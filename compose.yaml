@@ -1,0 +1,85 @@
+name: wordpress-acf
+
+x-wordpress-environment: &wordpress-environment
+  WORDPRESS_DB_HOST: db:3306
+  WORDPRESS_DB_NAME: wordpress
+  WORDPRESS_DB_USER: wordpress
+  WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?Run python3 bin/configure.py first}
+  WORDPRESS_CONFIG_EXTRA: |
+    define('DISALLOW_FILE_EDIT', true);
+    define('WP_ENVIRONMENT_TYPE', 'local');
+
+x-wordpress-volumes: &wordpress-volumes
+  - wordpress_data:/var/www/html
+  - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+
+services:
+  db:
+    image: mariadb:11.4@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Run python3 bin/configure.py first}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Run python3 bin/configure.py first}
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  wordpress:
+    image: wordpress-acf:local
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WORDPRESS_PORT:-8080}:80"
+    environment: *wordpress-environment
+    volumes: *wordpress-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, php, -r, "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  setup:
+    image: wordpress-acf:local
+    profiles: [tools]
+    user: "33:33"
+    working_dir: /var/www/html
+    entrypoint: [/bin/sh, /opt/wordpress/setup.sh]
+    environment:
+      <<: *wordpress-environment
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+      WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8080}
+      WORDPRESS_TITLE: ${WORDPRESS_TITLE:-WordPress with ACF}
+      WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:-siteadmin}
+      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:-admin@example.test}
+      WORDPRESS_ADMIN_PASSWORD: ${WORDPRESS_ADMIN_PASSWORD:?Run python3 bin/configure.py first}
+    volumes: *wordpress-volumes
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+  cli:
+    image: wordpress-acf:local
+    profiles: [tools]
+    user: "33:33"
+    working_dir: /var/www/html
+    entrypoint: [wp]
+    environment:
+      <<: *wordpress-environment
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes: *wordpress-volumes
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+volumes:
+  database:
+  wordpress_data:

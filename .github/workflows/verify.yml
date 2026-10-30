@@ -1,0 +1,24 @@
+name: Verify WordPress and ACF
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install
+        run: sh bin/start.sh
+      - name: Verify ACF database write and read
+        run: sh bin/verify.sh
+      - name: Verify HTTP
+        run: curl --fail --silent --show-error http://localhost:8080/wp-login.php > /dev/null
+      - name: Verify setup is repeatable
+        run: docker compose run --rm -T setup && sh bin/verify.sh
+      - name: Stop test services
+        if: always()
+        run: docker compose down --volumes
