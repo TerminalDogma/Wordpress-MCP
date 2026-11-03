@@ -1,0 +1,35 @@
+services:
+  wordpress:
+    volumes:
+      - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+  setup:
+    volumes:
+      - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+  cli:
+    volumes:
+      - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./tests/shared-content:/msc-tests:ro
+      - ./multisite-shared-content/examples:/msc-examples:ro
+      - ./dist:/msc-releases:ro
+  shared-worker:
+    image: wordpress-acf:local
+    user: "33:33"
+    working_dir: /var/www/html
+    restart: unless-stopped
+    entrypoint: [/bin/sh, -c]
+    command:
+      - 'while true; do wp --url="$$WORDPRESS_URL" eval ''if(\MSC\Queue::status()["pending"]){echo wp_json_encode(\MSC\Queue::run(100)).PHP_EOL;}''; sleep 5; done'
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?Run python3 bin/configure.py first}
+      WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8080}
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+    depends_on:
+      wordpress:
+        condition: service_healthy

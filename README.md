@@ -2,6 +2,17 @@
 
 A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Custom Fields Free 6.8.10**. This repository contains the configuration and setup automation; a running site needs Docker or a PHP/database hosting service. GitHub Pages cannot run this installation.
 
+## Shared TV Shows and Episodes
+
+The optional **Multisite Shared Content 1.1.0** plugin adds authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+
+```sh
+sh bin/shared-content.sh setup
+sh bin/shared-content.sh demo
+```
+
+This creates Sites A, B and C and runs a local synchronization worker. See [the ACF guide](multisite-shared-content/docs/acf.md) and [verification/limits](VERIFICATION.md). Build the installable ZIP with `python3 tools/package-msc.py`.
+
 ## Mac multisite testing
 
 For a local network with a main site plus **two test sites**, follow [the Mac multisite guide](docs/mac-multisite.md). After generating `.env`, run:

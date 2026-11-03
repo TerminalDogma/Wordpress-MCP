@@ -1,0 +1,8 @@
+.msc { max-width: 1200px; }
+.msc .msc-fields { background: #fff; border: 1px solid #dcdcde; margin: 1rem 0; }
+.msc-fields th { padding-left: 18px; }
+.msc-fields td { padding-right: 18px; }
+.msc-fields details { background: #f0f6fc; border-left: 3px solid #2271b1; padding: 8px 12px; margin-bottom: 12px; }
+.msc pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; }
+.msc summary { cursor: pointer; font-weight: 600; }
+.msc-fields label { display: block; margin-bottom: 8px; }

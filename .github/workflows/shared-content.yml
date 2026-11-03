@@ -1,0 +1,41 @@
+name: Shared Content plugin
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COMPOSE_PROJECT_NAME: msc-ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ACF and the three-site shared-content test network
+        run: sh bin/shared-content.sh setup
+      - name: PHP syntax
+        run: |
+          COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose exec -T wordpress sh -c 'find wp-content/plugins/multisite-shared-content -name "*.php" -print0 | xargs -0 -n1 php -l'
+      - name: Integration, HTTP, concurrency, media and real ACF tests
+        run: MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh test
+      - name: Package release
+        run: python3 tools/package-msc.py
+      - name: Install packaged plugin ZIP
+        run: COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose run --rm -T --entrypoint /bin/sh cli /msc-tests/release.sh
+      - name: Browser ACF editing workflow
+        run: |
+          python3 -m venv /tmp/msc-browser-env
+          /tmp/msc-browser-env/bin/pip install playwright==1.62.0
+          /tmp/msc-browser-env/bin/python -m playwright install --with-deps chromium
+          sh bin/shared-content.sh demo
+          MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/browser.py
+      - name: Upload plugin and source packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: multisite-shared-content-1.1.0
+          path: dist/
+      - name: Stop services
+        if: always()
+        run: COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose down --volumes

@@ -1,0 +1,181 @@
+{
+    "msc_show": {
+        "label": "TV Shows",
+        "slug": "shows",
+        "archive": true,
+        "noindex": true,
+        "default_status": "draft",
+        "fields": {
+            "title": {
+                "type": "text",
+                "property": "post_title",
+                "label": "Title"
+            },
+            "content": {
+                "type": "richtext",
+                "property": "post_content",
+                "label": "Description"
+            },
+            "excerpt": {
+                "type": "richtext",
+                "property": "post_excerpt",
+                "label": "Synopsis"
+            },
+            "slug": {
+                "type": "slug",
+                "property": "post_name",
+                "label": "URL slug"
+            },
+            "featured_image": {
+                "type": "media"
+            },
+            "network": {
+                "type": "text"
+            },
+            "streaming_service": {
+                "type": "text"
+            },
+            "seo_title": {
+                "type": "text"
+            },
+            "seo_description": {
+                "type": "text"
+            },
+            "additional_metadata": {
+                "type": "json"
+            },
+            "original_title": {
+                "type": "text"
+            },
+            "status": {
+                "type": "text"
+            },
+            "country": {
+                "type": "text"
+            },
+            "language": {
+                "type": "text"
+            },
+            "premiere_date": {
+                "type": "date",
+                "indexed": true
+            },
+            "finale_date": {
+                "type": "date",
+                "indexed": true
+            },
+            "genres": {
+                "type": "multiselect"
+            },
+            "poster": {
+                "type": "media"
+            },
+            "promotional_images": {
+                "type": "media_list"
+            },
+            "official_website": {
+                "type": "url"
+            },
+            "number_of_seasons": {
+                "type": "integer",
+                "min": 0
+            },
+            "number_of_episodes": {
+                "type": "integer",
+                "min": 0
+            },
+            "external_ids": {
+                "type": "json"
+            }
+        }
+    },
+    "msc_episode": {
+        "label": "Episodes",
+        "slug": "episodes",
+        "archive": true,
+        "noindex": true,
+        "default_status": "draft",
+        "fields": {
+            "title": {
+                "type": "text",
+                "property": "post_title",
+                "label": "Title"
+            },
+            "content": {
+                "type": "richtext",
+                "property": "post_content",
+                "label": "Description"
+            },
+            "excerpt": {
+                "type": "richtext",
+                "property": "post_excerpt",
+                "label": "Synopsis"
+            },
+            "slug": {
+                "type": "slug",
+                "property": "post_name",
+                "label": "URL slug"
+            },
+            "featured_image": {
+                "type": "media"
+            },
+            "network": {
+                "type": "text"
+            },
+            "streaming_service": {
+                "type": "text"
+            },
+            "seo_title": {
+                "type": "text"
+            },
+            "seo_description": {
+                "type": "text"
+            },
+            "additional_metadata": {
+                "type": "json"
+            },
+            "parent_show": {
+                "type": "relationship",
+                "target": "msc_show",
+                "indexed": true
+            },
+            "season_number": {
+                "type": "integer",
+                "min": 0,
+                "indexed": true
+            },
+            "episode_number": {
+                "type": "integer",
+                "min": 0,
+                "indexed": true
+            },
+            "overall_episode_number": {
+                "type": "integer",
+                "min": 0
+            },
+            "release_date": {
+                "type": "date",
+                "indexed": true
+            },
+            "air_time": {
+                "type": "time"
+            },
+            "time_zone": {
+                "type": "timezone"
+            },
+            "runtime": {
+                "type": "number",
+                "min": 0
+            },
+            "episode_image": {
+                "type": "media"
+            },
+            "production_code": {
+                "type": "text"
+            },
+            "additional_release_dates": {
+                "type": "json"
+            }
+        }
+    }
+}

@@ -1,0 +1,1 @@
+{"apiVersion":3,"name":"msc/record","version":"1.0.0","title":"Shared Show or Episode","category":"widgets","icon":"networking","description":"Render a published shared record with this site's effective data.","attributes":{"uuid":{"type":"string","default":""}},"supports":{"html":false}}
