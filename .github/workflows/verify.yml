@@ -9,16 +9,40 @@ jobs:
   installation:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [single, multisite]
     steps:
       - uses: actions/checkout@v4
+      - name: Check Intel and Apple Silicon image manifests
+        run: |
+          for image in \
+            wordpress:php8.3-apache@sha256:848b03bb7b4b160e3a670454e8e928e309c9aaeb1c2584e917f42ab5197662e2 \
+            wordpress:cli-php8.3@sha256:6bcc7bb91f5157c4b915e74ee131873e99c1c1ff48f602e4a6f6cd17827305cb \
+            mariadb:11.4@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620
+          do
+            docker buildx imagetools inspect --raw "$image" |
+              python3 -c 'import json,sys; data=json.load(sys.stdin); platforms={(m.get("platform",{}).get("os"),m.get("platform",{}).get("architecture")) for m in data.get("manifests",[])}; assert {("linux","amd64"),("linux","arm64")} <= platforms, platforms'
+          done
       - name: Build and install
-        run: sh bin/start.sh
-      - name: Verify ACF database write and read
-        run: sh bin/verify.sh
-      - name: Verify HTTP
-        run: curl --fail --silent --show-error http://localhost:8080/wp-login.php > /dev/null
+        run: sh bin/start.sh "${{ matrix.mode }}"
+      - name: Verify ACF and HTTP
+        run: sh bin/verify.sh && python3 bin/verify-http.py "${{ matrix.mode }}"
+      - name: Verify existing single-site conversion preserves content
+        if: matrix.mode == 'single'
+        run: |
+          post_id=$(docker compose run --rm -T cli post create --post_title="Conversion preservation check" --post_status=draft --porcelain)
+          docker compose run --rm -T setup multisite
+          docker compose run --rm -T cli post get "$post_id" --field=post_title | grep -Fx "Conversion preservation check"
+          sh bin/verify.sh
+          python3 bin/verify-http.py multisite
       - name: Verify setup is repeatable
-        run: docker compose run --rm -T setup && sh bin/verify.sh
+        run: |
+          docker compose run --rm -T setup "${{ matrix.mode }}"
+          sh bin/verify.sh
+          python3 bin/verify-http.py multisite
+          test "$(docker compose run --rm -T cli site list --field=blog_id | wc -l | tr -d ' ')" = 3
       - name: Stop test services
         if: always()
         run: docker compose down --volumes

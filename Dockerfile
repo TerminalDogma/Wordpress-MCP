@@ -20,4 +20,5 @@ RUN --mount=type=secret,id=proxy_ca \
 
 COPY --chmod=0644 docker/setup.sh /opt/wordpress/setup.sh
 COPY --chmod=0644 docker/verify.php /opt/wordpress/verify.php
+COPY --chmod=0644 docker/cli.sh /opt/wordpress/cli.sh
 RUN chmod 0755 /opt/wordpress

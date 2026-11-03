@@ -2,7 +2,18 @@
 
 A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Custom Fields Free 6.8.10**. This repository contains the configuration and setup automation; a running site needs Docker or a PHP/database hosting service. GitHub Pages cannot run this installation.
 
-## Start locally
+## Mac multisite testing
+
+For a local network with a main site plus **two test sites**, follow [the Mac multisite guide](docs/mac-multisite.md). After generating `.env`, run:
+
+```sh
+sh bin/start.sh multisite
+sh bin/verify.sh
+```
+
+This creates `http://localhost:8080/site-a/` and `http://localhost:8080/site-b/`, enables ACF across the network, and configures Apache subdirectory routing. The same command can convert the original single-site installation while preserving its content and administrator account. Back up an existing installation before conversion. Subsequent setup runs preserve the network and avoid duplicate sites.
+
+## Start locally as a single site
 
 Requires Docker Engine with Compose v2, Python 3, and a POSIX shell. On macOS or Windows, use Docker Desktop (and WSL or a compatible shell on Windows).
 
@@ -43,7 +54,7 @@ Add project PHP code under `wp-content/mu-plugins/`; it is mounted read-only int
 
 The WordPress/PHP 8.3, WP-CLI, and MariaDB 11.4 images are pinned by digest in `Dockerfile` and `compose.yaml`. ACF 6.8.10 is pinned to upstream commit `fa4ceb7b2773ac520d9b3c36d7271853bccd7a8f`, and its archive checksum is verified during the build. The image includes WP-CLI and the ACF package, so setup does not need to download plugins at runtime.
 
-`bin/verify.sh` checks the installed database, ACF activation, and a real ACF field write/read. It removes its temporary draft page afterward. GitHub Actions builds a fresh installation, checks HTTP, and repeats setup to check idempotence.
+`bin/verify.sh` checks the installed database, ACF activation, and a real ACF field write/read. It removes its temporary draft page afterward. GitHub Actions checks fresh single-site and multisite installations, conversion with existing content, ACF on every test site, authenticated dashboards, subsite asset routing, repeat setup, and availability of both amd64 and arm64 image manifests.
 
 ## Hosting and updates
 

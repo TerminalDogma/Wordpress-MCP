@@ -3,3 +3,4 @@
 !docker/
 !docker/setup.sh
 !docker/verify.php
+!docker/cli.sh

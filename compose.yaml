@@ -1,6 +1,7 @@
 name: wordpress-acf
 
 x-wordpress-environment: &wordpress-environment
+  WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8080}
   WORDPRESS_DB_HOST: db:3306
   WORDPRESS_DB_NAME: wordpress
   WORDPRESS_DB_USER: wordpress
@@ -71,7 +72,7 @@ services:
     profiles: [tools]
     user: "33:33"
     working_dir: /var/www/html
-    entrypoint: [wp]
+    entrypoint: [/bin/sh, /opt/wordpress/cli.sh]
     environment:
       <<: *wordpress-environment
       WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
