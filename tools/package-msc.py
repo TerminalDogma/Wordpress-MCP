@@ -10,6 +10,7 @@ plugin = root / 'multisite-shared-content'
 version = re.search(r'\* Version: ([0-9.]+)', (plugin / 'multisite-shared-content.php').read_text()).group(1)
 out = root / 'dist'
 out.mkdir(exist_ok=True)
+out.chmod(0o755)
 names = ['Dockerfile', 'README.md', 'VERIFICATION.md', 'compose.yaml', 'compose.shared-content.yaml', '.dockerignore', '.gitignore', 'bin', 'docs', 'wp-content', 'multisite-shared-content', 'tests', 'tools', '.github']
 source = []
 for name in names:

@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     entrypoint: [/bin/sh, -c]
     command:
-      - 'while true; do wp --url="$$WORDPRESS_URL" eval ''if(\MSC\Queue::status()["pending"]){echo wp_json_encode(\MSC\Queue::run(100)).PHP_EOL;}''; sleep 5; done'
+      - 'while true; do wp --url="$$WORDPRESS_URL" eval ''if(class_exists(\MSC\Queue::class) && \MSC\Queue::status()["pending"]){echo wp_json_encode(\MSC\Queue::run(100)).PHP_EOL;}''; sleep 5; done'
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_NAME: wordpress
