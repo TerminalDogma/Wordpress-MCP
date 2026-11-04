@@ -83,7 +83,7 @@ async def main():
         await page.goto(url)
         assert await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B · The Matinee', "Browser assertion at line 82: await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B · The Matinee'"
         poster = page.locator('.acf-field[data-name="msc_poster"]')
-        assert await poster.locator('.msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0'), "Browser assertion at line 84: await poster.locator('.msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0')"
+        assert await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0'), "Browser assertion at line 84: await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0')"
         value = json.loads(await poster.locator('.msc-media-value').input_value())
         assert value['site_id'] != 3, 'Expected inherited image from Site A.'
         assert await poster.locator('textarea').count() == 0, "Browser assertion at line 87: await poster.locator('textarea').count() == 0"
@@ -108,10 +108,14 @@ async def main():
         await poster.locator('.msc-choose-media').click()
         modal = page.locator('.media-modal')
         await modal.get_by_role('tab', name='Media Library', exact=True).click()
-        await modal.locator('.attachment').first.wait_for()
-        await modal.locator('.attachment').first.click()
+        image_choice = modal.locator('.attachment:has(.attachment-preview.type-image)').first
+        await image_choice.wait_for()
+        selected_id = await image_choice.get_attribute('data-id')
+        await image_choice.click()
         await modal.get_by_role('button', name='Use this media', exact=True).click()
-        assert await poster.locator('.msc-media-previews img').count() == 1, "Browser assertion at line 112: await poster.locator('.msc-media-previews img').count() == 1"
+        await page.wait_for_function("([selector, id]) => JSON.parse(document.querySelector(selector).value).attachment_id === Number(id)", arg=['.acf-field[data-name=msc_poster] .msc-media-value', selected_id])
+        assert await poster.locator('.msc-media-control .msc-media-previews img').count() == 1, 'Choosing an image must render its preview card'
+        assert await poster.locator('.msc-media-control .msc-media-card').get_attribute('data-attachment') == selected_id, 'Preview must match the chosen image'
         assert await poster.locator('input[name="override[poster]"]').is_checked(), 'Browser assertion at line 113: await poster.locator(\'input[name="override[poster]"]\').is_checked()'
         # Do not save the replacement; it demonstrates the picker without mutating demo artwork.
         await page.goto(base + '/site-b/wp-admin/admin.php?page=msc&record=' + records['movie'])

@@ -150,7 +150,7 @@ Validation errors return 400, capability errors 403, and stale updates 409. Unkn
 
 ## Fields, CPT extension, and hooks
 
-See `examples/register-schema.php`. Built-in field types: text, richtext, slug, integer, number, date, time, timezone, boolean, select, multiselect, url, media, media_list, relationship, json. JSON is bounded by decoder depth on input but is otherwise schema-agnostic; nested key-specific validation requires an extension. Scalar min/max applies to numeric fields. Required-field and arbitrary cross-field validation are not implemented beyond the title schema definition.
+See `examples/register-schema.php`. Built-in field types: text, richtext, slug, integer, number, date, time, timezone, boolean, select, multiselect, url, media, media_list, relationship, relationship_list, json. `relationship_list` stores an ordered list of global UUIDs (maximum 200), with a required `target` type. Category-backed text/select/multiselect fields use the `taxonomy` property; values are portable names rather than site term IDs. See [People, categories, media controls and templates](presentation.md). JSON is bounded by decoder depth on input but is otherwise schema-agnostic; nested key-specific validation requires an extension. Scalar min/max applies to numeric fields. Required-field and arbitrary cross-field validation are not implemented beyond the title schema definition.
 
 Third-party field registration:
 

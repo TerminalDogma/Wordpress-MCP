@@ -27,7 +27,7 @@ if ( empty( $demo['show'] ) || ! $store->get( $demo['show'] ) ) {
 // Add the Movie example when upgrading an existing demo; retain TV edits.
 if ( empty( $demo['movie'] ) || ! $store->get( $demo['movie'] ) ) {
 	switch_to_blog( $sites[0] );
-	try { $movie = $store->create( 'msc_movie', array( 'title' => 'The Last Light', 'content' => '<p>On a remote coast, the last lighthouse keeper watches a world that has learned to navigate without her. Then, one night, the light across the bay begins to answer.</p><p>A fictional, atmospheric journey through memory and the enduring need to be found.</p>', 'release_date' => '2099-06-01', 'digital_release_date' => '2099-07-01', 'runtime' => 112, 'director' => 'Demo Director', 'distributor' => 'Demo Pictures', 'cast' => '<p>Demo Actor as the lead</p>' ) ); $demo['movie'] = $movie['uuid']; }
+	try { $movie = $store->create( 'msc_movie', array( 'title' => 'The Last Light', 'content' => '<p>On a remote coast, the last lighthouse keeper watches a world that has learned to navigate without her. Then, one night, the light across the bay begins to answer.</p><p>A fictional, atmospheric journey through memory and the enduring need to be found.</p>', 'release_date' => '2099-06-01', 'digital_release_date' => '2099-07-01', 'runtime' => 112, 'director' => 'Julian Vale', 'distributor' => 'Demo Pictures', 'cast' => '<p>Maya Chen as Dr. Lena Park</p>' ) ); $demo['movie'] = $movie['uuid']; }
 	finally { restore_current_blog(); }
 	for ( $i = 0; $i < 100 && \MSC\Queue::status()['pending']; ++$i ) { $result = \MSC\Queue::run( 1000 ); if ( $result['errors'] ) { throw new RuntimeException( 'Movie demo synchronization failed.' ); } }
 	foreach ( $sites as $site ) {

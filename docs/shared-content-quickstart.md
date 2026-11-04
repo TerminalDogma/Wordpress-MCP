@@ -1,6 +1,6 @@
-# Test shared TV Shows and Episodes on your Mac
+# Test shared Movies, TV Shows, Episodes and People on your Mac
 
-This adds the **Multisite Shared Content** plugin to the Docker environment already in this repository. It creates **three independent test subsites**, activates ACF and MSC, enrolls those subsites, and starts a local background synchronization worker.
+This adds the **Multisite Shared Content** plugin to the Docker environment already in this repository. It creates **three independent test subsites**, activates ACF and MSC, enrolls those subsites, and starts a local background synchronization worker. Version 1.3 also styles the sites as Observatory (green), The Matinee (cream/red) and After Hours (purple), with detail templates, linked People, native categories and image previews. See [the presentation guide](../multisite-shared-content/docs/presentation.md).
 
 ## Install or update
 
@@ -28,11 +28,11 @@ With the default port:
 
 Log in using `siteadmin` and `WORDPRESS_ADMIN_PASSWORD` from `.env`, or your existing administrator account. On each subsite, open **Shared Content → TV Shows** or **Episodes**. The demo command prints direct editing links as well.
 
-The fictitious **Network Demo Show**, **Demo Pilot** and **Network Demo Movie** exist as native posts on all three sites. Sites A and C inherit the episode date `2099-01-01`. Site B overrides it to `2099-01-02` and has its own SEO title. They are published for local preview and noindex by default. Running the demo again keeps your edits. Upgrading an older demo adds its missing Movie without resetting TV records. Movies have their own release dates, runtime, director, cast and distributor fields: see [the field reference](../multisite-shared-content/docs/content-fields.md).
+A fresh demo creates the fictional **The Signal**, **First Contact** and **The Last Light**, plus linked **Maya Chen** and **Julian Vale** Person profiles. Older demos keep their saved names and fields. All appear as native posts on the three sites; open `/site-a/`, `/site-b/` or `/site-c/` to browse their styled templates. Sites A and C inherit the episode date `2099-01-01`. Site B overrides it to `2099-01-02` and has its own SEO title. They are published for local preview and noindex by default. Running the demo again keeps your edits. Upgrading an older demo adds its missing Movie without resetting TV records. Movies have their own release dates, runtime, director, cast and distributor fields: see [the field reference](../multisite-shared-content/docs/content-fields.md).
 
 ## Try the key workflow
 
-1. On Site A, open the Demo Pilot through Shared Content and choose **Edit supported fields with ACF**.
+1. On Site A, open the demo Episode through Shared Content and choose **Edit supported fields with ACF**.
 2. Switch to **GLOBAL EDITING**, change Release Date, and save.
 3. Wait a few seconds for the worker. Sites A and C follow the new date; Site B retains its override.
 4. On Site B, open the episode's ACF form in **LOCAL EDITING**. Uncheck Release Date's Override control and save.
@@ -40,7 +40,7 @@ The fictitious **Network Demo Show**, **Demo Pilot** and **Network Demo Movie** 
 
 The Show/Episode relationship uses one global UUID. Each site's ACF Post Object control resolves it to that site's native Show post ID. Global edits can be made on any enrolled site by an authorized global editor. Ordinary editors receive local editing/publishing capabilities by default; network/site administrators manage permissions.
 
-Use **All fields and publishing** for titles, descriptions, media, JSON, publication, global revisions and advanced relationships. Each theme controls its own rendering. ACF is used for the supported custom fields listed in [the ACF guide](../multisite-shared-content/docs/acf.md), not for unsupported Pro or third-party fields.
+Use **All fields and publishing** for titles, descriptions, JSON, publication and global revisions. Both editors support Person/category selectors and media previews; ACF provides searchable, ordered Person links. Each theme controls its own rendering. ACF is used for the supported custom fields listed in [the ACF guide](../multisite-shared-content/docs/acf.md), not for unsupported Pro or third-party fields.
 
 ## Synchronization and daily commands
 
