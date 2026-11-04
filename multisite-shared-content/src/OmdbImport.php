@@ -141,7 +141,13 @@ final class OmdbImport {
             $roles = array_intersect( array( 'actors', 'directors', 'screenwriters' ), $selected );
             foreach ( $roles as $role ) { $values[ $role ] = array(); }
             if ( 'msc_episode' === $s['type'] && in_array( 'parent_show', $selected, true ) ) { $values['parent_show'] = (string) ( $request['parent_show'] ?? '' ); }
-            if ( 'msc_episode' === $s['type'] && empty( $values['parent_show'] ) && empty( $r['data']['parent_show'] ) ) { throw new OmdbError( 'Select the parent TV Show. Import that Show first if it is not in this catalog.' ); }
+            if ( 'msc_episode' === $s['type'] ) {
+                $parent = array_key_exists( 'parent_show', $values ) ? $values['parent_show'] : ( $r['data']['parent_show'] ?? '' );
+                if ( ! $parent ) { throw new OmdbError( 'Select and enable the parent TV Show field. Import that Show first if it is not in this catalog.' ); }
+                Schema::sanitize( Schema::get( $s['type'] )['fields']['parent_show'], $parent );
+                $show = Plugin::store()->get( $parent ); $identity = $show['data']['external_ids']['imdb'] ?? '';
+                if ( $identity && ! empty( $s['data']['seriesID'] ) && $identity !== $s['data']['seriesID'] ) { throw new OmdbError( 'The selected TV Show has a different IMDb ID from the Episode’s series.' ); }
+            }
             $external = $r['data']['external_ids'] ?? array(); if ( ! is_array( $external ) || ! empty( $external['imdb'] ) && $external['imdb'] !== $s['imdb'] ) { throw new OmdbError( 'The destination already identifies another IMDb title.', 409 ); }
             $values['external_ids'] = array_replace( $external, array( 'imdb' => $s['imdb'] ) );
             if ( ! $r ) { $has_title = false; foreach ( Schema::get( $s['type'] )['fields'] as $key => $definition ) { if ( 'post_title' === ( $definition['property'] ?? '' ) && ! empty( $values[ $key ] ) ) { $has_title = true; } } if ( ! $has_title ) { throw new OmdbError( 'Select the title field when creating a new record.' ); } }
