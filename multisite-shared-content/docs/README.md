@@ -17,3 +17,5 @@ Global records and revisions survive local deletion, deactivation, and uninstall
 
 - [ACF supported-field integration](acf.md)
 - [Mac quickstart](../../docs/shared-content-quickstart.md)
+
+- [TV Show, Movie and Episode field reference](content-fields.md)

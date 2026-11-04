@@ -1,8 +1,12 @@
-# Shared Content 1.1.0 verification
+# Shared Content 1.2.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
 
-## Actual environment and results
+## TV/Movie field coverage
+
+Version 1.2 adds separate Movie fields and generated ACF groups, plus a versioned additive upgrade. `tests/shared-content/catalog.php` checks type isolation, custom-schema/native-property preservation, stored records and local overrides, enrollment policy, Movie updates/reset/indexed dates and noindex HTTP output. The browser workflow also checks the distinct TV/Movie controls and saves a Movie director from one site for another to inherit. The Shared Content GitHub Actions workflow records current results.
+
+## Core environment and baseline results
 
 WordPress 7.1.4, PHP 8.3.36, MariaDB 11.4 and ACF Free 6.8.10, using pinned images, a main site and three independent participating subsites.
 

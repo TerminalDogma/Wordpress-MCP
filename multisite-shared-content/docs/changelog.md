@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.2.0
+
+Adds a separate Movies type with movie-specific release dates, runtime, credits, distribution and rating fields. TV Shows retain series dates and season/episode fields; Episodes remain linked to Shows. The additive versioned upgrade preserves custom schemas, native-property aliases, records and local overrides. ACF headings identify each type. The existing demo gains a Movie without replacing TV edits. Integration/browser tests cover field isolation, upgrades and Movie inheritance.
+
 ## 1.1.0
 
 Adds real ACF Free controls for supported custom fields, explicit global/local atomic forms, falsey overrides and reset, date and Post Object conversion, local `get_field`/`update_field` integration, and permission/nonce/revision protection. Includes Mac setup/demo, a local queue worker, integrated CI and clean packaging. Upgrades preserve deliberately removed role capabilities.

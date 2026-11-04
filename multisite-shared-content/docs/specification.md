@@ -13,7 +13,7 @@ This describes the shipped behavior and practical limits. It is not a promise of
 | Field registry | Native properties and text/richtext/numeric/date/time/timezone/select/list/boolean/URL/media/relationship/JSON fields |
 | Validation | Type, numeric min/max, options, valid calendar/time/zone, media ownership, relationship target type; sanitization and escaping |
 | Extensibility | Custom field sanitizers, schema-defined CPTs, generic relationship targets, materialization action, media fallback filter |
-| Starter content | TV Show and Episode schemas include description/synopsis, schedule, imagery, networks/services, SEO, identifiers, and arbitrary metadata |
+| Starter content | Separate TV Show, Episode and Movie schemas include type-specific scheduling/credits alongside common description, imagery, SEO and identifiers |
 | Episodes | Parent UUID, season/episode numbering, season grouping, indexed date lookup, upcoming and next-episode queries |
 | Editorial UI | Separate global/local banners, global value preview, override state/control, reset by unchecking, conflict notices, UUID columns, inheritance list filter |
 | Episode UI | Bounded season-grouped episode list on a show; prefilled Add Episode; links to manage existing episodes |

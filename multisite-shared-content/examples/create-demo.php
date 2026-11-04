@@ -24,9 +24,25 @@ if ( empty( $demo['show'] ) || ! $store->get( $demo['show'] ) ) {
 	finally { restore_current_blog(); }
 	update_network_option( get_current_network_id(), 'msc_demo_records', $demo );
 }
+// Add the Movie example when upgrading an existing demo; retain TV edits.
+if ( empty( $demo['movie'] ) || ! $store->get( $demo['movie'] ) ) {
+	switch_to_blog( $sites[0] );
+	try { $movie = $store->create( 'msc_movie', array( 'title' => 'Network Demo Movie', 'content' => '<p>A fictitious film for testing movie-specific fields.</p>', 'release_date' => '2099-06-01', 'digital_release_date' => '2099-07-01', 'runtime' => 112, 'director' => 'Demo Director', 'distributor' => 'Demo Pictures', 'cast' => '<p>Demo Actor as the lead</p>' ) ); $demo['movie'] = $movie['uuid']; }
+	finally { restore_current_blog(); }
+	for ( $i = 0; $i < 100 && \MSC\Queue::status()['pending']; ++$i ) { $result = \MSC\Queue::run( 1000 ); if ( $result['errors'] ) { throw new RuntimeException( 'Movie demo synchronization failed.' ); } }
+	foreach ( $sites as $site ) {
+		switch_to_blog( $site );
+		try { $r = $store->resolved( $demo['movie'] ); $store->local( $r['uuid'], array(), array(), (int) $r['mapping']['local_version'], 'publish' ); }
+		finally { restore_current_blog(); }
+	}
+	update_network_option( get_current_network_id(), 'msc_demo_records', $demo );
+}
 foreach ( $sites as $site ) {
 	switch_to_blog( $site );
 	try { $r = $store->resolved( $demo['episode'] ); WP_CLI::log( home_url( '/' ) . ' | Episode date: ' . $r['data']['release_date'] . ' | ' . admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ) ); }
 	finally { restore_current_blog(); }
+	switch_to_blog( $site );
+	try { WP_CLI::log( 'Movie fields: ' . admin_url( 'admin.php?page=msc-acf&record=' . $demo['movie'] ) ); }
+	finally { restore_current_blog(); }
 }
-WP_CLI::success( 'Demo ready. Site B has its own episode date; Sites A and C inherit the shared date.' );
+WP_CLI::success( 'TV Show, Episode and Movie demos ready. Site B has its own episode date; Sites A and C inherit it.' );

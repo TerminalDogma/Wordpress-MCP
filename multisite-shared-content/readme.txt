@@ -4,11 +4,11 @@ Tags: multisite, custom-post-types, shared-content
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Network-owned TV Shows, Episodes, and extensible CPTs with explicit local overrides.
+Network-owned TV Shows, Episodes, Movies, and extensible CPTs with explicit local overrides.
 
 == Installation ==
 Upload the release ZIP, network activate, open Network Admin > Shared Content, and enable types for participating sites. Configure capabilities and a real queue runner. See docs/administrator.md.

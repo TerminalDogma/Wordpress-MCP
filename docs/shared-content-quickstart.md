@@ -28,7 +28,7 @@ With the default port:
 
 Log in using `siteadmin` and `WORDPRESS_ADMIN_PASSWORD` from `.env`, or your existing administrator account. On each subsite, open **Shared Content → TV Shows** or **Episodes**. The demo command prints direct editing links as well.
 
-The fictitious **Network Demo Show** and **Demo Pilot** exist as native posts on all three sites. Sites A and C inherit the episode date `2099-01-01`. Site B overrides it to `2099-01-02` and has its own SEO title. They are published for local preview and noindex by default. Running the demo again keeps your edits.
+The fictitious **Network Demo Show**, **Demo Pilot** and **Network Demo Movie** exist as native posts on all three sites. Sites A and C inherit the episode date `2099-01-01`. Site B overrides it to `2099-01-02` and has its own SEO title. They are published for local preview and noindex by default. Running the demo again keeps your edits. Upgrading an older demo adds its missing Movie without resetting TV records. Movies have their own release dates, runtime, director, cast and distributor fields: see [the field reference](../multisite-shared-content/docs/content-fields.md).
 
 ## Try the key workflow
 
@@ -67,7 +67,7 @@ The worker is a local development convenience. A production network needs a supe
 
 ## Install the ZIP elsewhere
 
-Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.1.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
+Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.2.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
 
 ## Automated testing
 

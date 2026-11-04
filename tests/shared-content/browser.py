@@ -1,5 +1,6 @@
 """Optional real-browser ACF workflow; requires Playwright and a disposable demo."""
 import asyncio
+import json
 from pathlib import Path
 import os
 import subprocess
@@ -13,8 +14,10 @@ config = dict(line.split('=', 1) for line in (root / '.env').read_text().splitli
 base = config.get('WORDPRESS_URL', 'http://localhost:8080').rstrip('/')
 if urlparse(base).hostname not in ('localhost', '127.0.0.1'):
     raise SystemExit('Browser tests are local only.')
-uuid = subprocess.check_output(['sh', 'bin/shared-content.sh', 'wp', 'eval', 'echo get_network_option(get_current_network_id(),"msc_demo_records")["episode"];'], cwd=root, text=True).strip()
-if len(uuid) != 36:
+records = json.loads(subprocess.check_output(['sh', 'bin/shared-content.sh', 'wp', 'eval', 'echo wp_json_encode(get_network_option(get_current_network_id(),"msc_demo_records"));'], cwd=root, text=True))
+uuid = records.get('episode', '')
+movie = records.get('movie', '')
+if len(uuid) != 36 or len(movie) != 36:
     raise SystemExit('Run the shared-content demo command first.')
 
 async def main():
@@ -59,9 +62,24 @@ async def main():
         date = page.locator('.acf-field[data-name="msc_release_date"]')
         assert await date.locator('input[type="hidden"]').input_value() == '20990201', 'Reset did not inherit the newest shared date.'
         assert not await date.locator('input[name="override[release_date]"]').is_checked()
+        await page.goto(base + '/site-a/wp-admin/admin.php?page=msc-acf&record=' + movie + '&scope=global')
+        assert await page.get_by_role('heading', name='Movies — ACF Shared Fields', exact=True).count()
+        for name in ('director', 'distributor', 'runtime', 'release_date'):
+            assert await page.locator('.acf-field[data-name="msc_' + name + '"]').count() == 1
+        for name in ('premiere_date', 'number_of_seasons', 'number_of_episodes', 'parent_show', 'network'):
+            assert await page.locator('.acf-field[data-name="msc_' + name + '"]').count() == 0
+        await page.locator('.acf-field[data-name="msc_director"] input[type="text"]').fill('Browser Film Director')
+        await page.get_by_role('button', name='Save shared fields globally', exact=True).click()
+        await page.wait_for_url('**updated=1', timeout=60000)
+        await page.goto(base + '/site-b/wp-admin/admin.php?page=msc-acf&record=' + movie + '&scope=local')
+        assert await page.locator('.acf-field[data-name="msc_director"] input[type="text"]').input_value() == 'Browser Film Director'
+        await page.goto(base + '/site-a/wp-admin/admin.php?page=msc-acf&record=' + records['show'] + '&scope=global')
+        assert await page.get_by_role('heading', name='TV Shows — ACF Shared Fields', exact=True).count()
+        assert await page.locator('.acf-field[data-name="msc_premiere_date"]').count() == 1
+        assert await page.locator('.acf-field[data-name="msc_director"]').count() == 0
         assert not errors, errors
         await browser.close()
-        print('PASS: Browser ACF date picker, global save, local preservation, reset and JavaScript checks.')
+        print('PASS: Browser ACF dates, global/local/reset, distinct TV/Movie fields, Movie save across sites and JavaScript checks.')
 
 try:
     asyncio.run(main())

@@ -17,11 +17,12 @@ final class Schema {
 			'content' => array( 'type' => 'richtext', 'property' => 'post_content', 'label' => 'Description' ),
 			'excerpt' => array( 'type' => 'richtext', 'property' => 'post_excerpt', 'label' => 'Synopsis' ),
 			'slug' => array( 'type' => 'slug', 'property' => 'post_name', 'label' => 'URL slug' ),
-			'featured_image' => array( 'type' => 'media' ), 'network' => array( 'type' => 'text' ),
-			'streaming_service' => array( 'type' => 'text' ), 'seo_title' => array( 'type' => 'text' ),
+			'featured_image' => array( 'type' => 'media' ), 'seo_title' => array( 'type' => 'text' ),
 			'seo_description' => array( 'type' => 'text' ), 'additional_metadata' => array( 'type' => 'json' ),
 		);
 		$show = $common;
+		$show['network'] = array( 'type' => 'text', 'label' => 'TV network' );
+		$show['streaming_service'] = array( 'type' => 'text' );
 		foreach ( array( 'original_title', 'status', 'country', 'language' ) as $field ) { $show[ $field ] = array( 'type' => 'text' ); }
 		foreach ( array( 'premiere_date', 'finale_date' ) as $field ) { $show[ $field ] = array( 'type' => 'date', 'indexed' => true ); }
 		$show['genres'] = array( 'type' => 'multiselect' ); $show['poster'] = array( 'type' => 'media' );
@@ -29,6 +30,8 @@ final class Schema {
 		$show['number_of_seasons'] = array( 'type' => 'integer', 'min' => 0 );
 		$show['number_of_episodes'] = array( 'type' => 'integer', 'min' => 0 ); $show['external_ids'] = array( 'type' => 'json' );
 		$episode = $common + array(
+			'network' => array( 'type' => 'text', 'label' => 'TV network' ),
+			'streaming_service' => array( 'type' => 'text' ),
 			'parent_show' => array( 'type' => 'relationship', 'target' => 'msc_show', 'indexed' => true ),
 			'season_number' => array( 'type' => 'integer', 'min' => 0, 'indexed' => true ),
 			'episode_number' => array( 'type' => 'integer', 'min' => 0, 'indexed' => true ),
@@ -38,10 +41,46 @@ final class Schema {
 			'episode_image' => array( 'type' => 'media' ), 'production_code' => array( 'type' => 'text' ),
 			'additional_release_dates' => array( 'type' => 'json' ),
 		);
+		$movie = $common;
+		foreach ( array( 'original_title', 'country', 'language', 'director', 'writers', 'distributor', 'production_companies', 'content_rating', 'release_status', 'streaming_service' ) as $field ) { $movie[ $field ] = array( 'type' => 'text' ); }
+		$movie['cast'] = array( 'type' => 'richtext', 'label' => 'Cast and roles' );
+		foreach ( array( 'release_date' => 'Theatrical release date', 'digital_release_date' => 'Digital release date', 'streaming_release_date' => 'Streaming release date', 'physical_release_date' => 'DVD / Blu-ray release date' ) as $field => $label ) { $movie[ $field ] = array( 'type' => 'date', 'label' => $label, 'indexed' => true ); }
+		$movie['runtime'] = array( 'type' => 'number', 'min' => 0, 'label' => 'Runtime (minutes)' );
+		$movie['genres'] = array( 'type' => 'multiselect' );
+		$movie['poster'] = array( 'type' => 'media' );
+		$movie['promotional_images'] = array( 'type' => 'media_list' );
+		$movie['official_website'] = array( 'type' => 'url' );
+		$movie['external_ids'] = array( 'type' => 'json', 'label' => 'External database identifiers' );
+		$movie['additional_release_dates'] = array( 'type' => 'json', 'label' => 'Additional regional release dates' );
 		return array(
 			'msc_show' => array( 'label' => 'TV Shows', 'slug' => 'shows', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $show ),
 			'msc_episode' => array( 'label' => 'Episodes', 'slug' => 'episodes', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $episode ),
+			'msc_movie' => array( 'label' => 'Movies', 'slug' => 'movies', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $movie ),
 		);
+	}
+	/** Add new built-ins and missing fields once, retaining saved schema choices. */
+	public static function upgrade_defaults(): void {
+		$network = get_current_network_id();
+		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 2 ) { return; }
+		Database::lock( 'builtin-schema', static function () use ( $network ) {
+			// Another request may have completed the upgrade while this one waited.
+			foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) { wp_cache_delete( $network . ':' . $option, 'site-options' ); }
+			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 2 ) { return; }
+			$saved = get_network_option( $network, 'msc_schemas', false );
+			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
+			$schemas = false === $saved ? self::defaults() : $saved;
+			foreach ( self::defaults() as $type => $default ) {
+				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type ) { $schemas[ $type ] = $default; } continue; }
+				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
+				foreach ( $default['fields'] as $key => $field ) {
+					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) || isset( $field['property'] ) && in_array( $field['property'], $properties, true ) ) { continue; }
+					$schemas[ $type ]['fields'][ $key ] = $field;
+					if ( isset( $field['property'] ) ) { $properties[] = $field['property']; }
+				}
+			}
+			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
+			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 2 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 2 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
+		} );
 	}
 	public static function register_type( string $name, callable $sanitize ): void { self::$types[ $name ] = $sanitize; }
 	public static function save( array $schemas ): void {
