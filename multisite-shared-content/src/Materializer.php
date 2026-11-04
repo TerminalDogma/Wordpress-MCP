@@ -41,6 +41,7 @@ final class Materializer {
 				foreach ( $schema['fields'] as $key => $field ) {
 					if ( ! isset( $field['property'] ) ) { update_post_meta( $post_id, 'msc_' . $key, wp_slash( $values[ $key ] ?? '' ) ); }
 				}
+				Taxonomies::sync( $post_id, $schema, $values );
 				$media = $values['featured_image'] ?? array();
 				if ( ! empty( $media['attachment_id'] ) && (int) $media['site_id'] === $site ) { set_post_thumbnail( $post_id, $media['attachment_id'] ); }
 				else { delete_post_meta( $post_id, '_thumbnail_id' ); }

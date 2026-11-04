@@ -10,7 +10,7 @@ final class Admin {
 		add_action( 'add_meta_boxes', array( self::class, 'metaboxes' ) );
 		add_action( 'admin_enqueue_scripts', static function () {
 			wp_enqueue_style( 'msc-admin', plugins_url( 'assets/admin.css', MSC_FILE ), array(), MSC_VERSION );
-			if ( 'msc' === ( $_GET['page'] ?? '' ) ) {
+			if ( in_array( $_GET['page'] ?? '', array( 'msc', 'msc-acf' ), true ) ) {
 				wp_enqueue_media();
 				wp_enqueue_script( 'msc-media', plugins_url( 'assets/media.js', MSC_FILE ), array( 'media-editor' ), MSC_VERSION, true );
 				wp_add_inline_script( 'msc-media', 'window.mscMediaSite=' . (int) get_current_blog_id() . ';', 'before' );
@@ -46,13 +46,24 @@ final class Admin {
 	private static function text( $value ): string { return is_array( $value ) || is_bool( $value ) ? wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) : (string) $value; }
 	private static function input( string $key, array $field, $value ): void {
 		$name = 'fields[' . $key . ']'; $type = $field['type']; $id = 'msc-' . $key;
-		if ( in_array( $type, array( 'richtext', 'json', 'media', 'media_list', 'multiselect' ), true ) ) {
+		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
+			Media::control( $name, $id, $value, 'media_list' === $type );
+		} elseif ( ! empty( $field['taxonomy'] ) || 'multiselect' === $type && ! empty( $field['options'] ) || in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
+			$multiple = in_array( $type, array( 'multiselect', 'relationship_list' ), true );
+			$options = array();
+			if ( in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
+				foreach ( Plugin::store()->query( $field['target'], array(), 0, 500 ) as $related ) { $r = Plugin::store()->get( $related ); $options[ $r['uuid'] ] = $r['data']['title'] ?? $r['uuid']; }
+				foreach ( (array) $value as $uuid ) { if ( $uuid && ! isset( $options[ $uuid ] ) ) { $r = Plugin::store()->get( $uuid ); $options[ $uuid ] = ( $r['data']['title'] ?? 'Unavailable record' ) . ' (current)'; } }
+			} else { foreach ( Taxonomies::choices( $field, $value ) as $choice ) { $options[ $choice ] = $choice; } }
+			echo '<select class="large-text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name . ( $multiple ? '[]' : '' ) ) . '"' . ( $multiple ? ' multiple size="6"' : '' ) . '>';
+			if ( ! $multiple ) { echo '<option value="">— None —</option>'; }
+			foreach ( $options as $option => $label ) { echo '<option value="' . esc_attr( $option ) . '"' . selected( in_array( (string) $option, array_map( 'strval', (array) $value ), true ), true, false ) . '>' . esc_html( $label ) . '</option>'; }
+			echo '</select>';
+			if ( $multiple ) { echo '<p class="description">Select multiple with Command (Mac) or Ctrl. Use ACF for searchable, ordered Person links.</p>'; }
+			if ( ! empty( $field['taxonomy'] ) ) { echo '<p class="description">Reusable category. Network administrators can add choices under Shared Content Network → Categories.</p>'; }
+		} elseif ( in_array( $type, array( 'richtext', 'json', 'multiselect' ), true ) ) {
 			echo '<textarea class="large-text" rows="' . ( 'richtext' === $type ? 5 : 3 ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( self::text( $value ) ) . '</textarea>';
-			if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
-				echo '<button type="button" class="button msc-choose-media" data-field="' . esc_attr( $id ) . '" data-multiple="' . ( 'media_list' === $type ? '1' : '0' ) . '">Choose media from this site</button>';
-				if ( 'media' === $type && is_array( $value ) ) { $url = Media::url( $value ); if ( $url ) { echo '<p><a href="' . esc_url( $url ) . '" target="_blank" rel="noopener">View current asset</a></p>'; } }
-			}
-			if ( 'richtext' !== $type ) { echo '<p class="description">JSON. Media: {"site_id":1,"attachment_id":123}. Empty media: [].</p>'; }
+			if ( 'richtext' !== $type ) { echo '<p class="description">JSON array or object.</p>'; }
 		} elseif ( 'boolean' === $type || 'select' === $type && ! empty( $field['options'] ) ) {
 			$options = 'boolean' === $type ? array( '0', '1' ) : $field['options'];
 			echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">';
@@ -96,10 +107,10 @@ final class Admin {
 		echo '<table class="form-table msc-fields"><tbody>';
 		foreach ( $schema['fields'] as $key => $field ) {
 			$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : '' );
-			if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect' ), true ) ) { $value = array(); }
+			if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
 			echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ) . '</label></th><td>';
 			if ( ! $global ) {
-				echo '<details><summary>Global value · ' . ( array_key_exists( $key, $r['overrides'] ) ? 'Overridden here' : 'Inherited' ) . '</summary><pre>' . esc_html( self::text( $r['global'][ $key ] ?? '' ) ) . '</pre></details>';
+				echo '<details><summary>Global value · ' . ( array_key_exists( $key, $r['overrides'] ) ? 'Overridden here' : 'Inherited' ) . '</summary>'; if ( in_array( $field['type'], array( 'media', 'media_list' ), true ) ) { echo '<div class="msc-media-previews">' . Media::previews( $r['global'][ $key ] ?? array(), 'media_list' === $field['type'] ) . '</div>'; } else { echo '<pre>' . esc_html( self::text( $r['global'][ $key ] ?? '' ) ) . '</pre>'; } echo '</details>';
 				if ( false === ( $field['override'] ?? true ) ) { echo '<p>Network locked; local overrides disabled.</p></td></tr>'; continue; }
 				echo '<label><input type="checkbox" name="override[' . esc_attr( $key ) . ']" value="1" ' . checked( array_key_exists( $key, $r['overrides'] ), true, false ) . '> Override on this site (including an intentionally empty value)</label>';
 			}
@@ -154,6 +165,8 @@ final class Admin {
 		echo '<p>Submit the complete type selection for the site. None disables all shared types.</p>'; submit_button( 'Set site participation' ); echo '</form><h2>Sites</h2><ul>';
 		foreach ( get_sites( array( 'network_id' => get_current_network_id(), 'number' => 100, 'offset' => absint( $_GET['offset'] ?? 0 ) ) ) as $site ) { echo '<li>' . esc_html( $site->blog_id . ': ' . $site->domain . $site->path . ' — ' . implode( ', ', get_blog_option( (int) $site->blog_id, 'msc_types', array() ) ) ) . '</li>'; }
 		echo '</ul><p><a href="' . esc_url( network_admin_url( 'admin.php?page=msc-network&offset=' . ( absint( $_GET['offset'] ?? 0 ) + 100 ) ) ) . '">Next 100 sites</a></p><h2>Type and field schemas</h2><p>Advanced network configuration. Edit labels, slug, archive, noindex, default_status, and fields. Fields support type, label, min/max, options, target, indexed, and override:false. Back up first; changes to field types require a data migration. Existing records are not automatically converted.</p>';
+		echo '<h2 id="categories">Categories</h2><p>Add reusable choices for every site. Existing values are preserved; choosing a category also assigns the native WordPress taxonomy on each site.</p>';
+		self::form_start( 'category' ); echo '<label>Category <select name="taxonomy">'; foreach ( Taxonomies::definitions() as $key => $definition ) { echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $definition[0] ) . '</option>'; } echo '</select></label> <label>Name <input name="category_name" maxlength="180" required></label>'; submit_button( 'Add category choice', 'secondary' ); echo '</form>';
 		self::form_start( 'schemas' ); echo '<textarea class="large-text code" rows="24" name="schemas">' . esc_textarea( wp_json_encode( Schema::all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ) . '</textarea>'; submit_button( 'Save network schemas' ); echo '</form></div>';
 	}
 	public static function save(): void {
@@ -166,7 +179,7 @@ final class Admin {
 				foreach ( $schema['fields'] as $key => $field ) {
 					if ( 'local' === $action && empty( $_POST['override'][ $key ] ) ) { if ( false !== ( $field['override'] ?? true ) ) { $reset[] = $key; } continue; }
 					$value = wp_unslash( $_POST['fields'][ $key ] ?? '' );
-					if ( in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect' ), true ) ) { $value = json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }
+					if ( in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = is_array( $value ) ? $value : json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }
 					$values[ $key ] = $value;
 				}
 				if ( 'global' === $action ) {
@@ -175,7 +188,7 @@ final class Admin {
 					self::notice( 'Global revision saved. Other sites are queued; check synchronization status for propagation.' );
 				} else { Plugin::store()->local( $id, $values, $reset, absint( $_POST['local_version'] ), isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : null ); self::notice( 'Local overrides saved.' ); }
 				$redirect = admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . ( 'global' === $action ? '&mode=global' : '' ) );
-			} elseif ( 'schemas' === $action ) { Schema::save( json_decode( wp_unslash( $_POST['schemas'] ), true, 64, JSON_THROW_ON_ERROR ) ); self::notice( 'Schemas saved. Re-save participation to rematerialize sites after schema changes.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
+			} elseif ( 'category' === $action ) { Taxonomies::add_choice( sanitize_key( $_POST['taxonomy'] ?? '' ), wp_unslash( $_POST['category_name'] ?? '' ) ); self::notice( 'Category choice added for all sites.' ); $redirect = network_admin_url( 'admin.php?page=msc-network#categories' ); } elseif ( 'schemas' === $action ) { Schema::save( json_decode( wp_unslash( $_POST['schemas'] ), true, 64, JSON_THROW_ON_ERROR ) ); self::notice( 'Schemas saved. Re-save participation to rematerialize sites after schema changes.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
 			elseif ( 'participate' === $action ) { Schema::participate( absint( $_POST['site'] ), array_map( 'sanitize_key', (array) ( $_POST['types'] ?? array() ) ) ); self::notice( 'Participation saved; materialization is queued.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
 			elseif ( 'retry' === $action ) { Queue::retry(); self::notice( 'Failed jobs queued for retry.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
 			elseif ( 'restore' === $action ) { Plugin::store()->restore( $id, absint( $_POST['revision'] ), absint( $_POST['version'] ) ); self::notice( 'Global data restored as a new revision; propagation queued.' ); $redirect .= '&record=' . rawurlencode( $id ); }

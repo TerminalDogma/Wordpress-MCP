@@ -2,12 +2,15 @@ services:
   wordpress:
     volumes:
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./wp-content/themes/msc-screening-room:/var/www/html/wp-content/themes/msc-screening-room:ro
   setup:
     volumes:
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./wp-content/themes/msc-screening-room:/var/www/html/wp-content/themes/msc-screening-room:ro
   cli:
     volumes:
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./wp-content/themes/msc-screening-room:/var/www/html/wp-content/themes/msc-screening-room:ro
       - ./tests/shared-content:/msc-tests:ro
       - ./multisite-shared-content/examples:/msc-examples:ro
       - ./dist:/msc-releases:ro
@@ -29,6 +32,7 @@ services:
     volumes:
       - wordpress_data:/var/www/html
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro
+      - ./wp-content/themes/msc-screening-room:/var/www/html/wp-content/themes/msc-screening-room:ro
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
     depends_on:
       wordpress:

@@ -1,0 +1,3 @@
+<?php $r = $args['record']; get_template_part( 'parts/hero', null, array( 'record' => $r, 'label' => 'Feature film', 'facts' => array( 'release_date' => 'In theaters', 'runtime' => 'Running time', 'content_rating' => 'Rating' ) ) );
+get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array( 'release_status' => 'Status', 'country' => 'Country', 'language' => 'Language', 'distributor' => 'Distributor', 'production_companies' => 'Production', 'streaming_service' => 'Streaming', 'digital_release_date' => 'Digital release', 'streaming_release_date' => 'Streaming release', 'physical_release_date' => 'Disc release' ) ) );
+\MSC\Presentation::credits( $r ); get_template_part( 'parts/gallery', null, $args );

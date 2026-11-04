@@ -16,16 +16,17 @@ source = []
 for name in names:
     path = root / name
     source.extend([path] if path.is_file() else [p for p in path.rglob('*') if p.is_file()])
+theme = root / 'wp-content/themes/msc-screening-room'
 archives = []
-for suffix, paths in [('', list(plugin.rglob('*'))), ('-source', source)]:
-    target = out / f'multisite-shared-content{suffix}-{version}.zip'
+for stem, paths, base in [('multisite-shared-content', list(plugin.rglob('*')), root), ('multisite-shared-content-source', source, root), ('msc-screening-room', list(theme.rglob('*')), theme.parent)]:
+    target = out / f'{stem}-{version}.zip'
     with ZipFile(target, 'w', ZIP_DEFLATED) as archive:
         for path in sorted(set(paths)):
             if not path.is_file() or '__pycache__' in path.parts:
                 continue
             if path.name.startswith('.env') or path.suffix in {'.env', '.log', '.sql', '.pyc'} or 'local.env' in path.name:
                 raise RuntimeError('Refusing runtime artifact: ' + str(path.relative_to(root)))
-            archive.write(path, path.relative_to(root))
+            archive.write(path, path.relative_to(base))
     target.chmod(0o644)
     with ZipFile(target) as archive:
         assert archive.testzip() is None

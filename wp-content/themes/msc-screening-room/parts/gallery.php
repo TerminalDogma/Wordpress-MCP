@@ -1,0 +1,2 @@
+<?php $images = $args['record']['data']['promotional_images'] ?? array(); if ( ! $images ) { return; } ?>
+<section class="gallery-section"><div class="section-heading"><h2>In the frame</h2></div><div class="image-gallery"><?php foreach ( $images as $ref ) { $url = msc_media_url( (array) $ref ); if ( $url ) { echo '<a href="' . esc_url( msc_media_url( (array) $ref, 'full' ) ) . '"><img src="' . esc_url( $url ) . '" alt="' . esc_attr( $args['record']['data']['title'] . ' promotional image' ) . '" loading="lazy"></a>'; } } ?></div></section>

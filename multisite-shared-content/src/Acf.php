@@ -12,6 +12,7 @@ final class Acf {
 		add_filter( 'acf/load_reference', array( self::class, 'reference' ), 10, 3 );
 		add_filter( 'acf/pre_load_value', array( self::class, 'load' ), 10, 3 );
 		add_filter( 'acf/pre_update_value', array( self::class, 'write' ), 10, 4 );
+		add_filter( 'acf/prepare_field', array( self::class, 'prepare' ) );
 		add_action( 'acf/render_field', array( self::class, 'override_control' ) );
 		add_action( 'admin_post_msc_acf_save', array( self::class, 'handle' ) );
 		add_action( 'admin_menu', static function () { add_submenu_page( null, 'ACF Shared Fields', 'ACF Shared Fields', 'edit_posts', 'msc-acf', array( self::class, 'page' ) ); } );
@@ -20,17 +21,20 @@ final class Acf {
 	public static function register(): void {
 		if ( ! function_exists( 'acf_add_local_field_group' ) ) { return; }
 		self::$fields = array();
-		$types = array( 'text' => 'text', 'richtext' => 'wysiwyg', 'integer' => 'number', 'number' => 'number', 'boolean' => 'true_false', 'date' => 'date_picker', 'time' => 'time_picker', 'timezone' => 'select', 'url' => 'url', 'select' => 'select', 'multiselect' => 'checkbox', 'relationship' => 'post_object' );
+		if ( ! acf_get_field_type( 'msc_media' ) ) { new AcfMediaField(); }
+		$types = array( 'text' => 'text', 'richtext' => 'wysiwyg', 'integer' => 'number', 'number' => 'number', 'boolean' => 'true_false', 'date' => 'date_picker', 'time' => 'time_picker', 'timezone' => 'select', 'url' => 'url', 'select' => 'select', 'multiselect' => 'checkbox', 'relationship' => 'post_object', 'relationship_list' => 'post_object', 'media' => 'msc_media', 'media_list' => 'msc_media' );
 		foreach ( Schema::all() as $type => $schema ) {
 			$fields = array();
 			foreach ( $schema['fields'] as $name => $definition ) {
 				if ( isset( $definition['property'] ) || ! isset( $types[ $definition['type'] ] ) ) { continue; }
 				$key = self::key( $type, $name );
 				$field = array( 'key' => $key, 'name' => 'msc_' . $name, 'label' => $definition['label'] ?? ucwords( str_replace( '_', ' ', $name ) ), 'type' => $types[ $definition['type'] ], 'msc_type' => $type, 'msc_name' => $name, 'required' => 0 );
-				if ( in_array( $definition['type'], array( 'select', 'multiselect', 'timezone' ), true ) ) { $choices = 'timezone' === $definition['type'] ? \DateTimeZone::listIdentifiers() : ( $definition['options'] ?? array() ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }
+				if ( ! empty( $definition['taxonomy'] ) ) { $field['type'] = 'select'; $field['multiple'] = 'multiselect' === $definition['type']; $field['ui'] = 1; $choices = Taxonomies::choices( $definition ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }
+				elseif ( in_array( $definition['type'], array( 'select', 'multiselect', 'timezone' ), true ) ) { $choices = 'timezone' === $definition['type'] ? \DateTimeZone::listIdentifiers() : ( $definition['options'] ?? array() ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }
 				if ( 'date' === $definition['type'] ) { $field['display_format'] = 'Y-m-d'; $field['return_format'] = 'Y-m-d'; }
 				if ( 'time' === $definition['type'] ) { $field['display_format'] = 'H:i:s'; $field['return_format'] = 'H:i:s'; }
-				if ( 'relationship' === $definition['type'] ) { $field['post_type'] = array( $definition['target'] ); $field['return_format'] = 'id'; $field['multiple'] = 0; $field['allow_null'] = 1; }
+				if ( in_array( $definition['type'], array( 'relationship', 'relationship_list' ), true ) ) { $field['post_type'] = array( $definition['target'] ); $field['return_format'] = 'id'; $field['multiple'] = 'relationship_list' === $definition['type'] ? 1 : 0; $field['allow_null'] = 1; }
+				if ( in_array( $definition['type'], array( 'media', 'media_list' ), true ) ) { $field['msc_multiple'] = 'media_list' === $definition['type']; }
 				foreach ( array( 'min', 'max' ) as $bound ) { if ( isset( $definition[ $bound ] ) ) { $field[ $bound ] = $definition[ $bound ]; } }
 				if ( 'integer' === $definition['type'] ) { $field['step'] = 1; }
 				self::$fields[ $key ] = $field; $fields[] = $field;
@@ -39,6 +43,15 @@ final class Acf {
 			acf_remove_local_field_group( 'group_msc_' . $type );
 			acf_add_local_field_group( array( 'key' => 'group_msc_' . $type, 'title' => $schema['label'] . ' — Shared fields', 'fields' => $fields, 'location' => array(), 'active' => true, 'show_in_rest' => 0 ) );
 		}
+	}
+	public static function prepare( $field ) {
+		if ( ! isset( self::$fields[ $field['key'] ?? '' ] ) ) { return $field; }
+		$definition = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ];
+		if ( ! empty( $definition['taxonomy'] ) ) {
+			$current = self::$editing ? ( self::$global ? self::$editing['global'] : self::$editing['data'] )[ $field['msc_name'] ] ?? array() : $field['value'] ?? array();
+			$choices = Taxonomies::choices( $definition, $current ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array();
+		}
+		return $field;
 	}
 	public static function reference( $reference, $name, $post_id ) {
 		if ( ! is_numeric( $post_id ) || ! str_starts_with( $name, 'msc_' ) ) { return $reference; }
@@ -55,11 +68,15 @@ final class Acf {
 		$type = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ]['type'];
 		if ( 'date' === $type ) { return str_replace( '-', '', (string) $value ); }
 		if ( 'relationship' === $type ) { return $value ? ( msc_local_post_id( $value ) ?? 0 ) : 0; }
+		if ( 'relationship_list' === $type ) { return array_values( array_filter( array_map( static fn( $uuid ) => msc_local_post_id( $uuid ) ?? 0, (array) $value ) ) ); }
+		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) { return is_array( $value ) ? $value : array(); }
 		if ( 'time' === $type && strlen( (string) $value ) === 5 ) { return $value . ':00'; }
 		return $value ?? '';
 	}
 	private static function from_acf( array $field, $value ) {
 		$definition = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ];
+		if ( in_array( $definition['type'], array( 'media', 'media_list' ), true ) && is_string( $value ) ) { $value = json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }
+		if ( 'relationship_list' === $definition['type'] ) { $value = array_map( static function( $post ) { $r = Plugin::store()->by_post( (int) $post ); if ( ! $r ) { throw new \InvalidArgumentException( 'Related Person is not a shared record on this site.' ); } return $r['uuid']; }, (array) ( $value ?: array() ) ); }
 		if ( 'relationship' === $definition['type'] && ! $value ) { $value = ''; }
 		if ( 'date' === $definition['type'] && preg_match( '/^\d{8}$/D', (string) $value ) ) { $value = substr( $value, 0, 4 ) . '-' . substr( $value, 4, 2 ) . '-' . substr( $value, 6, 2 ); }
 		if ( 'relationship' === $definition['type'] && $value ) { $related = Plugin::store()->by_post( (int) $value ); if ( ! $related ) { throw new \InvalidArgumentException( 'Related post is not a shared record on this site.' ); } $value = $related['uuid']; }
@@ -93,6 +110,7 @@ final class Acf {
 			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; }
 			else {
+				if ( 'relationship_list' === $definition['type'] ) { $previous = 'global' === $scope ? $r['data'][ $name ] ?? array() : Plugin::store()->resolved( $r['id'] )['data'][ $name ] ?? array(); foreach ( (array) $previous as $uuid ) { if ( ! msc_local_post_id( $uuid ) ) { throw new \InvalidArgumentException( 'A related Person is unavailable on this site. Use All fields and publishing to manage these links.' ); } } }
 				if ( 'global' === $scope && 'relationship' === $definition['type'] && ! $raw && ! empty( $r['data'][ $name ] ) && ! msc_local_post_id( $r['data'][ $name ] ) ) { throw new \InvalidArgumentException( 'Related record is unavailable on this site. Use the Shared Content UUID editor.' ); }
 				$values[ $name ] = self::from_acf( $field, $raw );
 			}
@@ -110,7 +128,7 @@ final class Acf {
 		if ( self::$global ) { echo '<p class="description">Shared value: this save updates every inheriting site.</p>'; return; }
 		if ( false === ( Schema::get( $field['msc_type'] )['fields'][ $name ]['override'] ?? true ) ) { echo '<p>Network locked; this value cannot be overridden.</p>'; return; }
 		echo '<label><input type="checkbox" name="override[' . esc_attr( $name ) . ']" value="1" ' . checked( array_key_exists( $name, self::$editing['overrides'] ), true, false ) . '> Override on this site, including an intentionally empty value. Uncheck to inherit.</label>';
-		echo '<p class="description">Current global value: ' . esc_html( wp_json_encode( self::$editing['global'][ $name ] ?? '' ) ) . '</p>';
+		if ( in_array( $field['type'], array( 'msc_media' ), true ) ) { echo '<details><summary>Global image preview</summary><div class="msc-media-previews">' . Media::previews( self::$editing['global'][ $name ] ?? array(), ! empty( $field['msc_multiple'] ) ) . '</div></details>'; } else { echo '<p class="description">Current global value: ' . esc_html( wp_json_encode( self::$editing['global'][ $name ] ?? '' ) ) . '</p>'; }
 	}
 	public static function page(): void {
 		if ( ! function_exists( 'acf_form' ) ) { wp_die( 'Activate Advanced Custom Fields to use this editor.' ); }
@@ -120,7 +138,7 @@ final class Acf {
 		try { Permissions::require( self::$global ? 'msc_edit_global' : 'msc_override_local', $r['type'] ); } catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ) ); }
 		self::$editing = $r;
 		echo '<div class="wrap"><h1>' . esc_html( Schema::get( $r['type'] )['label'] ) . ' — ACF Shared Fields</h1><h2>' . esc_html( $r['data']['title'] ?? '' ) . '</h2><p><strong>' . ( self::$global ? 'GLOBAL EDITING — Changes affect every inheriting site.' : 'LOCAL EDITING — Check Override to customize a field; uncheck to reset it.' ) . '</strong></p>';
-		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">All fields and publishing</a></p><p>Native title/body, media and complex fields use the existing Shared Content editor. This ACF form saves only supported custom fields.</p>';
+		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
 		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. Other sites update through the synchronization queue.</p></div>'; }
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }

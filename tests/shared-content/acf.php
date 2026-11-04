@@ -22,7 +22,7 @@ acf_at_msc($a,static function()use($id){
 	acf_check_msc('20980101'===get_field('msc_premiere_date',$post,false),'ACF date raw value uses Ymd and field names resolve without stored references');
 	acf_check_msc('2098-01-01'===get_field('msc_premiere_date',$post),'ACF date formatting returns ISO date');
 	acf_check_msc((bool)acf_get_field(Acf::key('msc_show','network')),'Supported scalar ACF field is registered');
-	acf_check_msc(!acf_get_field(Acf::key('msc_show','poster')),'Unsupported cross-site media is excluded from ACF adapter');
+	acf_check_msc('msc_media'===acf_get_field(Acf::key('msc_show','poster'))['type'],'Cross-site media uses the owner-aware ACF preview control');
 });
 acf_at_msc($b,static function()use($id){
 	$post=msc_local_post_id($id);

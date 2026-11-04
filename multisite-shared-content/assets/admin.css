@@ -6,3 +6,11 @@
 .msc pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; }
 .msc summary { cursor: pointer; font-weight: 600; }
 .msc-fields label { display: block; margin-bottom: 8px; }
+.msc-media-previews { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+.msc-media-card { margin: 0; width: 160px; background: #f6f7f7; border: 1px solid #c3c4c7; padding: 10px; border-radius: 6px; }
+.msc-media-card img { display: block; width: 160px; height: 180px; object-fit: contain; background: #e8eaed; }
+.msc-media-card figcaption { margin: 8px 0; overflow-wrap: anywhere; font-weight: 600; }
+.msc-media-card small { display: block; font-weight: 400; color: #50575e; }
+.msc-media-card .dashicons { font-size: 64px; width: 100%; height: 90px; padding-top: 30px; }
+.msc-media-empty, .msc-media-missing { padding: 16px; background: #f0f0f1; color: #50575e; }
+.msc-fields select[multiple] { min-height: 140px; }

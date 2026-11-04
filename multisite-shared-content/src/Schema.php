@@ -52,34 +52,56 @@ final class Schema {
 		$movie['official_website'] = array( 'type' => 'url' );
 		$movie['external_ids'] = array( 'type' => 'json', 'label' => 'External database identifiers' );
 		$movie['additional_release_dates'] = array( 'type' => 'json', 'label' => 'Additional regional release dates' );
+		foreach ( array( 'actors' => 'Actors', 'directors' => 'Directors', 'screenwriters' => 'Screenwriters', 'producers' => 'Producers' ) as $key => $label ) {
+			$definition = array( 'type' => 'relationship_list', 'target' => 'msc_person', 'label' => $label );
+			$show[ $key ] = $episode[ $key ] = $movie[ $key ] = $definition;
+		}
+		$show['creators'] = array( 'type' => 'relationship_list', 'target' => 'msc_person' );
+		$person = $common + array(
+			'headshot' => array( 'type' => 'media' ), 'birth_date' => array( 'type' => 'date' ),
+			'country' => array( 'type' => 'text' ), 'professions' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_profession' ),
+			'official_website' => array( 'type' => 'url' ), 'external_ids' => array( 'type' => 'json' ),
+		);
+		// Taxonomy values remain portable names, never site-specific term IDs.
+		$categories = array( 'genres' => 'msc_genre', 'network' => 'msc_network', 'streaming_service' => 'msc_platform', 'country' => 'msc_country', 'language' => 'msc_language', 'status' => 'msc_show_status', 'release_status' => 'msc_movie_status', 'content_rating' => 'msc_rating' );
+		foreach ( array( &$show, &$episode, &$movie, &$person ) as &$fields ) {
+			foreach ( $categories as $key => $taxonomy ) { if ( isset( $fields[ $key ] ) ) { $fields[ $key ]['taxonomy'] = $taxonomy; } }
+		}
+		unset( $fields );
 		return array(
 			'msc_show' => array( 'label' => 'TV Shows', 'slug' => 'shows', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $show ),
 			'msc_episode' => array( 'label' => 'Episodes', 'slug' => 'episodes', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $episode ),
 			'msc_movie' => array( 'label' => 'Movies', 'slug' => 'movies', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $movie ),
+			'msc_person' => array( 'label' => 'People', 'slug' => 'people', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $person ),
 		);
 	}
 	/** Add new built-ins and missing fields once, retaining saved schema choices. */
 	public static function upgrade_defaults(): void {
 		$network = get_current_network_id();
-		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 2 ) { return; }
+		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 3 ) { return; }
 		Database::lock( 'builtin-schema', static function () use ( $network ) {
 			// Another request may have completed the upgrade while this one waited.
 			foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) { wp_cache_delete( $network . ':' . $option, 'site-options' ); }
-			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 2 ) { return; }
+			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 3 ) { return; }
 			$saved = get_network_option( $network, 'msc_schemas', false );
 			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
 			$schemas = false === $saved ? self::defaults() : $saved;
 			foreach ( self::defaults() as $type => $default ) {
-				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type ) { $schemas[ $type ] = $default; } continue; }
+				if ( ! isset( $schemas[ $type ] ) ) { if ( in_array( $type, array( 'msc_movie', 'msc_person' ), true ) ) { $schemas[ $type ] = $default; } continue; }
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
-					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) || isset( $field['property'] ) && in_array( $field['property'], $properties, true ) ) { continue; }
+					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
+						$existing = &$schemas[ $type ]['fields'][ $key ];
+						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
+						unset( $existing ); continue;
+					}
+					if ( isset( $field['property'] ) && in_array( $field['property'], $properties, true ) ) { continue; }
 					$schemas[ $type ]['fields'][ $key ] = $field;
 					if ( isset( $field['property'] ) ) { $properties[] = $field['property']; }
 				}
 			}
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
-			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 2 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 2 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
+			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 3 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 3 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );
 	}
 	public static function register_type( string $name, callable $sanitize ): void { self::$types[ $name ] = $sanitize; }
@@ -97,6 +119,7 @@ final class Schema {
 			$properties = array();
 			foreach ( $schema['fields'] as $key => $field ) {
 				if ( ! preg_match( '/^[a-z][a-z0-9_]{0,63}$/D', $key ) || ! in_array( $field['type'], self::field_types(), true ) ) { throw new \InvalidArgumentException( 'Invalid field key or type: ' . $key ); }
+				if ( ! empty( $field['taxonomy'] ) && ( ! isset( Taxonomies::definitions()[ $field['taxonomy'] ] ) || ! in_array( $field['type'], array( 'text', 'select', 'multiselect' ), true ) ) ) { throw new \InvalidArgumentException( 'Unsupported category field.' ); }
 				if ( isset( $field['property'] ) && ! in_array( $field['property'], array( 'post_title', 'post_content', 'post_excerpt', 'post_name' ), true ) ) { throw new \InvalidArgumentException( 'Unsupported native property.' ); }
 				if ( isset( $field['property'] ) ) {
 					if ( isset( $properties[ $field['property'] ] ) || ! in_array( $field['type'], array( 'text', 'richtext', 'slug' ), true ) ) { throw new \InvalidArgumentException( 'Native properties need unique text/richtext/slug fields.' ); }
@@ -125,11 +148,16 @@ final class Schema {
 		update_network_option( get_current_network_id(), 'msc_schemas', $schemas );
 	}
 	public static function field_types(): array {
-		return array_merge( array( 'text', 'richtext', 'slug', 'number', 'integer', 'boolean', 'date', 'time', 'timezone', 'select', 'multiselect', 'url', 'media', 'media_list', 'relationship', 'json' ), array_keys( self::$types ) );
+		return array_merge( array( 'text', 'richtext', 'slug', 'number', 'integer', 'boolean', 'date', 'time', 'timezone', 'select', 'multiselect', 'url', 'media', 'media_list', 'relationship', 'relationship_list', 'json' ), array_keys( self::$types ) );
 	}
 	public static function sanitize( array $field, $value ) {
 		$type = $field['type'];
 		if ( isset( self::$types[ $type ] ) ) { return ( self::$types[ $type ] )( $value, $field ); }
+		if ( 'relationship_list' === $type ) {
+			if ( ! is_array( $value ) || ! array_is_list( $value ) || count( $value ) > 200 ) { throw new \InvalidArgumentException( 'Expected a list of at most 200 related records.' ); }
+			foreach ( $value as $item ) { if ( ! is_scalar( $item ) || '' === (string) $item ) { throw new \InvalidArgumentException( 'Related record identifiers cannot be blank.' ); } }
+			return array_values( array_unique( array_map( static fn( $item ) => self::sanitize( array( 'type' => 'relationship', 'target' => $field['target'] ), $item ), $value ) ) );
+		}
 		if ( 'boolean' === $type ) {
 			if ( ! in_array( $value, array( true, false, 0, 1, '0', '1' ), true ) ) { throw new \InvalidArgumentException( 'Expected boolean.' ); }
 			return (bool) $value;

@@ -9,6 +9,8 @@ function msc_local_post_id( $id, ?int $site = null ): ?int { $r = msc_get_record
 function msc_media_url( array $ref, string $size = 'large' ): string { return \MSC\Media::url( $ref, $size ); }
 function msc_query( string $type, array $filters = array(), ?int $site = null, int $limit = 50, int $after = 0 ): array { return \MSC\Plugin::store()->query( $type, $filters, $site ?? get_current_blog_id(), $limit, $after ); }
 function msc_related( $id, string $field, ?int $site = null ): ?array { $target = msc_get_field( $id, $field, $site ); return $target ? msc_get_record( $target, $site ) : null; }
+function msc_related_list( $id, string $field, ?int $site = null ): array { return array_values( array_filter( array_map( static fn( $target ) => msc_get_record( $target, $site ), (array) msc_get_field( $id, $field, $site ) ) ) ); }
+function msc_filmography( string $person ): array { return \MSC\Presentation::filmography( $person ); }
 function msc_episodes( string $show, ?int $site = null, int $limit = 100 ): array { return \MSC\Relationships::episodes( $show, null, $site ?? get_current_blog_id(), $limit ); }
 function msc_upcoming_episodes( ?string $show = null, ?string $from = null, ?int $site = null, int $limit = 20 ): array { return \MSC\Relationships::episodes( $show, $from ?? wp_date( 'Y-m-d' ), $site ?? get_current_blog_id(), $limit, true ); }
 function msc_next_episode( string $show ): ?array { $ids = msc_upcoming_episodes( $show, null, null, 1 ); return $ids ? msc_get_record( $ids[0] ) : null; }

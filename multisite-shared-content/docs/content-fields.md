@@ -1,6 +1,6 @@
-# TV Show, Movie and Episode fields
+# TV Show, Movie, Episode and Person fields
 
-The plugin has three separate schemas and separate generated ACF groups. Shared values and local overrides work within each type. A Movie cannot receive TV season fields, and an Episode's parent must be a TV Show.
+The plugin has separate schemas and generated ACF groups for TV Shows, Movies, Episodes and People. Shared values and local overrides work within each type. A Movie cannot receive TV season fields, and an Episode's parent must be a TV Show.
 
 ## Fields available on every type
 
@@ -52,8 +52,12 @@ sh bin/shared-content.sh setup
 sh bin/shared-content.sh demo
 ```
 
-Setup enables TV Shows, Episodes and Movies on the three demo subsites. The demo adds **Network Demo Movie** even if your Show/Episode demo already exists, without replacing edits to those records. Open **Shared Content → Movies**, select the movie, and choose **Edit supported fields with ACF**.
+Setup enables TV Shows, Episodes, Movies and People on the three demo subsites. The demo adds a fictional Movie even if your Show/Episode demo already exists, without replacing edits to those records. Open **Shared Content → Movies**, select the movie, and choose **Edit supported fields with ACF**.
 
-The one-time additive schema upgrade adds Movies and missing built-in fields to stored network configuration. It keeps existing labels, field definitions, options, override policies, values, UUIDs, revisions, native post IDs and local overrides. It does not automatically enroll other sites in Movies. For ZIP installations, network-activate the update, then enable Movies on the desired sites under **Network Admin → Shared Content**.
+The one-time additive schema upgrade adds Movies and missing built-in fields to stored network configuration. It keeps existing labels, field definitions, options, override policies, values, UUIDs, revisions, native post IDs and local overrides. It does not automatically enroll other sites in Movies. For ZIP installations, network-activate the update, then enable Movies and People on the desired sites under **Network Admin → Shared Content**.
 
-The source of field definitions remains the network schema. Custom field definitions take precedence over new defaults. Media and JSON use the full MSC editor; ACF handles the supported scalar/relationship controls. Genres are list values; configure schema `options` for ACF checkbox choices, or use the full editor's JSON list control.
+## People and structured credits — `msc_person`
+
+People have a name, biography, synopsis, headshot, professions, country, birth date, website and external IDs, in addition to common SEO/media fields. Movies, TV Shows and Episodes link ordered Person lists using `actors`, `directors`, `screenwriters` and `producers`; TV Shows also use `creators`. The original Movie `director`, `writers` and `cast` text remains available for legacy/character-role notes.
+
+The source of field definitions remains the network schema. Custom field definitions take precedence over new defaults. ACF supports scalar controls, category selectors, single/multiple relationships and owner-aware media previews. JSON uses the full editor. Category-backed fields materialize native taxonomies; genres/professions support multiple choices. See [the presentation and editing guide](presentation.md) for all category names, image controls, Person links and per-site templates.

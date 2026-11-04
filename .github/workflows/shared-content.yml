@@ -17,7 +17,7 @@ jobs:
         run: sh bin/shared-content.sh setup
       - name: PHP syntax
         run: |
-          COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose exec -T wordpress sh -c 'find wp-content/plugins/multisite-shared-content -name "*.php" -print0 | xargs -0 -n1 php -l'
+          COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose exec -T wordpress sh -c 'find wp-content/plugins/multisite-shared-content wp-content/themes/msc-screening-room -name "*.php" -print0 | xargs -0 -n1 php -l'
       - name: Integration, HTTP, concurrency, media and real ACF tests
         run: MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh test
       - name: Package release
@@ -31,10 +31,11 @@ jobs:
           /tmp/msc-browser-env/bin/python -m playwright install --with-deps chromium
           sh bin/shared-content.sh demo
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/browser.py
+          MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/presentation-browser.py
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-1.2.0
+          name: multisite-shared-content-1.3.0
           path: dist/
       - name: Stop services
         if: always()

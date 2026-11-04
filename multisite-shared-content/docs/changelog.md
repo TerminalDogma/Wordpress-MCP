@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.3.0
+
+Adds Person records and ordered actor/director/writer/producer/creator relationships, category-backed native taxonomies with network-wide choices, and thumbnail media controls in both editors (including ACF Free). The optional Screening Room theme supplies distinct green, cream/red and purple demo sites, responsive Movie/TV Show/Episode/Person templates, archives, search, season guides and published filmographies. The additive upgrade preserves existing text credits, custom schemas and overrides. The demo adds original locally generated artwork and linked fictional People without replacing saved values. Includes a separate theme ZIP and integration/browser coverage. See [the guide](presentation.md).
+
 ## 1.2.0
 
 Adds a separate Movies type with movie-specific release dates, runtime, credits, distribution and rating fields. TV Shows retain series dates and season/episode fields; Episodes remain linked to Shows. The additive versioned upgrade preserves custom schemas, native-property aliases, records and local overrides. ACF headings identify each type. The existing demo gains a Movie without replacing TV edits. Integration/browser tests cover field isolation, upgrades and Movie inheritance.
@@ -19,7 +23,7 @@ Initial functional implementation: UUID global records, native per-site posts, e
 - Schema editing uses JSON. Media has a native current-site picker and explicit cross-site owner/attachment references. There is no visual field builder.
 - There are no per-CPT granular capability names or schema-controlled role assignments. Publish-only users use the native editor or REST API; the field-management screen requires local override authority.
 - Native Gutenberg conflict middleware is included; its browser interaction has not received automated browser coverage. Real REST requests are covered.
-- ACF support is limited to the documented Free scalar and single-relationship types. Repeaters/flexible content, media adapters, arbitrary third-party field widgets and nested validation are not implemented.
+- ACF support is limited to the documented Free scalar, single/multiple-relationship and owner-aware media types. Repeaters/flexible content, arbitrary third-party field widgets and nested validation are not implemented.
 - Dates/times/zones are stored separately. Upcoming queries use calendar dates, not UTC instants or daylight-saving-aware airing schedules.
 - Relationship lists are bounded (500 in the grouped panel). There is no drag-and-drop season organizer or infinite scrolling.
 - Embedded rich-content local attachment IDs, reusable blocks, shortcodes, and site-specific URLs are preserved, not rewritten or copied. Use site-aware integration blocks for those assets.
@@ -33,7 +37,7 @@ Initial functional implementation: UUID global records, native per-site posts, e
 1. Browser-tested field builder, cross-site media-library browsing, and richer episode management.
 2. Production load/concurrent-writer benchmarks, queue telemetry, retention controls, and operational dashboards.
 3. Per-type capability/role configuration and independent publish-only workflows.
-4. Extend the validated scalar/single-relationship ACF adapter to owner-aware media and nested structures.
+4. Extend the validated ACF adapter to nested structures and advanced fields.
 5. UTC airing index with time-zone/DST policy and richer calendar queries.
 6. Semantic schema migration tooling and safe opt-in permanent purge with backups.
 7. Third-party SEO/cache compatibility matrix, embedded-media adapters, and richer REST query validation.

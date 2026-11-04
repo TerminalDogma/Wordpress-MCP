@@ -4,7 +4,7 @@ ACF Free is optional. Without it, the plugin's complete Shared Content editor an
 
 ## Editor workflow
 
-1. On Site A, open **Shared Content → TV Shows** and create a global record. Its native title/body, images, publication and advanced fields use the existing editor.
+1. On Site A, open **Shared Content → TV Shows** and create a global record. Its native title/body, publication and advanced JSON fields use the full editor.
 2. Open the record and choose **Edit supported fields with ACF**.
 3. In **GLOBAL EDITING**, saving updates the shared values for inheriting sites. The form shows global values, not a local site's overrides.
 4. Switch to **LOCAL EDITING**. Check **Override on this site** for each field you want to change. A checked field can be intentionally empty, zero, false, or an empty list.
@@ -28,8 +28,11 @@ Global and local forms carry separate revision tokens. Stale forms return HTTP 4
 | url | URL | Valid public HTTP(S) URL |
 | select / multiselect | Select / Checkbox | Schema choices; empty list preserved |
 | relationship | Single Post Object | Local post ID translates to a permanent global UUID |
+| relationship_list | Multiple Post Object | Ordered local post IDs translate to global Person UUIDs |
+| media / media_list | Shared network media | Image previews and media picker retain owner site and attachment references |
+| category-backed text / multiselect | Select / Multiple Select | Portable names project into native taxonomies per site |
 
-Only non-native custom fields are included in these groups. Native title/body/excerpt/slug, owner-scoped media, media lists, arbitrary JSON, ACF Pro repeaters, flexible content, galleries, clones and third-party field types are not bridged. Media and JSON remain available through the full MSC editor; unsupported fields are excluded rather than copied with incorrect site IDs. A related record needs a local representation for the Post Object selector. Use the full UUID relationship editor when the target type is not enrolled on that site.
+Only non-native custom fields are included in these groups. Native title/body/excerpt/slug, arbitrary JSON, ACF Pro repeaters, flexible content, stock ACF gallery fields, clones and third-party field types are not bridged. JSON remains available through the full MSC editor. A related record needs a local representation for the Post Object selector; use the full Shared Content name selector when the target type is not enrolled on that site. Owner-scoped media uses the custom `msc_media` ACF control rather than storing bare local image IDs. [People, categories and images](presentation.md) explains these workflows.
 
 The network schema remains the source of field definitions. These generated PHP field groups are not independent, editable ACF schemas. Other ordinary ACF field groups continue to work normally. Do not create a second ACF field using a reserved `msc_` name on a managed post.
 

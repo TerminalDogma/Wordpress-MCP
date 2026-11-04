@@ -1,6 +1,12 @@
-# Shared Content 1.2.0 verification
+# Shared Content 1.3.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
+
+## Presentation, Person, category and image coverage
+
+Version 1.3 adds the optional MSC Screening Room theme with three visual identities and native Movie/TV Show/Episode/Person templates. **34 additional integration checks passed** for global Person links, per-site ACF ID conversion, local empty-list overrides/reset, native category materialization, custom vocabulary permissions, legacy credit preservation, a safe 1.2 schema upgrade, disabling all types, and owner-aware image previews/clear/reset.
+
+The real Chromium workflow passed for **12 detail pages at desktop and mobile sizes** across all three sites, distinct palettes and admin badges, working taxonomy archives, published Person filmographies, image previews in both editors, the actual media-library selector, and empty local image overrides/reset, with no JavaScript page errors. PHP syntax, shell/JavaScript checks and ZIP integrity checks passed. Plugin and theme ZIP installation are covered in the release workflow. Original demo artwork is generated locally with PHP GD.
 
 ## TV/Movie field coverage
 
@@ -29,11 +35,11 @@ sh bin/shared-content.sh demo
 python3 tools/package-msc.py
 ```
 
-Optional browser testing uses Python Playwright 1.62.0 and Chromium, or `MSC_BROWSER_EXECUTABLE=/path/to/chromium`. After creating a fresh demo, run `MSC_DISPOSABLE_TESTS=1 python3 tests/shared-content/browser.py`. It changes the demo date and resets Site B's override. CI provisions a fresh network and runs these checks, packaging, and the WordPress ZIP installer.
+Optional browser testing uses Python Playwright 1.62.0 and Chromium, or `MSC_BROWSER_EXECUTABLE=/path/to/chromium`. After creating a fresh demo, run `MSC_DISPOSABLE_TESTS=1 python3 tests/shared-content/browser.py`. It changes the demo date and resets Site B's override. Also run `MSC_DISPOSABLE_TESTS=1 python3 tests/shared-content/presentation-browser.py` for the three identities, responsive detail templates and media controls. CI provisions a fresh network and runs both browser workflows, packaging, and the WordPress plugin/theme ZIP installers.
 
 ## Limits and remaining work
 
-ACF support covers generated, schema-owned custom scalar fields and single Post Object relationships. It does not import arbitrary ACF schemas, turn a native Gutenberg save into a global edit, support ACF Pro repeaters/flexible content, bridge owner-scoped media into ACF image controls, or promise `get_fields()` enumeration. Unsupported data remains in the full MSC editor where its type is supported. See [the adapter guide](multisite-shared-content/docs/acf.md).
+ACF support covers generated, schema-owned scalar/category controls, single/multiple Post Object relationships and owner-aware media previews through a custom ACF field. It does not import arbitrary ACF schemas, turn a native Gutenberg save into a global edit, support ACF Pro repeaters/flexible content, or promise `get_fields()` enumeration. Unsupported data remains in the full MSC editor where its type is supported. See [the adapter guide](multisite-shared-content/docs/acf.md).
 
 The network schema editor is an advanced JSON form. Capabilities are generic rather than per-CPT configurations. Queries use calendar dates, without a UTC/DST airing-time index. Embedded local attachment/block IDs in arbitrary rich content are preserved, not rewritten. Global revisions lack retention controls; admin lists are bounded; no destructive global-purge UI exists.
 

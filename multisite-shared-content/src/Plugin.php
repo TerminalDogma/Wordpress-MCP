@@ -65,7 +65,7 @@ final class Plugin {
 			return $url ? '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $data['title'] ?? '' ) . '" loading="lazy">' : '';
 		}, 10, 2 );
 		add_filter( 'has_post_thumbnail', static function ( $has, $post ) { $post = get_post( $post ); if ( ! $post ) { return $has; } $r = self::store()->by_post( (int) $post->ID ); return $r ? (bool) Media::url( (array) ( self::store()->resolved( $r['id'] )['data']['featured_image'] ?? array() ) ) : $has; }, 10, 2 );
-		Seo::boot(); Admin::boot(); Acf::boot();
+		Seo::boot(); Admin::boot(); Acf::boot(); Presentation::boot();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) { \WP_CLI::add_command( 'msc', CLI::class ); }
 		do_action( 'msc_register_field_types' );
 	}
@@ -73,14 +73,15 @@ final class Plugin {
 		foreach ( Schema::all() as $type => $schema ) {
 			if ( ! Schema::enabled( $type ) || post_type_exists( $type ) ) { continue; }
 			register_post_type( $type, array(
-				'label' => $schema['label'], 'public' => true, 'show_in_rest' => true,
+				'label' => $schema['label'], 'labels' => array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode' )[ $type ] ?? $schema['label'] ), 'public' => true, 'show_in_rest' => true,
 				'has_archive' => (bool) ( $schema['archive'] ?? true ), 'rewrite' => array( 'slug' => $schema['slug'] ),
 				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'custom-fields' ),
 				'capability_type' => 'post', 'map_meta_cap' => true,
 				'capabilities' => array( 'create_posts' => 'msc_create_global', 'publish_posts' => 'msc_publish_local' ),
-				'menu_icon' => 'dashicons-networking',
+				'menu_icon' => array( 'msc_person' => 'dashicons-admin-users', 'msc_movie' => 'dashicons-video-alt2', 'msc_show' => 'dashicons-desktop', 'msc_episode' => 'dashicons-playlist-video' )[ $type ] ?? 'dashicons-networking',
 			) );
 		}
+		Taxonomies::register();
 	}
 	private static function changing( array $data, \WP_Post $old, array $schema ): array {
 		$changed = array();

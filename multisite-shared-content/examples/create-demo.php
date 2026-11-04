@@ -9,8 +9,8 @@ $demo = get_network_option( get_current_network_id(), 'msc_demo_records', array(
 if ( empty( $demo['show'] ) || ! $store->get( $demo['show'] ) ) {
 	switch_to_blog( $sites[0] );
 	try {
-		$show = $store->create( 'msc_show', array( 'title' => 'Network Demo Show', 'content' => '<p>A fictitious show for testing shared content.</p>', 'network' => 'Demo Network', 'premiere_date' => '2099-01-01' ) );
-		$episode = $store->create( 'msc_episode', array( 'title' => 'Demo Pilot', 'parent_show' => $show['uuid'], 'season_number' => 1, 'episode_number' => 1, 'release_date' => '2099-01-01', 'air_time' => '20:00:00', 'time_zone' => 'America/New_York' ) );
+		$show = $store->create( 'msc_show', array( 'title' => 'The Signal', 'content' => '<p>At a remote observatory in the far north, a small crew listens to the universe. When an impossible message arrives, their quiet routine gives way to a mystery that reaches beyond the horizon.</p><p>A fictional series about connection, curiosity, and the unknown.</p>', 'network' => 'Demo Network', 'premiere_date' => '2099-01-01' ) );
+		$episode = $store->create( 'msc_episode', array( 'title' => 'First Contact', 'parent_show' => $show['uuid'], 'season_number' => 1, 'episode_number' => 1, 'release_date' => '2099-01-01', 'air_time' => '20:00:00', 'time_zone' => 'America/New_York' ) );
 		$demo = array( 'show' => $show['uuid'], 'episode' => $episode['uuid'] );
 	} finally { restore_current_blog(); }
 	for ( $i = 0; $i < 100 && \MSC\Queue::status()['pending']; ++$i ) { $result = \MSC\Queue::run( 1000 ); if ( $result['errors'] ) { throw new RuntimeException( 'Demo synchronization failed.' ); } }
@@ -27,7 +27,7 @@ if ( empty( $demo['show'] ) || ! $store->get( $demo['show'] ) ) {
 // Add the Movie example when upgrading an existing demo; retain TV edits.
 if ( empty( $demo['movie'] ) || ! $store->get( $demo['movie'] ) ) {
 	switch_to_blog( $sites[0] );
-	try { $movie = $store->create( 'msc_movie', array( 'title' => 'Network Demo Movie', 'content' => '<p>A fictitious film for testing movie-specific fields.</p>', 'release_date' => '2099-06-01', 'digital_release_date' => '2099-07-01', 'runtime' => 112, 'director' => 'Demo Director', 'distributor' => 'Demo Pictures', 'cast' => '<p>Demo Actor as the lead</p>' ) ); $demo['movie'] = $movie['uuid']; }
+	try { $movie = $store->create( 'msc_movie', array( 'title' => 'The Last Light', 'content' => '<p>On a remote coast, the last lighthouse keeper watches a world that has learned to navigate without her. Then, one night, the light across the bay begins to answer.</p><p>A fictional, atmospheric journey through memory and the enduring need to be found.</p>', 'release_date' => '2099-06-01', 'digital_release_date' => '2099-07-01', 'runtime' => 112, 'director' => 'Demo Director', 'distributor' => 'Demo Pictures', 'cast' => '<p>Demo Actor as the lead</p>' ) ); $demo['movie'] = $movie['uuid']; }
 	finally { restore_current_blog(); }
 	for ( $i = 0; $i < 100 && \MSC\Queue::status()['pending']; ++$i ) { $result = \MSC\Queue::run( 1000 ); if ( $result['errors'] ) { throw new RuntimeException( 'Movie demo synchronization failed.' ); } }
 	foreach ( $sites as $site ) {
@@ -37,6 +37,7 @@ if ( empty( $demo['movie'] ) || ! $store->get( $demo['movie'] ) ) {
 	}
 	update_network_option( get_current_network_id(), 'msc_demo_records', $demo );
 }
+require __DIR__ . '/enrich-demo.php';
 foreach ( $sites as $site ) {
 	switch_to_blog( $site );
 	try { $r = $store->resolved( $demo['episode'] ); WP_CLI::log( home_url( '/' ) . ' | Episode date: ' . $r['data']['release_date'] . ' | ' . admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ) ); }
@@ -45,4 +46,4 @@ foreach ( $sites as $site ) {
 	try { WP_CLI::log( 'Movie fields: ' . admin_url( 'admin.php?page=msc-acf&record=' . $demo['movie'] ) ); }
 	finally { restore_current_blog(); }
 }
-WP_CLI::success( 'TV Show, Episode and Movie demos ready. Site B has its own episode date; Sites A and C inherit it.' );
+WP_CLI::success( 'TV Show, Episode, Movie and linked Person demos ready. Site B has its own episode date; Sites A and C inherit it.' );

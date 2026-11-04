@@ -57,7 +57,7 @@ try {
 	if ( 200 !== $code || empty( json_decode( $body, true )['uuid'] ) ) { throw new RuntimeException( 'Valid nonce-authenticated REST create failed: ' . $code ); }
 	WP_CLI::log( 'PASS: HTTP cookie and valid REST nonce authorize global creation' );
 	[$code,,$body] = http_msc( '/site-a/wp-admin/admin.php?page=msc&record=' . $r['uuid'] . '&mode=global', array( $cookie_header ) );
-	if ( 200 !== $code || ! str_contains( $body, 'GLOBAL EDITING' ) || ! str_contains( $body, 'Save global record' ) || ! str_contains( $body, 'Choose media from this site' ) ) { throw new RuntimeException( 'Authenticated global editor page failed: ' . $code ); }
+	if ( 200 !== $code || ! str_contains( $body, 'GLOBAL EDITING' ) || ! str_contains( $body, 'Save global record' ) || ! str_contains( $body, 'Choose image or media' ) ) { throw new RuntimeException( 'Authenticated global editor page failed: ' . $code ); }
 	WP_CLI::log( 'PASS: HTTP authenticated global editor form renders' );
 	[$code,,$body] = http_msc( '/wp-admin/network/admin.php?page=msc-network', array( $cookie_header ) );
 	if ( 200 !== $code || ! str_contains( $body, 'Site participation' ) || ! str_contains( $body, 'Type and field schemas' ) ) { throw new RuntimeException( 'Network settings page failed: ' . $code ); }

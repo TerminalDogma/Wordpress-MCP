@@ -80,3 +80,7 @@ docker build --secret id=proxy_ca,src=/path/to/ca-bundle.pem -t wordpress-acf:lo
 docker compose up -d --wait db wordpress
 docker compose run --rm -T setup
 ```
+
+### Site designs, People, categories and image previews
+
+MSC 1.3 includes the optional Screening Room theme, three distinct demo identities, Movie/TV Show/Episode/Person templates, linked cast and crew, reusable categories, and ACF image previews. See [the update and editing guide](multisite-shared-content/docs/presentation.md). Existing shared values and site overrides are retained.
