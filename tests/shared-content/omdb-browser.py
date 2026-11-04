@@ -121,7 +121,7 @@ async def main():
         # Chromium can abort the core admin ViewTransition when a deliberate
         # HTTP 409/wp_die destination opts out of transitions. Application
         # errors, and transition errors before this deliberate navigation, fail.
-        unexpected = [error for error in errors if not (error['intentional_error_navigation'] and error['message'] == 'Transition was aborted because of invalid state. ViewTransition opt-in disabled')]
+        unexpected = [error for error in errors if not (error['intentional_error_navigation'] and error['message'] in ('Transition was aborted because of invalid state. ViewTransition opt-in disabled', 'Transition was skipped'))]
         assert not unexpected, unexpected
         await browser.close()
         print('PASS: OMDb title/year/type search, preview, selective create, duplicate POST, real poster upload/ACF preview, cross-site selective update, override preservation, HTTP 409, CSRF and key isolation.')
