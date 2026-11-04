@@ -84,3 +84,7 @@ docker compose run --rm -T setup
 ### Site designs, People, categories and image previews
 
 MSC 1.3 includes the optional Screening Room theme, three distinct demo identities, Movie/TV Show/Episode/Person templates, linked cast and crew, reusable categories, and ACF image previews. See [the update and editing guide](multisite-shared-content/docs/presentation.md). Existing shared values and site overrides are retained.
+
+### OMDb title search and import
+
+MSC 1.4 adds Movie/TV Show/Episode title search, selective global imports, reviewed Person links and optional poster downloads. Configure the key once in Network Admin; credentials stay outside GitHub. See [the OMDb guide](multisite-shared-content/docs/omdb.md).

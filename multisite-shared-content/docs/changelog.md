@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.4.0
+
+Adds server-side OMDb title/year/type search, paginated results, user/site-bound previews and selective global imports for Movies, TV Shows and Episodes. IMDb IDs prevent duplicate imports; stale previews reject updates. Existing local overrides, unrelated IDs and metadata remain intact. Includes reviewed Person links, safe optional poster downloads, caching/rate limits, credential-safe error handling, and network/server-managed key configuration. Episodes gain an External IDs JSON field through a narrow additive upgrade. Database transactions now use savepoints for atomic nested Person/title writes. Provider-contract and browser tests use disposable fixtures; live OMDb is blocked by the development cloud's network policy. See [the guide](omdb.md).
+
 ## 1.3.0
 
 Adds Person records and ordered actor/director/writer/producer/creator relationships, category-backed native taxonomies with network-wide choices, and thumbnail media controls in both editors (including ACF Free). The optional Screening Room theme supplies distinct green, cream/red and purple demo sites, responsive Movie/TV Show/Episode/Person templates, archives, search, season guides and published filmographies. The additive upgrade preserves existing text credits, custom schemas and overrides. The demo adds original locally generated artwork and linked fictional People without replacing saved values. Includes a separate theme ZIP and integration/browser coverage. See [the guide](presentation.md).

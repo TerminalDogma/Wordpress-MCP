@@ -81,3 +81,7 @@ python3 tools/package-msc.py
 The test command stops the background worker so deliberate failure/retry tests are deterministic. Restart it afterward with `COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose up -d shared-worker` if you continue using that disposable environment.
 
 Read the [editor guide](../multisite-shared-content/docs/editor.md), [administrator guide](../multisite-shared-content/docs/administrator.md), [developer reference](../multisite-shared-content/docs/developer.md), and [verification report](../VERIFICATION.md) for supported behavior and remaining limits.
+
+## Import a title from OMDb
+
+Configure the API key in Network Admin → Shared Content → OMDb API, then open Shared Content → Search OMDb on a participating site. Review the title, select fields and Person links, and import. See [the OMDb guide](../multisite-shared-content/docs/omdb.md) for poster downloads, updates and limits.

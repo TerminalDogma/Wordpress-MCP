@@ -39,7 +39,7 @@ final class Schema {
 			'release_date' => array( 'type' => 'date', 'indexed' => true ), 'air_time' => array( 'type' => 'time' ),
 			'time_zone' => array( 'type' => 'timezone' ), 'runtime' => array( 'type' => 'number', 'min' => 0 ),
 			'episode_image' => array( 'type' => 'media' ), 'production_code' => array( 'type' => 'text' ),
-			'additional_release_dates' => array( 'type' => 'json' ),
+			'additional_release_dates' => array( 'type' => 'json' ), 'external_ids' => array( 'type' => 'json' ),
 		);
 		$movie = $common;
 		foreach ( array( 'original_title', 'country', 'language', 'director', 'writers', 'distributor', 'production_companies', 'content_rating', 'release_status', 'streaming_service' ) as $field ) { $movie[ $field ] = array( 'type' => 'text' ); }
@@ -78,18 +78,21 @@ final class Schema {
 	/** Add new built-ins and missing fields once, retaining saved schema choices. */
 	public static function upgrade_defaults(): void {
 		$network = get_current_network_id();
-		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 3 ) { return; }
+		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 4 ) { return; }
 		Database::lock( 'builtin-schema', static function () use ( $network ) {
 			// Another request may have completed the upgrade while this one waited.
 			foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) { wp_cache_delete( $network . ':' . $option, 'site-options' ); }
-			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 3 ) { return; }
+			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 4 ) { return; }
+			$previous_version = (int) get_network_option( $network, 'msc_builtin_schema_version', 0 );
 			$saved = get_network_option( $network, 'msc_schemas', false );
 			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
 			$schemas = false === $saved ? self::defaults() : $saved;
 			foreach ( self::defaults() as $type => $default ) {
-				if ( ! isset( $schemas[ $type ] ) ) { if ( in_array( $type, array( 'msc_movie', 'msc_person' ), true ) ) { $schemas[ $type ] = $default; } continue; }
+				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 ) { $schemas[ $type ] = $default; } continue; }
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
+					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
+					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -101,7 +104,7 @@ final class Schema {
 				}
 			}
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
-			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 3 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 3 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
+			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 4 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 4 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );
 	}
 	public static function register_type( string $name, callable $sanitize ): void { self::$types[ $name ] = $sanitize; }

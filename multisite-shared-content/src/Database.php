@@ -2,6 +2,7 @@
 namespace MSC;
 
 final class Database {
+	private static int $transaction_depth = 0;
 	public static function table( string $name ): string {
 		global $wpdb;
 		return $wpdb->base_prefix . 'msc_' . get_current_network_id() . '_' . $name;
@@ -13,9 +14,12 @@ final class Database {
 	}
 	public static function transaction( callable $callback ) {
 		global $wpdb;
-		self::check( $wpdb->query( 'START TRANSACTION' ) );
-		try { $result = $callback(); self::check( $wpdb->query( 'COMMIT' ) ); return $result; }
-		catch ( \Throwable $e ) { $wpdb->query( 'ROLLBACK' ); throw $e; }
+		$depth = self::$transaction_depth; $savepoint = 'msc_transaction_' . $depth;
+		self::check( $wpdb->query( $depth ? 'SAVEPOINT ' . $savepoint : 'START TRANSACTION' ) );
+		++self::$transaction_depth;
+		try { $result = $callback(); self::check( $wpdb->query( $depth ? 'RELEASE SAVEPOINT ' . $savepoint : 'COMMIT' ) ); return $result; }
+		catch ( \Throwable $e ) { $wpdb->query( $depth ? 'ROLLBACK TO SAVEPOINT ' . $savepoint : 'ROLLBACK' ); if ( $depth ) { $wpdb->query( 'RELEASE SAVEPOINT ' . $savepoint ); } throw $e; }
+		finally { --self::$transaction_depth; }
 	}
 	public static function lock( string $name, callable $callback ) {
 		global $wpdb;

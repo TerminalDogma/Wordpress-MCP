@@ -29,6 +29,7 @@ services:
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?Run python3 bin/configure.py first}
       WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8080}
       WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+      OMDB_API_KEY: ${OMDB_API_KEY:-}
     volumes:
       - wordpress_data:/var/www/html
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro

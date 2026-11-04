@@ -1,6 +1,10 @@
-# Shared Content 1.3.0 verification
+# Shared Content 1.4.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
+
+## OMDb integration coverage
+
+Version 1.4 adds title search, preview and selective global imports with reviewed Person links, IMDb deduplication and optional owner-aware poster downloads. Tests exercise real WordPress storage, HTTP/media APIs and ACF against deterministic provider fixtures. Coverage includes filtering/pagination, cache/key separation, malformed/missing/quota errors, secure configuration, per-user request limits, selective updates, retained local overrides and IDs/metadata, Episode parent resolution, credit ordering, stale previews and nested rollback/poster cleanup. Chromium verifies the actual search/import/ACF workflow and HTTP 409. The cloud blocks outbound OMDb calls; the supplied live key was not verified. See [the OMDb guide](multisite-shared-content/docs/omdb.md).
 
 ## Presentation, Person, category and image coverage
 

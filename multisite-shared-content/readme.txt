@@ -4,7 +4,7 @@ Tags: multisite, custom-post-types, shared-content
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,6 +29,9 @@ No. Optional ACF Free controls support shared scalar fields, single/multiple Per
 The resolved PHP API reads current authoritative values. Native posts and site indexes update asynchronously. Monitor the queue and configure a system cron.
 
 == Changelog ==
+= 1.4.0 =
+OMDb title search and selective imports, reviewed Person links, owner-aware poster downloads, and secure network API-key configuration. See docs/omdb.md.
+
 = 1.3.0 =
 Person records and linked credits, native category taxonomies, image preview controls, and the optional Screening Room demo theme. See docs/presentation.md.
 
