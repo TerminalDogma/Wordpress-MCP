@@ -150,7 +150,7 @@ final class OmdbImport {
             }
             $external = $r['data']['external_ids'] ?? array(); if ( ! is_array( $external ) || ! empty( $external['imdb'] ) && $external['imdb'] !== $s['imdb'] ) { throw new OmdbError( 'The destination already identifies another IMDb title.', 409 ); }
             $values['external_ids'] = array_replace( $external, array( 'imdb' => $s['imdb'] ) );
-            if ( ! $r ) { $has_title = false; foreach ( Schema::get( $s['type'] )['fields'] as $key => $definition ) { if ( 'post_title' === ( $definition['property'] ?? '' ) && ! empty( $values[ $key ] ) ) { $has_title = true; } } if ( ! $has_title ) { throw new OmdbError( 'Select the title field when creating a new record.' ); } }
+            if ( ! $r ) { $has_title = false; foreach ( Schema::get( $s['type'] )['fields'] as $key => $definition ) { if ( 'post_title' === ( $definition['property'] ?? '' ) && isset( $values[ $key ] ) && '' !== (string) $values[ $key ] ) { $has_title = true; } } if ( ! $has_title ) { throw new OmdbError( 'Select the title field when creating a new record.' ); } }
             if ( isset( $values['additional_metadata'] ) ) { $old = (array) ( $r['data']['additional_metadata'] ?? array() ); $values['additional_metadata'] = array_replace( $old, array( 'omdb' => array_replace( (array) ( $old['omdb'] ?? array() ), $values['additional_metadata']['omdb'] ) ) ); }
             Schema::values( $s['type'], $values ); // Validate all ordinary values before creating people or files.
             $used = array_filter( $s['credits'], static fn( $credit ) => (bool) array_intersect( $roles, $credit['roles'] ) );

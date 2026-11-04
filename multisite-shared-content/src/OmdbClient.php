@@ -91,7 +91,7 @@ final class OmdbClient {
 	}
 	public static function details( string $imdb ): array {
 		$data = self::request( array( 'i' => self::imdb( $imdb ), 'plot' => 'full' ), 6 * HOUR_IN_SECONDS );
-		if ( ( $data['imdbID'] ?? '' ) !== $imdb || empty( $data['Title'] ) || ! in_array( $data['Type'] ?? '', array( 'movie', 'series', 'episode' ), true ) ) { throw new OmdbError( 'OMDb returned a different or unsupported title.', 502 ); }
+		if ( ( $data['imdbID'] ?? '' ) !== $imdb || '' === ( $data['Title'] ?? '' ) || ! in_array( $data['Type'] ?? '', array( 'movie', 'series', 'episode' ), true ) ) { throw new OmdbError( 'OMDb returned a different or unsupported title.', 502 ); }
 		return $data;
 	}
 }

@@ -45,7 +45,7 @@ final class OmdbAdmin {
             echo '</select></label><label>Year <input type="text" name="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="Optional" value="' . esc_attr( $year ) . '"></label>'; submit_button( 'Search titles', 'primary', 'search', false ); echo '</form>';
             if ( ! OmdbClient::key() ) { echo '<div class="notice notice-warning inline"><p>An administrator must configure the OMDb API key under <a href="' . esc_url( network_admin_url( 'admin.php?page=msc-omdb-settings' ) ) . '">Network Admin → Shared Content → OMDb API</a>.</p></div>'; }
             $imdb = sanitize_text_field( $_GET['imdb'] ?? '' );
-            if ( $query || $imdb ) {
+            if ( '' !== $query || '' !== $imdb ) {
                 if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'msc_omdb_search' ) ) { throw new OmdbError( 'The search token expired. Submit the search form again.', 403 ); }
                 if ( $imdb ) { self::preview( OmdbImport::preview( $imdb, $record ) ); }
                 else {

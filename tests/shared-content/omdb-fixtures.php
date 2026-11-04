@@ -15,6 +15,7 @@ final class MSC_Omdb_Fixtures {
             'tt0234215' => array_replace( $base, array( 'Title' => 'The Matrix Reloaded', 'Year' => '2003', 'Released' => '15 May 2003', 'imdbID' => 'tt0234215' ) ),
             'tt9000010' => array_replace( $base, array( 'Title' => 'OMDb Fixture Signal', 'Year' => '2020–2022', 'imdbID' => 'tt9000010', 'Type' => 'series', 'totalSeasons' => '2', 'Actors' => 'Fixture Actor', 'Director' => 'N/A', 'Writer' => 'Fixture Writer', 'Released' => '01 Jan 2020' ) ),
             'tt9000011' => array_replace( $base, array( 'Title' => 'OMDb Fixture Pilot', 'Year' => '2020', 'imdbID' => 'tt9000011', 'Type' => 'episode', 'seriesID' => 'tt9000010', 'Season' => '1', 'Episode' => '1', 'Actors' => 'Fixture Actor', 'Writer' => 'Fixture Writer', 'Director' => 'Fixture Director', 'Runtime' => '48 min', 'Released' => '15 Jan 2020' ) ),
+            'tt9000030' => array_replace( $base, array( 'Title' => '0', 'Year' => '2024', 'imdbID' => 'tt9000030', 'Runtime' => '0 min', 'Released' => '01 Jan 2024' ) ),
             'tt9000020' => array_replace( $base, array( 'Title' => 'OMDb Partial Fixture', 'Year' => '2024', 'imdbID' => 'tt9000020', 'Released' => 'N/A', 'Runtime' => 'N/A', 'Genre' => 'N/A', 'Plot' => 'N/A', 'Director' => 'N/A', 'Writer' => 'N/A', 'Actors' => 'N/A', 'Country' => 'N/A', 'Language' => 'N/A', 'DVD' => 'N/A', 'Poster' => 'N/A', 'Website' => 'N/A' ) ),
         );
         $browser_id = get_network_option( get_current_network_id(), 'msc_omdb_browser_id', '' );
