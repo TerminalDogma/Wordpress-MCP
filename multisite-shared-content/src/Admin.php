@@ -83,7 +83,7 @@ final class Admin {
 		if ( $id && ! $r ) { echo '<p>Record not found.</p></div>'; return; }
 		if ( $r ) { $type = $r['type']; $schema = Schema::get( $type ); }
 		if ( ! Schema::enabled( $type ) ) { echo '<p>A network administrator must enable this type for this site.</p></div>'; return; }
-		if ( OmdbImport::allowed() && in_array( $type, OmdbImport::TYPES, true ) ) { echo '<p><a class="button" href="' . esc_url( OmdbAdmin::link( $r['uuid'] ?? '' ) ) . '">Search OMDb and import title information</a></p>'; }
+		if ( OpenImport::allowed() && isset( OpenImport::TYPES[ $type ] ) ) { echo '<p><a class="button" href="' . esc_url( add_query_arg( 'kind', $type, OpenAdmin::link( $r['uuid'] ?? '' ) ) ) . '">Search and import content</a></p>'; }
 		echo '<nav class="nav-tab-wrapper">';
 		foreach ( Schema::all() as $key => $s ) { if ( Schema::enabled( $key ) ) { echo '<a class="nav-tab" href="' . esc_url( admin_url( 'admin.php?page=msc&type=' . $key ) ) . '">' . esc_html( $s['label'] ) . '</a>'; } }
 		echo '</nav>';

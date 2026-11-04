@@ -1,6 +1,10 @@
-# Shared Content 1.4.0 verification
+# Shared Content 1.5.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
+
+## Commercial-source and Episode import coverage
+
+Version 1.5 introduces source-identified Movie/Person/TV imports, Wikipedia text with separate provenance, explicit Commons image-licence allowlists, source attribution in the theme, and Show/season-based Episode imports with resumable progress. Provider fixtures run against real WordPress storage, media, transactions and ACF. They check exact Episode parents/numbering/timezones, missing values, specials, idempotency, selective refresh/local overrides, concurrent edits, namesake People, image errors and cleanup, licences, permissions, caching and shared backoff. Chromium exercises the complete sequential Episode workflow and Movie/Person enrichment with licensed media and responsive attribution. The current GitHub Actions run records results. Direct live source requests are restricted in this cloud; live searches must be verified on the Mac. See [the guide](multisite-shared-content/docs/import-content.md).
 
 ## OMDb integration coverage
 

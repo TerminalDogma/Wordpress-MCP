@@ -36,10 +36,14 @@ jobs:
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
           MSC_DISPOSABLE_TESTS=1 sh bin/omdb-browser-tests.sh
+      - name: Browser commercial-source and Episode import workflow
+        run: |
+          export PATH="/tmp/msc-browser-env/bin:$PATH"
+          MSC_DISPOSABLE_TESTS=1 sh bin/open-import-browser-tests.sh
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-1.4.0
+          name: multisite-shared-content-1.5.0
           path: dist/
       - name: Stop services
         if: always()

@@ -37,7 +37,7 @@ final class Presentation {
 	}
 	public static function card( array $r ): void {
 		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person' )[ $r['type'] ] ?? 'Story';
-		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . self::image( $r, 'card-art', 'medium_large' ) . '<div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a></article>';
+		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . self::image( $r, 'card-art', 'medium_large' ) . '<div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::render( $r, array( 'title', 'excerpt' ) ) . Attribution::image_html( $r ) . '</article>';
 	}
 	public static function credits( array $r ): void {
 		$groups = array( 'actors' => 'Cast', 'directors' => 'Directors', 'screenwriters' => 'Writers', 'producers' => 'Producers', 'creators' => 'Creators' );
@@ -45,7 +45,7 @@ final class Presentation {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::record( $uuid ); if ( $person && 'msc_person' === $person['type'] ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
 			echo '<section class="credit-section"><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
-			foreach ( $people as $person ) { echo '<a class="person-card" href="' . esc_url( self::url( $person ) ) . '">' . self::image( $person, '', 'medium' ) . '<span>' . esc_html( $person['data']['title'] ) . '</span></a>'; }
+			foreach ( $people as $person ) { echo '<div class="person-credit"><a class="person-card" href="' . esc_url( self::url( $person ) ) . '">' . self::image( $person, '', 'medium' ) . '<span>' . esc_html( $person['data']['title'] ) . '</span></a>' . Attribution::render( $person, array( 'title' ) ) . Attribution::image_html( $person ) . '</div>'; }
 			echo '</div></section>';
 		}
 	}

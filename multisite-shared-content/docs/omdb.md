@@ -1,4 +1,7 @@
-# Search and import from OMDb
+# Legacy OMDb integration
+
+**Disabled by default in MSC 1.5.** OMDb states CC BY-NC 4.0, which does not satisfy the default commercial-use requirement. Use [Import Content](import-content.md) instead. Existing imports and keys are preserved, without changing their licence. The instructions below apply only when a server administrator explicitly enables `MSC_ENABLE_LEGACY_OMDB` for an appropriately licensed use.
+
 
 Version 1.4 adds title search, a review screen and selective imports for Movies, TV Shows and Episodes. It uses the existing shared fields, Person relationships, categories and owner-aware media. Imports change global values; local overrides remain intact.
 

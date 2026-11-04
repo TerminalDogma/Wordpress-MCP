@@ -67,7 +67,7 @@ The worker is a local development convenience. A production network needs a supe
 
 ## Install the ZIP elsewhere
 
-Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.2.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
+Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.5.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
 
 ## Automated testing
 
@@ -82,6 +82,6 @@ The test command stops the background worker so deliberate failure/retry tests a
 
 Read the [editor guide](../multisite-shared-content/docs/editor.md), [administrator guide](../multisite-shared-content/docs/administrator.md), [developer reference](../multisite-shared-content/docs/developer.md), and [verification report](../VERIFICATION.md) for supported behavior and remaining limits.
 
-## Import a title from OMDb
+## Search and import content
 
-Configure the API key in Network Admin → Shared Content → OMDb API, then open Shared Content → Search OMDb on a participating site. Review the title, select fields and Person links, and import. See [the OMDb guide](../multisite-shared-content/docs/omdb.md) for poster downloads, updates and limits.
+Open **Shared Content → Import Content**. No API key is required. Movies and People use Wikidata/Wikipedia; Shows and Episodes use TVmaze. To import Episodes, search for the Show, connect/import it first, choose a season and select Episodes. The batch saves progress after each Episode and can be resumed. Review field selection and licences, and publish drafts separately. See [the complete import guide](../multisite-shared-content/docs/import-content.md), including how to connect older Episode records without duplicating them.

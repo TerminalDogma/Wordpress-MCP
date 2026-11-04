@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.5.0
+
+Adds keyless, source-aware imports using TVmaze, Wikidata, Wikipedia and individually licensed Commons images. People are identified by provider IDs and can be enriched with biographies, birth dates and headshots. Replaces Episode title search with verified Show/season lists, individual review and resumable sequential batches. Retains original airing dates, specials, missing values, per-site overrides and concurrent-edit protection. Attribution follows field values and actual media across the bundled theme. Legacy OMDb screens are disabled by default; old data is retained without relicensing. Adds provider-contract and browser coverage. See [the guide](import-content.md).
+
 ## 1.4.0
 
 Adds server-side OMDb title/year/type search, paginated results, user/site-bound previews and selective global imports for Movies, TV Shows and Episodes. IMDb IDs prevent duplicate imports; stale previews reject updates. Existing local overrides, unrelated IDs and metadata remain intact. Includes reviewed Person links, safe optional poster downloads, caching/rate limits, credential-safe error handling, and network/server-managed key configuration. Episodes gain an External IDs JSON field through a narrow additive upgrade. Database transactions now use savepoints for atomic nested Person/title writes. Provider-contract and browser tests use disposable fixtures; live OMDb is blocked by the development cloud's network policy. See [the guide](omdb.md).

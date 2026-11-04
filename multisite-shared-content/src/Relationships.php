@@ -8,15 +8,16 @@ final class Relationships {
 		if ( $show ) { $sql .= ' AND p.text_value=%s'; $args[] = $show; }
 		if ( $from ) { $sql .= ' AND d.text_value>=%s'; $args[] = $from; }
 		if ( $site ) { $sql .= ' AND EXISTS (SELECT 1 FROM ' . Database::table( 'maps' ) . " m WHERE m.record_id=r.id AND m.site_id=%d AND m.status='publish' AND m.suppressed=0)"; $args[] = $site; }
-		$sql .= ' ORDER BY ' . ( $release_order ? 'd.text_value,' : '' ) . 's.number_value,e.number_value,r.id LIMIT %d'; $args[] = min( 500, max( 1, $limit ) );
+		$sql .= ' ORDER BY ' . ( $release_order ? 'd.text_value,' : '' ) . 's.number_value IS NULL,s.number_value,e.number_value IS NULL,e.number_value,r.id LIMIT %d'; $args[] = min( 500, max( 1, $limit ) );
 		return array_map( 'intval', $wpdb->get_col( $wpdb->prepare( $sql, ...$args ) ) );
 	}
 	public static function seasons( string $show, int $site = 0 ): array {
 		$groups = array();
 		foreach ( self::episodes( $show, null, $site, 500 ) as $id ) {
 			$r = $site ? Plugin::store()->resolved( $id, $site ) : Plugin::store()->get( $id );
-			$groups[ $r['data']['season_number'] ?? 0 ][] = $r;
+			$season = $r['data']['season_number'] ?? null;
+			$groups[ null === $season || '' === $season ? 'unknown' : $season ][] = $r;
 		}
-		ksort( $groups, SORT_NUMERIC ); return $groups;
+		uksort( $groups, static fn( $a, $b ) => ( 'unknown' === $a ? PHP_INT_MAX : (int) $a ) <=> ( 'unknown' === $b ? PHP_INT_MAX : (int) $b ) ); return $groups;
 	}
 }

@@ -2,9 +2,9 @@
 
 A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Custom Fields Free 6.8.10**. This repository contains the configuration and setup automation; a running site needs Docker or a PHP/database hosting service. GitHub Pages cannot run this installation.
 
-## Shared TV Shows, Episodes and Movies
+## Shared TV Shows, Episodes, Movies and People
 
-The optional **Multisite Shared Content 1.2.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+The optional **Multisite Shared Content 1.5.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
 
 ```sh
 sh bin/shared-content.sh setup
@@ -85,6 +85,6 @@ docker compose run --rm -T setup
 
 MSC 1.3 includes the optional Screening Room theme, three distinct demo identities, Movie/TV Show/Episode/Person templates, linked cast and crew, reusable categories, and ACF image previews. See [the update and editing guide](multisite-shared-content/docs/presentation.md). Existing shared values and site overrides are retained.
 
-### OMDb title search and import
+### Search and import content
 
-MSC 1.4 adds Movie/TV Show/Episode title search, selective global imports, reviewed Person links and optional poster downloads. Configure the key once in Network Admin; credentials stay outside GitHub. See [the OMDb guide](multisite-shared-content/docs/omdb.md).
+MSC 1.5 adds keyless TVmaze TV/episode data, Wikidata Movie/Person facts, Wikipedia biographies, and individually licensed Commons images. **Shared Content → Import Content** includes reviewed field selection, persistent attribution and a resumable Show → season → Episode importer. Sources permit commercial reuse under their stated licences; CC BY-SA obligations still apply. Legacy OMDb screens are disabled by default and previously imported content needs review. See [the import and Mac update guide](multisite-shared-content/docs/import-content.md).
