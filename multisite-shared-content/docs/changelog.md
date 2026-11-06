@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.5.2
+
+TV Show episode lists display episode numbers, linked titles and dates without images or synopses. Episode titles use 18px text on desktop and 16px text on mobile. Source credits apply only to the fields displayed in each row. Episode detail pages and catalog cards retain their images and descriptions.
+
 ## 1.5.1
 
 Replaces promotional headings, taglines, decorative content labels and empty-state copy with descriptive catalog labels. The three demo sites are named Site A, Site B and Site C and retain their distinct colors and layouts. Homepages explain shared records and per-site field overrides. Existing record titles, content and overrides are retained.
