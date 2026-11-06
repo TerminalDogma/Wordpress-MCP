@@ -5,9 +5,9 @@ namespace MSC;
 final class Presentation {
 	public static function identities(): array {
 		return array(
-			'a' => array( 'name' => 'Observatory', 'label' => 'Site A', 'tagline' => 'A wider view of film & television.', 'color' => '#a9e34b', 'ink' => '#142012' ),
-			'b' => array( 'name' => 'The Matinee', 'label' => 'Site B', 'tagline' => 'Stories worth making time for.', 'color' => '#b33123', 'ink' => '#fff8ec' ),
-			'c' => array( 'name' => 'After Hours', 'label' => 'Site C', 'tagline' => 'Stay for one more story.', 'color' => '#c4a4ff', 'ink' => '#1b1037' ),
+			'a' => array( 'name' => 'Site A', 'label' => 'Site A', 'tagline' => 'Shared content demo', 'color' => '#a9e34b', 'ink' => '#142012' ),
+			'b' => array( 'name' => 'Site B', 'label' => 'Site B', 'tagline' => 'Shared content demo', 'color' => '#b33123', 'ink' => '#fff8ec' ),
+			'c' => array( 'name' => 'Site C', 'label' => 'Site C', 'tagline' => 'Shared content demo', 'color' => '#c4a4ff', 'ink' => '#1b1037' ),
 		);
 	}
 	public static function identity(): array {
@@ -16,7 +16,7 @@ final class Presentation {
 	public static function boot(): void {
 		add_action( 'admin_bar_menu', static function ( $bar ) {
 			if ( ! get_option( 'msc_site_identity' ) ) { return; }
-			$i = self::identity(); $bar->add_node( array( 'id' => 'msc-identity', 'title' => esc_html( $i['label'] . ' · ' . $i['name'] ), 'href' => home_url( '/' ) ) );
+			$i = self::identity(); $bar->add_node( array( 'id' => 'msc-identity', 'title' => esc_html( $i['label'] ), 'href' => home_url( '/' ) ) );
 		}, 80 );
 		$style = static function () {
 			if ( ! get_option( 'msc_site_identity' ) ) { return; }
@@ -36,7 +36,7 @@ final class Presentation {
 		return $url ? '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $url ) . '" alt="' . esc_attr( $d['title'] ?? '' ) . '" loading="lazy" decoding="async">' : '<div class="art-placeholder ' . esc_attr( $class ) . '" aria-label="No image available"><span>' . esc_html( mb_substr( $d['title'] ?? '?', 0, 1 ) ) . '</span></div>';
 	}
 	public static function card( array $r ): void {
-		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person' )[ $r['type'] ] ?? 'Story';
+		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person' )[ $r['type'] ] ?? 'Content';
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . self::image( $r, 'card-art', 'medium_large' ) . '<div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::render( $r, array( 'title', 'excerpt' ) ) . Attribution::image_html( $r ) . '</article>';
 	}
 	public static function credits( array $r ): void {

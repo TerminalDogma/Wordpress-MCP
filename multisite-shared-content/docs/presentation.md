@@ -24,9 +24,9 @@ With the default port, open:
 
 | Site | URL | Visual identity |
 | --- | --- | --- |
-| A | http://localhost:8080/site-a/ | **Observatory** — forest green, lime, editorial serif |
-| B | http://localhost:8080/site-b/ | **The Matinee** — warm cream, red, print-inspired typography |
-| C | http://localhost:8080/site-c/ | **After Hours** — purple, lavender, rounded cards |
+| A | http://localhost:8080/site-a/ | **Site A** — forest green, lime, editorial serif |
+| B | http://localhost:8080/site-b/ | **Site B** — warm cream, red, print-inspired typography |
+| C | http://localhost:8080/site-c/ | **Site C** — purple, lavender, rounded cards |
 
 Use your configured port if it differs. The site ribbon links between sites; colored badges also identify the current site in the WordPress admin bar. The sample Movie, Show and Episode have detail links from the homepage. Click a cast member to open their Person page and published credits.
 

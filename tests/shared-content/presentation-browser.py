@@ -38,7 +38,7 @@ async def main():
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         backgrounds = []
-        for letter, brand in [('a', 'Observatory'), ('b', 'The Matinee'), ('c', 'After Hours')]:
+        for letter, brand in [('a', 'Site A'), ('b', 'Site B'), ('c', 'Site C')]:
             prefix = '/site-' + letter + '/'
             response = await page.goto(base + prefix)
             assert response.status == 200, ('homepage', letter, response.status)
@@ -81,7 +81,7 @@ async def main():
         await page.wait_for_url('**/wp-admin/**')
         url = base + '/site-b/wp-admin/admin.php?page=msc-acf&record=' + records['movie'] + '&scope=local'
         await page.goto(url)
-        assert await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B · The Matinee', "Browser assertion at line 82: await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B · The Matinee'"
+        assert await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B', "Browser assertion at line 82: await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B'"
         poster = page.locator('.acf-field[data-name="msc_poster"]')
         assert await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0'), "Browser assertion at line 84: await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0')"
         value = json.loads(await poster.locator('.msc-media-value').input_value())

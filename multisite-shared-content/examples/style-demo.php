@@ -10,4 +10,4 @@ foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
 	try { switch_theme( 'msc-screening-room' ); update_option( 'msc_site_identity', $key ); update_option( 'show_on_front', 'posts' ); update_option( 'msc_flush_rewrite', 1 ); }
 	finally { restore_current_blog(); }
 }
-WP_CLI::success( 'Sites A, B and C now use Observatory, The Matinee and After Hours.' );
+WP_CLI::success( 'Sites A, B and C now use distinct demo styles and descriptive site labels.' );

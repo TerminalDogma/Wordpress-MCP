@@ -4,7 +4,7 @@ A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Cu
 
 ## Shared TV Shows, Episodes, Movies and People
 
-The optional **Multisite Shared Content 1.5.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+The optional **Multisite Shared Content 1.5.1** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
 
 ```sh
 sh bin/shared-content.sh setup

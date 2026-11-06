@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.5.1
+
+Replaces promotional headings, taglines, decorative content labels and empty-state copy with descriptive catalog labels. The three demo sites are named Site A, Site B and Site C and retain their distinct colors and layouts. Homepages explain shared records and per-site field overrides. Existing record titles, content and overrides are retained.
+
 ## 1.5.0
 
 Adds keyless, source-aware imports using TVmaze, Wikidata, Wikipedia and individually licensed Commons images. People are identified by provider IDs and can be enriched with biographies, birth dates and headshots. Replaces Episode title search with verified Show/season lists, individual review and resumable sequential batches. Retains original airing dates, specials, missing values, per-site overrides and concurrent-edit protection. Attribution follows field values and actual media across the bundled theme. Legacy OMDb screens are disabled by default; old data is retained without relicensing. Adds provider-contract and browser coverage. See [the guide](import-content.md).

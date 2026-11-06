@@ -1,6 +1,6 @@
 <?php
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '1.5.0' ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '1.5.1' ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
 function msc_screen_chips( array $r ): void {
@@ -26,6 +26,6 @@ function msc_screen_grid( string $type, int $limit = 6 ): void {
     $posts = get_posts( array( 'post_type' => $type, 'post_status' => 'publish', 'posts_per_page' => $limit, 'orderby' => 'modified', 'order' => 'DESC' ) );
     echo '<div class="catalog-grid">'; $count = 0;
     foreach ( $posts as $post ) { $global = function_exists( 'msc_from_post' ) ? msc_from_post( $post->ID ) : null; $r = $global ? \MSC\Presentation::record( $global['id'] ) : null; if ( $r ) { \MSC\Presentation::card( $r ); ++$count; } }
-    if ( ! $count ) { echo '<p class="empty-state">The next story starts here. Published entries will appear in this collection.</p>'; }
+    if ( ! $count ) { echo '<p class="empty-state">No published entries in this section.</p>'; }
     echo '</div>';
 }
