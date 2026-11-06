@@ -1,6 +1,6 @@
 <?php
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '1.6.0' ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '1.7.0' ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
 function msc_screen_chips( array $r ): void {

@@ -19,3 +19,4 @@
 .msc-attribution,.msc-image-credit{margin:12px 0;line-height:1.5;overflow-wrap:anywhere}.msc-season-nav{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}#msc-import-job progress{width:100%;max-width:700px;height:24px}.msc-job-results{line-height:1.8;margin-left:24px}
 
 .wp-list-table .column-msc_season_number,.wp-list-table .column-msc_episode_number{width:70px}.wp-list-table .column-msc_air_date{width:110px}.wp-list-table .column-msc_parent_show{width:18%}.msc-episode-filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.msc-episode-filters select{max-width:280px}.msc-episode-context{margin:16px 0}.msc-episode-navigation .button{margin-right:6px}
+.msc-show-groups th:first-child,.msc-season-groups th:first-child{width:45%}.msc-show-groups td,.msc-season-groups td{vertical-align:middle;padding:14px 10px}.msc-show-groups td:first-child,.msc-season-groups td:first-child{font-size:15px}

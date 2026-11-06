@@ -2,6 +2,14 @@
 
 Version 1.6 makes the existing parent TV Show relationship visible throughout the backend. No title-based matching or bulk renaming is required.
 
+## Default Episodes browser
+
+Version 1.7 makes **Episodes → By TV Show** the default entry point. It displays one row per Show with season and Episode counts, rather than a row for every Episode. Search by Show title; results paginate in groups of 25 Shows.
+
+Select **View seasons** to see that Show's season batches, then **Manage Episodes** to open only that season in the native post list. Normal WordPress editing, bulk actions, publication and inheritance controls are available there. Links above the list return to the Show's seasons or all TV Shows. The Show page also offers **View Episodes** for the entire Show and **Add Episode** with the parent preselected when permitted.
+
+**All Episodes** remains a secondary menu option and a link from the Show browser. Episodes with no parent appear together under **No TV Show**. Missing seasons appear as **Season not set**, separately from season zero. Only Shows with Episodes on the current site appear in the browser; counts include drafts, exclude trash and reflect local parent and season overrides. The global Shared Content catalog retains its separate global scope.
+
 ## Browse a Show's Episodes
 
 - In the native **TV Shows** list, use the **Episodes** action beneath a Show's title.

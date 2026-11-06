@@ -6,6 +6,7 @@ final class EpisodeAdmin {
     private const COLUMNS = array( 'msc_parent_show' => 'TV Show', 'msc_season_number' => 'Season', 'msc_episode_number' => 'Episode', 'msc_air_date' => 'Air date' );
     public static function boot(): void {
         if ( ! isset( Schema::all()['msc_episode'], Schema::all()['msc_show'] ) ) { return; }
+        EpisodeGroups::boot();
         add_filter( 'manage_msc_episode_posts_columns', array( self::class, 'columns' ), 20 );
         add_action( 'manage_msc_episode_posts_custom_column', array( self::class, 'column' ), 20, 2 );
         add_filter( 'manage_edit-msc_episode_sortable_columns', static fn( $columns ) => $columns + array_combine( array_keys( self::COLUMNS ), array_keys( self::COLUMNS ) ) );
@@ -159,11 +160,11 @@ final class EpisodeAdmin {
         if ( $parent['record'] ) { self::context( array( 'type' => 'msc_episode', 'data' => array( 'parent_show' => $uuid ) ), true ); }
     }
     public static function list_context(): void {
-        $screen = get_current_screen(); if ( ! $screen || 'edit-msc_episode' !== $screen->id ) { return; } $s = self::selection();
-        if ( '' === $s['parent'] ) { return; }
+        $screen = get_current_screen(); if ( ! $screen || 'edit-msc_episode' !== $screen->id || ! Schema::enabled( 'msc_show' ) ) { return; } $s = self::selection();
+        if ( '' === $s['parent'] ) { echo '<div class="notice notice-info"><p><a href="' . esc_url( EpisodeGroups::url() ) . '">Browse Episodes by TV Show and season</a>.</p></div>'; return; }
         if ( ! $s['valid'] ) { echo '<div class="notice notice-error"><p>The TV Show or season filter is invalid. <a href="' . esc_url( self::native_url() ) . '">View all Episodes</a>.</p></div>'; return; }
         $parent = self::parent( 'unassigned' === $s['parent'] ? '' : $s['parent'] );
-        echo '<div class="notice notice-info"><p><strong>Episodes: ' . esc_html( $parent['label'] ) . '</strong> · <a href="' . esc_url( self::native_url() ) . '">All Episodes</a>';
+        echo '<div class="notice notice-info"><p><strong>Episodes: ' . esc_html( $parent['label'] ) . '</strong> · <a href="' . esc_url( EpisodeGroups::url() ) . '">Browse TV Shows</a> · <a href="' . esc_url( EpisodeGroups::url( $s['parent'] ) ) . '">Seasons</a> · <a href="' . esc_url( self::native_url() ) . '">All Episodes</a>';
         if ( $parent['record'] && self::can_add( $parent['record'] ) ) { echo ' · <a href="' . esc_url( self::add_url( $parent['record']['uuid'] ) ) . '">Add Episode to this TV Show</a>'; } echo '</p></div>';
     }
     /** Global catalog scope deliberately includes active draft/unpublished records. */

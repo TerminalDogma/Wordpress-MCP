@@ -73,7 +73,8 @@ final class Plugin {
 		foreach ( Schema::all() as $type => $schema ) {
 			if ( ! Schema::enabled( $type ) || post_type_exists( $type ) ) { continue; }
 			register_post_type( $type, array(
-				'label' => $schema['label'], 'labels' => array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode' )[ $type ] ?? $schema['label'] ), 'public' => true, 'show_in_rest' => true,
+				'label' => $schema['label'], 'labels' => array_filter( array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode' )[ $type ] ?? $schema['label'], 'all_items' => 'msc_episode' === $type ? 'All Episodes' : null ) ), 'public' => true, 'show_in_rest' => true,
+				'show_in_menu' => 'msc_episode' === $type && Schema::enabled( 'msc_show' ) ? 'msc-episodes' : true,
 				'has_archive' => (bool) ( $schema['archive'] ?? true ), 'rewrite' => array( 'slug' => $schema['slug'] ),
 				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'custom-fields' ),
 				'capability_type' => 'post', 'map_meta_cap' => true,

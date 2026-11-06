@@ -67,7 +67,7 @@ The worker is a local development convenience. A production network needs a supe
 
 ## Install the ZIP elsewhere
 
-Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.6.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
+Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.7.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
 
 ## Automated testing
 

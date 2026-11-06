@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.7.0
+
+Episodes now opens a Show-first browser by default, with one row per Show and Episode/season counts. Open a Show's season batches, then manage only the chosen season in the native editor list. Show search and pagination support larger libraries; All Episodes remains available. Counts follow site-specific relationships, drafts, missing season values and season zero. No record migration or title changes are required.
+
 ## 1.6.0
 
 Adds Show-aware Episode administration: parent/season/episode/air-date columns, numeric default ordering, Show and season filters, contextual row titles, and direct Show-to-Episode navigation. Native lists respect local parent and numbering overrides; the paginated Shared Content catalog uses global relationships and supports Show-title search. Scoped Add Episode links preselect the Show, including the native Add New action in a filtered list. Native, ACF and full-field editors expose parent/sibling navigation. Stored titles and canonical UUID relationships are preserved. Includes real WordPress query/permission tests and a browser workflow. See [the guide](episode-administration.md).

@@ -1,8 +1,10 @@
-# Shared Content 1.6.0 verification
+# Shared Content 1.7.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
 
 ## Episode administration
+
+Version 1.7 adds the default Show-first Episodes menu and season-batch navigation. Real WordPress tests cover parent and season aggregation, drafts, missing seasons versus zero, local overrides, Show search, 25-Show pagination and editorial permissions. Chromium checks the top-level menu, Show counts, season counts, the selected season's native list, return navigation and access to All Episodes.
 
 Version 1.6 adds Show-scoped native and global Episode lists, filters, numeric ordering, contextual row titles and parent-prefilled creation. `tests/shared-content/episode-admin.php` exercises actual WordPress admin main queries, draft visibility, empty/missing parents, season zero, missing numbers, sorting, combined inheritance filters, native/global title preservation, pagination, local parent overrides and role restrictions. `episode-admin-browser.py` exercises the real admin lists, sorting controls, scoped creation, Show row actions, ACF navigation and cross-site overrides. These workflows run in the Shared Content GitHub Actions job.
 

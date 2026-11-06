@@ -48,6 +48,32 @@ async def main():
         await page.locator('#wp-submit').click()
         await page.wait_for_url('**/wp-admin/**', timeout=60000, wait_until='domcontentloaded')
         prefix = base + '/site-a/wp-admin/'
+        # Episodes opens the Show-first browser, with All Episodes as a secondary option.
+        await page.goto(prefix + 'index.php')
+        await navigate(page.locator('#toplevel_page_msc-episodes > a'))
+        assert await page.get_by_role('heading', name='Episodes by TV Show', exact=True).count() == 1
+        await page.locator('#msc-show-search').fill(data['tag'])
+        await navigate(page.get_by_role('button', name='Search TV Shows', exact=True))
+        assert await page.locator('.msc-show-groups tbody tr').count() == 2
+        group = page.locator('.msc-show-groups tr[data-parent="' + data['show']['uuid'] + '"]')
+        assert await group.locator('td').nth(1).inner_text() == '3'
+        assert await group.locator('td').nth(2).inner_text() == '4'
+        await page.screenshot(path='/tmp/msc-episode-groups-shows.png', full_page=True)
+        await navigate(group.get_by_role('link', name='View seasons', exact=True))
+        assert await page.locator('.msc-season-groups tbody tr').count() == 3
+        assert await page.locator('.msc-season-groups tr[data-season="1"] td').nth(1).inner_text() == '2'
+        assert await page.locator('.msc-season-groups tr[data-season="unknown"] td').nth(1).inner_text() == '1'
+        await page.screenshot(path='/tmp/msc-episode-groups-seasons.png', full_page=True)
+        await navigate(page.locator('.msc-season-groups tr[data-season="1"]').get_by_role('link', name='Manage Episodes', exact=True))
+        ids = data['posts']['/site-a/']
+        assert await row_ids() == [ids['two'], ids['ten']]
+        assert await page.locator('#toplevel_page_msc-episodes').get_attribute('class') is not None
+        assert 'wp-has-current-submenu' in await page.locator('#toplevel_page_msc-episodes').get_attribute('class')
+        await navigate(page.locator('.notice').get_by_role('link', name='Seasons', exact=True))
+        assert await page.locator('.msc-season-groups tbody tr').count() == 3
+        await navigate(page.get_by_role('link', name='All TV Shows', exact=False))
+        await navigate(page.locator('.msc-episode-groups').get_by_role('link', name='All Episodes', exact=True))
+        assert await page.locator('#the-list').count() == 1
         await page.goto(prefix + 'edit.php?' + urlencode({'post_type': 'msc_episode', 'msc_parent_show': data['show']['uuid']}))
         ids = data['posts']['/site-a/']
         assert await row_ids() == [ids['zero'], ids['two'], ids['ten'], ids['unknown']]
@@ -94,14 +120,19 @@ async def main():
         assert 'S01E02 — Pilot' in await page.locator('.msc-episode-catalog').inner_text()
         assert await page.locator('#msc-parent-show').input_value() == data['show']['uuid']
         await page.screenshot(path='/tmp/msc-episode-admin-global.png', full_page=True)
+        # The newly created global Episode reaches other sites through the queue.
+        wp('for($i=0;$i<100&&\\MSC\\Queue::status()["pending"];$i++){$r=\\MSC\\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Fixture queue failed");}}')
         wp('wp_set_current_user(1);switch_to_blog(3);try{$r=\\MSC\\Plugin::store()->resolved("' + data['episodes']['two']['uuid'] + '");\\MSC\\Plugin::store()->local($r["uuid"],["parent_show"=>"' + data['other']['uuid'] + '","season_number"=>3],[],(int)$r["mapping"]["local_version"]);}finally{restore_current_blog();}')
         await page.goto(base + '/site-b/wp-admin/edit.php?' + urlencode({'post_type': 'msc_episode', 'msc_parent_show': data['show']['uuid']}))
         assert data['posts']['/site-b/']['two'] not in await row_ids()
+        await page.goto(base + '/site-b/wp-admin/admin.php?' + urlencode({'page': 'msc-episodes', 'msc_search': data['tag']}))
+        assert await page.locator('.msc-show-groups tr[data-parent="' + data['show']['uuid'] + '"] td').nth(2).inner_text() == '4'
+        assert await page.locator('.msc-show-groups tr[data-parent="' + data['other']['uuid'] + '"] td').nth(2).inner_text() == '2'
         await page.goto(base + '/site-b/wp-admin/admin.php?' + urlencode({'page': 'msc', 'type': 'msc_episode', 'msc_parent_show': data['show']['uuid']}))
         assert 'S01E02 — Pilot' in await page.locator('.msc-episode-catalog').inner_text(), 'Global parentage must remain distinct from a local move.'
         assert not errors, errors
         await browser.close()
-    print('PASS: Native and Shared Content Episode lists, Show/season filters, numeric sorting, scoped creation, Show row actions, ACF navigation, draft visibility and local/global parent overrides.')
+    print('PASS: Show-first Episodes menu, Show/season batches and counts, native and Shared Content lists, numeric sorting, scoped creation, ACF navigation and local/global parent overrides.')
 
 try:
     asyncio.run(main())
