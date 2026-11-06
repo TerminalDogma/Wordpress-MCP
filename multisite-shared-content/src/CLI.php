@@ -1,6 +1,8 @@
 <?php
 namespace MSC;
 final class CLI {
+	/** One-time Site A catch-up. Promotes source overrides and resets conflicting destination overrides. */
+	public function reconcile(): void { \WP_CLI::success( 'Site A catch-up: ' . wp_json_encode( SiteAUpdate::run() ) ); }
 	/** Process durable jobs. ## OPTIONS
 	 * [--limit=<number>]
 	 * : Maximum jobs; runtime is capped at 20 seconds.

@@ -119,7 +119,7 @@ final class Acf {
 		return Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) );
 	}
 	public static function handle(): void {
-		try { $r = self::save( wp_unslash( $_POST ) ); wp_safe_redirect( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . sanitize_key( $_POST['scope'] ) . '&updated=1' ) ); exit; }
+		try { $r = self::save( wp_unslash( $_POST ) ); if ( 'global' === $_POST['scope'] ) { Propagation::send( $r ); } wp_safe_redirect( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . sanitize_key( $_POST['scope'] ) . '&updated=1' ) ); exit; }
 		catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ), 'Shared fields were not saved', array( 'response' => str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : ( $e instanceof \InvalidArgumentException ? 400 : 403 ), 'back_link' => true ) ); }
 	}
 	public static function override_control( array $field ): void {
@@ -134,17 +134,18 @@ final class Acf {
 		if ( ! function_exists( 'acf_form' ) ) { wp_die( 'Activate Advanced Custom Fields to use this editor.' ); }
 		$r = Plugin::store()->resolved( sanitize_text_field( $_GET['record'] ?? '' ) );
 		if ( ! $r || empty( $r['mapping']['post_id'] ) || ! current_user_can( 'edit_post', (int) $r['mapping']['post_id'] ) ) { wp_die( 'A local shared post and edit permission are required.' ); }
-		self::$global = 'global' === ( $_GET['scope'] ?? '' );
+		self::$global = Admin::global_scope( $_GET['scope'] ?? '' );
 		try { Permissions::require( self::$global ? 'msc_edit_global' : 'msc_override_local', $r['type'] ); } catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ) ); }
 		self::$editing = $r;
 		echo '<div class="wrap"><h1>' . esc_html( Schema::get( $r['type'] )['label'] ) . ' — ACF Shared Fields</h1><h2>' . esc_html( $r['data']['title'] ?? '' ) . '</h2><p><strong>' . ( self::$global ? 'GLOBAL EDITING — Changes affect every inheriting site.' : 'LOCAL EDITING — Check Override to customize a field; uncheck to reset it.' ) . '</strong></p>';
-		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
+		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( self::$global ? 'global' : 'local' ) ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
 		EpisodeAdmin::context( $r, self::$global );
-		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. Other sites update through the synchronization queue.</p></div>'; }
+		PersonReview::notice( $r );
+		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. See Site synchronization below for global delivery and local overrides.</p></div>'; }
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
 		acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'field_groups' => array( 'group_msc_' . $r['type'] ), 'form' => false, 'honeypot' => false ) );
-		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' ); echo '</form></div>';
+		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' ); echo '</form>'; if ( self::$global ) { Propagation::render( $r ); } echo '</div>';
 		self::$editing = null;
 	}
 }

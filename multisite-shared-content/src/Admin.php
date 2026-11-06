@@ -8,8 +8,11 @@ final class Admin {
 		add_action( 'admin_notices', array( self::class, 'notices' ) );
 		add_action( 'network_admin_notices', array( self::class, 'notices' ) );
 		add_action( 'add_meta_boxes', array( self::class, 'metaboxes' ) );
+		add_filter( 'get_edit_post_link', static function ( $link, $post ) { if ( ! current_user_can( 'msc_edit_global' ) || ! isset( Schema::all()[ get_post_type( $post ) ?: '' ] ) ) { return $link; } $r = Plugin::store()->by_post( (int) $post ); return $r && Schema::enabled( $r['type'] ) ? admin_url( 'admin.php?page=msc&mode=global&record=' . $r['uuid'] ) : $link; }, 20, 2 );
+		add_filter( 'post_row_actions', static function ( $actions, $post ) { if ( isset( Schema::all()[ $post->post_type ] ) && current_user_can( 'msc_edit_global' ) && current_user_can( 'msc_override_local' ) && Plugin::store()->by_post( $post->ID ) ) { $actions['msc_edit_locally'] = '<a href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) ) . '">Edit locally (WordPress)</a>'; } return $actions; }, 30, 2 );
 		add_action( 'admin_enqueue_scripts', static function () {
 			wp_enqueue_style( 'msc-admin', plugins_url( 'assets/admin.css', MSC_FILE ), array(), MSC_VERSION );
+			if ( in_array( $_GET['page'] ?? '', array( 'msc-import', 'msc-omdb' ), true ) ) { wp_enqueue_script( 'msc-import-selection', plugins_url( 'assets/import-selection.js', MSC_FILE ), array(), MSC_VERSION, true ); }
 			if ( in_array( $_GET['page'] ?? '', array( 'msc', 'msc-acf' ), true ) ) {
 				wp_enqueue_media();
 				wp_enqueue_script( 'msc-media', plugins_url( 'assets/media.js', MSC_FILE ), array( 'media-editor' ), MSC_VERSION, true );
@@ -97,10 +100,11 @@ final class Admin {
 			if ( count( $ids ) === 50 ) { echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&type=' . $type . '&after=' . end( $ids ) ) ) . '">Next page</a></p>'; }
 			echo '</div>'; return;
 		}
-		$global = ! $r || 'global' === ( $_GET['mode'] ?? '' );
+		$global = ! $r || self::global_scope( $_GET['mode'] ?? '' );
 		if ( ! current_user_can( $global ? ( $r ? 'msc_edit_global' : 'msc_create_global' ) : 'msc_override_local' ) ) { echo '<p>You do not have permission for this editing mode.</p></div>'; return; }
 		if ( ! $r ) { EpisodeAdmin::new_context( $type ); }
 		if ( $r ) {
+			PersonReview::notice( $r );
 			EpisodeAdmin::context( $r, $global );
 			if ( function_exists( 'acf_form' ) ) { echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( $global ? 'global' : 'local' ) ) ) . '">Edit supported fields with ACF</a></p>'; }
 			echo '<p><code>' . esc_html( $r['uuid'] ) . '</code> · Global revision ' . esc_html( $r['version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( $global ? 'local' : 'global' ) ) ) . '">' . ( $global ? 'Switch to local overrides' : 'Switch to global editing' ) . '</a></p>';
@@ -127,6 +131,7 @@ final class Admin {
 			echo '</select></label><p class="description">Removed deletes only the local post. Choosing another status recreates it with its overrides preserved.</p>';
 		}
 		submit_button( $global ? 'Save global record' : 'Save local overrides' ); echo '</form>';
+		if ( $r && $global ) { Propagation::render( $r ); }
 		if ( $r && $global && 'msc_show' === $r['type'] ) { self::episodes( $r ); }
 		if ( $r && current_user_can( 'msc_edit_global' ) ) {
 			echo '<details><summary>Global revision history and recovery</summary><ul>';
@@ -159,6 +164,7 @@ final class Admin {
 		self::hidden( 'msc_expected_version', $m['local_version'] );
 		echo '<p>Editing title, content, excerpt, or slug here creates a <strong>local override</strong>. Use Manage fields to view global values, reset inheritance, edit media, or make a global change.</p><p><code>' . esc_html( $r['uuid'] ) . '</code> · ' . esc_html( count( Plugin::store()->overrides( (int) $r['id'] ) ) ) . ' overrides · local revision ' . esc_html( $m['local_version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">Manage fields and inheritance</a></p>';
 	}
+	public static function global_scope( $scope ): bool { return 'global' === $scope || '' === $scope && current_user_can( 'msc_edit_global' ); }
 	public static function network_page(): void {
 		echo '<div class="wrap msc"><h1>Shared Content Network</h1><h2>Synchronization</h2><p>' . esc_html( wp_json_encode( Queue::status() ) ) . '</p><p>Run a real system cron every minute for reliable propagation: <code>wp msc queue --limit=100</code>. Pending does not mean propagated.</p>';
 		global $wpdb; $jobs = $wpdb->get_results( 'SELECT job_key,attempts,state,last_error FROM ' . Database::table( 'jobs' ) . " WHERE last_error<>'' ORDER BY id LIMIT 50", ARRAY_A );
@@ -188,10 +194,10 @@ final class Admin {
 				}
 				if ( 'global' === $action ) {
 					$r = $r ? Plugin::store()->update( $id, $values, absint( $_POST['version'] ) ) : Plugin::store()->create( $type, $values );
-					Plugin::materializer()->sync( (int) $r['id'], get_current_blog_id() );
-					self::notice( 'Global revision saved. Other sites are queued; check synchronization status for propagation.' );
+					Propagation::send( $r );
+					self::notice( 'Global revision saved. Check Site synchronization for each site’s delivery and local overrides.' );
 				} else { Plugin::store()->local( $id, $values, $reset, absint( $_POST['local_version'] ), isset( $_POST['status'] ) ? sanitize_key( $_POST['status'] ) : null ); self::notice( 'Local overrides saved.' ); }
-				$redirect = admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . ( 'global' === $action ? '&mode=global' : '' ) );
+				$redirect = admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . ( 'global' === $action ? '&mode=global' : '&mode=local' ) );
 			} elseif ( 'category' === $action ) { Taxonomies::add_choice( sanitize_key( $_POST['taxonomy'] ?? '' ), wp_unslash( $_POST['category_name'] ?? '' ) ); self::notice( 'Category choice added for all sites.' ); $redirect = network_admin_url( 'admin.php?page=msc-network#categories' ); } elseif ( 'schemas' === $action ) { Schema::save( json_decode( wp_unslash( $_POST['schemas'] ), true, 64, JSON_THROW_ON_ERROR ) ); self::notice( 'Schemas saved. Re-save participation to rematerialize sites after schema changes.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
 			elseif ( 'participate' === $action ) { Schema::participate( absint( $_POST['site'] ), array_map( 'sanitize_key', (array) ( $_POST['types'] ?? array() ) ) ); self::notice( 'Participation saved; materialization is queued.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }
 			elseif ( 'retry' === $action ) { Queue::retry(); self::notice( 'Failed jobs queued for retry.' ); $redirect = network_admin_url( 'admin.php?page=msc-network' ); }

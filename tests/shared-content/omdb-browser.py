@@ -98,6 +98,11 @@ async def main():
         await search('c', uuid)
         assert await page.get_by_role('button', name='Import selected global fields', exact=True).count() == 1
         assert await page.locator('input[name="fields[]"]:checked').count() == 0, 'Existing fields must start unchecked.'
+        master = page.get_by_role('checkbox', name='Select all import data', exact=True)
+        await master.check()
+        assert await page.locator('[data-msc-import-option]:not(:disabled):not(:checked)').count() == 0
+        await master.uncheck()
+        assert await page.locator('input[name="fields[]"]:checked').count() == 0
         await page.locator('input[name="fields[]"][value=runtime]').check()
         await page.get_by_role('button', name='Import selected global fields', exact=True).click()
         await page.wait_for_url('**done=*', timeout=60000)

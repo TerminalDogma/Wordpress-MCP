@@ -1,5 +1,7 @@
 # Test shared Movies, TV Shows, Episodes and People on your Mac
 
+Existing installations should read [the 1.8 update guide](update-1.8.md): setup includes the requested one-time Site A catch-up and resets conflicting destination shared-field overrides with recovery snapshots.
+
 This adds the **Multisite Shared Content** plugin to the Docker environment already in this repository. It creates **three independent test subsites**, activates ACF and MSC, enrolls those subsites, and starts a local background synchronization worker. Version 1.3 also styles the sites as Site A (green), Site B (cream/red) and Site C (purple), with detail templates, linked People, native categories and image previews. See [the presentation guide](../multisite-shared-content/docs/presentation.md).
 
 ## Install or update
@@ -67,7 +69,7 @@ The worker is a local development convenience. A production network needs a supe
 
 ## Install the ZIP elsewhere
 
-Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.7.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
+Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.8.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
 
 ## Automated testing
 

@@ -161,7 +161,9 @@ final class OpenSources {
         }
         foreach ( $roles as $property => $role ) { foreach ( array_slice( self::ids( $e, $property ), 0, 30 ) as $other ) {
             $person = $entities[ $other ] ?? array(); $name = self::label( $person ); if ( '' === $name || ! in_array( 'Q5', self::ids( $person, 'P31' ), true ) ) { continue; }
-            $key = 'wikidata:' . $other; $credits[ $key ] = array( 'provider' => 'wikidata', 'id' => $other, 'name' => $name, 'fields' => array( 'title' => $name ), 'source' => self::source( 'wikidata', 'https://www.wikidata.org/wiki/' . $other ), 'roles' => array_values( array_unique( array_merge( $credits[ $key ]['roles'] ?? array(), array( $role ) ) ) ) );
+            $person_ids = array( 'wikidata' => $other ); $person_imdb = self::claims( $person, 'P345' )[0] ?? ''; if ( is_string( $person_imdb ) && preg_match( '/^nm[0-9]{7,12}$/D', $person_imdb ) ) { $person_ids['imdb'] = $person_imdb; }
+            $person_fields = array( 'title' => $name ); $born = self::claims( $person, 'P569' )[0] ?? null; if ( is_array( $born ) && ( $date = self::wiki_date( $born ) ) ) { $person_fields['birth_date'] = $date; }
+            $key = 'wikidata:' . $other; $credits[ $key ] = array( 'provider' => 'wikidata', 'id' => $other, 'external_ids' => $person_ids, 'name' => $name, 'fields' => $person_fields, 'source' => self::source( 'wikidata', 'https://www.wikidata.org/wiki/' . $other ), 'roles' => array_values( array_unique( array_merge( $credits[ $key ]['roles'] ?? array(), array( $role ) ) ) ) );
         } }
         $article = $e['sitelinks']['enwiki']['title'] ?? '';
         if ( '' !== $article ) { try {

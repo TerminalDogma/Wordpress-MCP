@@ -3,6 +3,15 @@ namespace MSC;
 
 /** Credit only the values and assets actually displayed on this site. */
 final class Attribution {
+    private static array $footer = array();
+    private static function collect_html( string $label, string $html ): string { if ( $html ) { self::$footer[ OpenImport::hash( array( $label, $html ) ) ] = array( 'label' => $label, 'html' => $html ); } return ''; }
+    public static function collect( array $record, ?array $fields = null ): string { return self::collect_html( (string) ( $record['data']['title'] ?? 'Content' ), self::render( $record, $fields ) ); }
+    public static function collect_image( array $record ): string { return self::collect_html( ( $record['data']['title'] ?? 'Content' ) . ' — image', self::image_html( $record ) ); }
+    public static function collect_media( array $ref, string $title ): string { return self::collect_html( $title . ' — gallery image', self::media_html( $ref ) ); }
+    public static function footer(): string {
+        if ( ! self::$footer ) { return ''; } $html = '<section class="msc-footer-credits"><details><summary>Sources and image credits</summary><ul>';
+        foreach ( self::$footer as $credit ) { $html .= '<li><strong>' . esc_html( $credit['label'] ) . '</strong>' . $credit['html'] . '</li>'; } return $html . '</ul></details></section>';
+    }
     public static function source_html( array $source ): string {
         $html = '<span class="msc-source"><a href="' . esc_url( $source['url'] ?? '' ) . '" rel="license noopener">' . esc_html( $source['attribution'] ?? $source['provider'] ?? 'Source' ) . '</a>';
         if ( ! empty( $source['credit'] ) ) { $html .= ' · ' . esc_html( $source['credit'] ); }

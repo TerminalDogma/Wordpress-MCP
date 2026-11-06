@@ -1,6 +1,10 @@
-# Shared Content 1.7.0 verification
+# Shared Content 1.8.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
+
+## Import review, global delivery and public navigation
+
+Version 1.8 tests duplicate draft review, one Person credited as writer/director, explicit namesakes, source ID reuse, curated biographies, global defaults/Edit links, immediate three-site delivery with the worker stopped, retained overrides, injected site failure/retry, recovery-backed Site A reconciliation and idempotency, published-only seasons, 50-Episode pagination and footer collection. Browser workflows cover real duplicate/409 responses, Select all/partial selection, both editor save paths, per-site status, public season links at desktop/mobile widths and footer-only text/image attribution.
 
 ## Episode administration
 

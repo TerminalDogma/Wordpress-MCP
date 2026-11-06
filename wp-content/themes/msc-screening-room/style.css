@@ -1,7 +1,7 @@
 /*
 Theme Name: MSC Screening Room
 Description: Film, television, episode and person templates with three distinct site identities.
-Version: 1.7.0
+Version: 1.8.0
 Requires at least: 6.9
 Requires PHP: 8.2
 License: GPL-2.0-or-later
@@ -19,3 +19,5 @@ body[data-identity=b] .site-header{border-bottom:3px double var(--line)}body[dat
 .msc-attribution,.msc-image-credit{font-family:var(--font-body,sans-serif);font-size:12px;line-height:1.6;overflow-wrap:anywhere;padding:12px 0}.catalog-card>.msc-attribution,.catalog-card>.msc-image-credit{padding:0 18px 12px}.msc-source a{text-decoration:underline;display:inline}.person-credit{min-width:0}
 
 .hero-art:has(.msc-image-credit) .art-stamp{top:16px;bottom:auto}
+
+.season-pagination,.episode-pagination{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}.season-pagination a,.episode-pagination a{padding:9px 15px;border:1px solid var(--line);border-radius:4px;font-size:14px}.season-pagination a[aria-current=page]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.episode-pagination span{align-self:center;color:var(--muted);font-size:13px}.msc-footer-credits{flex-basis:100%;width:100%;font-size:12px;line-height:1.6;overflow-wrap:anywhere}.site-footer{flex-wrap:wrap}.msc-footer-credits summary{cursor:pointer}.msc-footer-credits ul{padding-left:18px}.msc-footer-credits li{margin:14px 0}.msc-footer-credits a{text-decoration:underline}.msc-footer-credits .msc-attribution,.msc-footer-credits .msc-image-credit{margin:4px 0}

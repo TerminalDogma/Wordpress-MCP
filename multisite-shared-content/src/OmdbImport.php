@@ -91,14 +91,15 @@ final class OmdbImport {
                 if ( 'relationship_list' !== ( $schema['fields'][ $role ]['type'] ?? '' ) || 'msc_person' !== ( $schema['fields'][ $role ]['target'] ?? '' ) ) { continue; }
                 $names = array_slice( self::names( self::text( $data, $source ) ), 0, 30 ); if ( ! $names ) { continue; }
                 $fields[ $role ] = $names;
-                foreach ( $names as $name ) { $hash = substr( hash( 'sha256', $name ), 0, 24 ); $credits[ $hash ] = array( 'name' => $name, 'roles' => array_unique( array_merge( $credits[ $hash ]['roles'] ?? array(), array( $role ) ) ) ); $same = array_keys( array_filter( $people, static fn( $title ) => 0 === strcasecmp( $title, $name ) ) ); $credits[ $hash ]['suggested'] = 1 === count( $same ) ? $same[0] : ( count( $same ) ? '' : 'new' ); }
+                foreach ( $names as $name ) { $hash = substr( hash( 'sha256', PersonIdentity::name( $name ) ), 0, 24 ); $credits[ $hash ] = array( 'name' => $credits[ $hash ]['name'] ?? $name, 'roles' => array_unique( array_merge( $credits[ $hash ]['roles'] ?? array(), array( $role ) ) ) ); }
             }
         }
         $parent = '';
         if ( 'msc_episode' === $type && ! empty( $data['seriesID'] ) && preg_match( '/^tt[0-9]{7,12}$/D', $data['seriesID'] ) ) { $parents = self::matches( $data['seriesID'] ); if ( 1 === count( $parents ) && 'msc_show' === $parents[0]['type'] && 'active' === $parents[0]['state'] ) { $parent = $parents[0]['uuid']; } }
         if ( 'msc_episode' === $type && 'relationship' === ( $schema['fields']['parent_show']['type'] ?? '' ) ) { $fields['parent_show'] = $parent; }
         $poster_field = 'msc_episode' === $type ? 'episode_image' : 'poster';
-        $snapshot = array( 'user' => get_current_user_id(), 'site' => get_current_blog_id(), 'network' => get_current_network_id(), 'type' => $type, 'imdb' => $imdb, 'data' => $data, 'fields' => $fields, 'credits' => $credits, 'target' => $r['uuid'] ?? '', 'version' => (int) ( $r['version'] ?? 0 ), 'warnings' => $warnings, 'poster_field' => 'media' === ( $schema['fields'][ $poster_field ]['type'] ?? '' ) ? $poster_field : '' );
+        $person_matches = PersonIdentity::review( $credits ); foreach ( $credits as $key => &$credit ) { $credit['suggested'] = $person_matches[ $key ]['suggested']; } unset( $credit );
+        $snapshot = array( 'user' => get_current_user_id(), 'site' => get_current_blog_id(), 'network' => get_current_network_id(), 'type' => $type, 'imdb' => $imdb, 'data' => $data, 'fields' => $fields, 'credits' => $credits, 'person_matches' => $person_matches, 'target' => $r['uuid'] ?? '', 'version' => (int) ( $r['version'] ?? 0 ), 'warnings' => $warnings, 'poster_field' => 'media' === ( $schema['fields'][ $poster_field ]['type'] ?? '' ) ? $poster_field : '' );
         $token = wp_generate_uuid4(); set_site_transient( 'msc_omdb_preview_' . $token, $snapshot, 15 * MINUTE_IN_SECONDS );
         $snapshot['token'] = $token; return $snapshot;
     }
@@ -156,7 +157,7 @@ final class OmdbImport {
             $used = array_filter( $s['credits'], static fn( $credit ) => (bool) array_intersect( $roles, $credit['roles'] ) );
             foreach ( $used as $key => $credit ) {
                 $choice = $choices[ $key ] ?? '';
-                if ( 'new' === $choice ) { Permissions::require( 'msc_create_global', 'msc_person' ); self::person_data( $credit, $roles, $s['imdb'] ); }
+                if ( in_array( $choice, array( 'new', 'new_distinct' ), true ) ) { Permissions::require( 'msc_create_global', 'msc_person' ); self::person_data( $credit, $roles, $s['imdb'] ); }
                 elseif ( $choice ) { $person = Plugin::store()->get( $choice ); if ( ! $person || 'msc_person' !== $person['type'] || 'active' !== $person['state'] ) { throw new OmdbError( 'A selected Person is unavailable. Open a fresh preview.' ); } }
             }
             $warnings = $s['warnings']; $media = null;
@@ -165,24 +166,26 @@ final class OmdbImport {
                 try { $media = self::poster( $s['imdb'], $s['data']['Poster'] ); $values[ $s['poster_field'] ] = $media; }
                 catch ( OmdbError $e ) { if ( 403 === $e->status ) { throw $e; } $warnings[] = 'The poster was unavailable. Other selected fields were saved; the current image was retained. Retry from a fresh preview.'; }
             }
-            $created = array();
+            $created = $touched = array();
             try {
-                $saved = Database::transaction( static function () use ( $s, $values, $used, $choices, $roles, $r, &$created ) {
+                $saved = PersonIdentity::locked( static function () use ( $s, $values, $used, $choices, $roles, $r, &$created, &$touched ) { return Database::transaction( static function () use ( $s, $values, $used, $choices, $roles, $r, &$created, &$touched ) {
                     $linked = array();
                     foreach ( $used as $key => $credit ) {
                         $choice = $choices[ $key ] ?? ''; if ( ! $choice ) { continue; }
-                        if ( 'new' === $choice ) {
-                            $person = Plugin::store()->create( 'msc_person', self::person_data( $credit, $roles, $s['imdb'] ) ); $choice = $person['uuid']; $created[] = $choice;
-                        }
+                        $person = PersonIdentity::resolve( $credit['name'], array(), '', $choice );
+                        if ( ! $person ) { $person = PersonIdentity::remember( Plugin::store()->create( 'msc_person', self::person_data( $credit, $roles, $s['imdb'] ) ) ); $created[] = $person['uuid']; }
+                        elseif ( current_user_can( 'msc_edit_global' ) && 'multiselect' === ( Schema::get( 'msc_person' )['fields']['professions']['type'] ?? '' ) ) { $professions = PersonIdentity::professions( $person, array_intersect( $roles, $credit['roles'] ) ); if ( $professions !== ( $person['data']['professions'] ?? array() ) ) { $person = PersonIdentity::remember( Plugin::store()->update( $person['uuid'], array( 'professions' => $professions ), (int) $person['version'] ) ); } }
+                        $choice = $person['uuid'];
+                        $touched[] = $choice;
                         $linked[ $key ] = $choice;
                     }
-                    foreach ( $roles as $role ) { foreach ( $s['fields'][ $role ] as $name ) { $key = substr( hash( 'sha256', $name ), 0, 24 ); if ( isset( $linked[ $key ] ) ) { $values[ $role ][] = $linked[ $key ]; } } }
+                    foreach ( $roles as $role ) { foreach ( $s['fields'][ $role ] as $name ) { $key = substr( hash( 'sha256', PersonIdentity::name( $name ) ), 0, 24 ); if ( isset( $linked[ $key ] ) ) { $values[ $role ][] = $linked[ $key ]; } } $values[ $role ] = array_values( array_unique( $values[ $role ] ) ); }
                     if ( ! $r ) { return Plugin::store()->create( $s['type'], $values ); }
                     $changes = array_filter( $values, static fn( $value, $key ) => ! array_key_exists( $key, $r['data'] ) || $r['data'][ $key ] !== $value, ARRAY_FILTER_USE_BOTH );
                     return $changes ? Plugin::store()->update( $r['uuid'], $changes, $s['version'] ) : $r;
-                } );
-            } catch ( \Throwable $e ) { if ( $media ) { wp_delete_attachment( $media['attachment_id'], true ); } throw $e; }
-            foreach ( array_merge( $created, array( $saved['uuid'] ) ) as $uuid ) { try { $record = Plugin::store()->get( $uuid ); Plugin::materializer()->sync( (int) $record['id'], get_current_blog_id() ); } catch ( \Throwable $e ) { $warnings[] = 'The shared record is saved; its local post is queued for synchronization.'; } }
+                } ); } );
+            } catch ( \Throwable $e ) { if ( $media ) { wp_delete_attachment( $media['attachment_id'], true ); } if ( $e instanceof SourceError ) { throw new OmdbError( $e->getMessage(), $e->status ); } throw $e; }
+            foreach ( array_unique( array_merge( $touched, array( $saved['uuid'] ) ) ) as $uuid ) { try { Propagation::send( Plugin::store()->get( $uuid ) ); } catch ( \Throwable $e ) { $warnings[] = 'The shared record is saved; delivery remains queued on one or more sites.'; } }
             return array( 'record' => $saved, 'people' => $created, 'warnings' => array_values( array_unique( $warnings ) ) );
         } );
     }

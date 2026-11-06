@@ -17,3 +17,4 @@ wp_test config set MSC_OPEN_TEST_FIXTURES true --raw
 wp_test plugin activate msc-open-fixtures --network
 wp_test eval 'update_network_option(get_current_network_id(),"msc_open_fixture_seed",random_int(500000000,899999000));foreach(["tvmaze","wikidata","wikipedia","commons"] as $p){delete_site_transient("msc_open_rate_".$p);delete_site_transient("msc_open_backoff_".$p);}'
 python3 tests/shared-content/open-browser.py
+python3 tests/shared-content/import-review-browser.py

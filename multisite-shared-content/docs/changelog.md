@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.8.0
+
+Person imports check existing drafts across roles/providers and require review of possible name matches. Confirmed identities reuse one Person and accumulate professions. Duplicate People lists existing possible matches. Import previews include Select all. Editors and standard Edit links default to global mode when permitted. Global saves attempt immediate delivery and show per-site status/retry controls. Setup runs the requested recovery-backed Site A catch-up, resetting conflicting destination overrides. Public TV Show pages paginate by season; source and image credits appear together in the footer. See the source package's `docs/update-1.8.md`.
+
 ## 1.7.0
 
 Episodes now opens a Show-first browser by default, with one row per Show and Episode/season counts. Open a Show's season batches, then manage only the chosen season in the native editor list. Show search and pagination support larger libraries; All Episodes remains available. Counts follow site-specific relationships, drafts, missing season values and season zero. No record migration or title changes are required.

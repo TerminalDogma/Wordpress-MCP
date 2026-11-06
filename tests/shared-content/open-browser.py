@@ -44,7 +44,11 @@ async def main():
         await page.fill('#user_login', config['WORDPRESS_ADMIN_USER'])
         await page.fill('#user_pass', config['WORDPRESS_ADMIN_PASSWORD'])
         await page.click('#wp-submit')
-        await page.wait_for_url('**/wp-admin/**')
+        try:
+            await page.wait_for_url('**/wp-admin/**', timeout=60000, wait_until='domcontentloaded')
+        except Exception as error:
+            message = await page.locator('#login_error').inner_text() if await page.locator('#login_error').count() else 'No login error message.'
+            raise RuntimeError('WordPress login did not reach admin: ' + page.url + ' ' + message) from error
         async def navigate(role, name, first=False):
             async with page.expect_navigation(wait_until='load', timeout=60000):
                 locator = page.get_by_role(role, name=name, exact=True)
@@ -59,11 +63,17 @@ async def main():
             await page.wait_for_url('**done=*', timeout=60000)
             href = await page.get_by_role('link', name='All fields and publishing', exact=True).get_attribute('href')
             return parse_qs(urlparse(href).query)['record'][0]
+        async def review_fixture_namesakes():
+            # Each fixture seed represents different source identities with the same display names.
+            for select in await page.locator('.msc-person-choices select').all():
+                if await select.locator('option[value=new_distinct]').count():
+                    await select.select_option('new_distinct')
         await search('msc_episode', 'Open Show ' + str(seed))
         await navigate('link', 'Choose episodes from Open Show ' + str(seed))
         assert 'Import or connect this TV Show' in await page.locator('body').inner_text(), await page.locator('.wrap.msc').inner_text()
         await navigate('link', 'Import TV Show first')
         assert await page.locator('.msc-omdb-preview img').count() == 0, 'TVmaze images must be excluded.'
+        await review_fixture_namesakes()
         await navigate('button', 'Create shared record')
         show = await receipt()
         await navigate('link', 'Choose seasons and episodes')
@@ -87,6 +97,7 @@ async def main():
         await search('msc_movie', 'Open Film ' + str(seed))
         await navigate('link', 'Preview Open Film ' + str(seed))
         assert 'Wikipedia contributors' in await page.locator('.msc-omdb-preview').inner_text()
+        await review_fixture_namesakes()
         await page.locator('input[name=image]').check()
         await navigate('button', 'Create shared record')
         movie = await receipt()
@@ -94,9 +105,12 @@ async def main():
         assert await page.locator('.msc-omdb-result').count() == 2, 'Namesakes remain separately selectable.'
         await navigate('link', 'Preview Alex Sharedname', first=True)
         assert await page.locator('input[name="fields[]"]:checked').count() == 0
-        for field in ['content', 'excerpt', 'birth_date', 'country', 'professions']:
-            await page.locator('input[name="fields[]"][value=' + field + ']').check()
-        await page.locator('input[name=image]').check()
+        master = page.get_by_role('checkbox', name='Select all import data', exact=True)
+        await master.check()
+        assert await page.locator('[data-msc-import-option]:not(:disabled):not(:checked)').count() == 0
+        await page.locator('input[name="fields[]"][value=country]').uncheck()
+        assert await master.evaluate('(input) => input.indeterminate')
+        await master.check()
         await navigate('button', 'Import selected global fields')
         person = await receipt()
         data = wp('$r=\\MSC\\Plugin::store()->get("' + person + '");echo wp_json_encode($r["data"]);')
@@ -107,8 +121,11 @@ async def main():
         for uuid in [movie, person]:
             url = wp('$r=\\MSC\\Plugin::store()->resolved("' + uuid + '");echo wp_json_encode(get_permalink((int)$r["mapping"]["post_id"]));')
             await page.goto(url)
+            await page.locator('footer .msc-footer-credits summary').click()
             assert 'Wikipedia contributors' in '\n'.join(await page.locator('.msc-attribution').all_inner_texts())
-            assert 'Fixture Photographer' in await page.locator('.hero-art .msc-image-credit').inner_text()
+            assert 'Fixture Photographer' in '\n'.join(await page.locator('footer .msc-image-credit').all_inner_texts())
+            assert await page.locator('main .msc-attribution,main .msc-image-credit').count() == 0
+            assert await page.locator('footer .msc-footer-credits').count() == 1
             assert await page.locator('.hero-art img').evaluate('(img) => img.complete && img.naturalWidth > 0')
         await page.set_viewport_size({'width': 390, 'height': 844})
         assert await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth + 1'), 'Credits must fit on mobile.'

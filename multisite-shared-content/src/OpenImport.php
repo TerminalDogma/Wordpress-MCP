@@ -47,7 +47,8 @@ final class OpenImport {
         self::validate_type( $type ); $s = OpenSources::details( $provider, $id, $type );
         $matches = self::matches( $type, $s['external_ids'] );
         if ( count( $matches ) > 1 ) { throw new SourceError( 'Source IDs identify multiple shared records. Resolve these before importing.', 409 ); }
-        $r = $target ? Plugin::store()->get( $target ) : ( $matches[0] ?? null );
+        $person_match = 'msc_person' === $type ? PersonIdentity::assess( $s['fields']['title'] ?? '', $s['external_ids'], $s['fields']['birth_date'] ?? '' ) : array( 'strong' => array(), 'possible' => array() );
+        $r = $target ? Plugin::store()->get( $target ) : ( $matches[0] ?? ( $person_match['strong'] ? Plugin::store()->get( array_key_first( $person_match['strong'] ) ) : null ) );
         if ( $target && ! $r || $r && $r['type'] !== $type || $r && $matches && $matches[0]['uuid'] !== $r['uuid'] ) { throw new SourceError( 'The destination is unavailable or another shared record already uses this identity.', 409 ); }
         if ( $r ) { self::compatible( $r, $s['external_ids'] ); }
         Permissions::require( $r ? 'msc_edit_global' : 'msc_create_global', $type );
@@ -62,6 +63,7 @@ final class OpenImport {
         foreach ( Schema::defaults()[ $type ]['fields'] as $key => $definition ) { if ( ! isset( $definition['property'], $original[ $key ] ) ) { continue; } foreach ( Schema::get( $type )['fields'] as $dest => $field ) { if ( ( $field['property'] ?? '' ) === $definition['property'] && isset( $s['field_sources'][ $key ] ) ) { $s['field_sources'][ $dest ] = $s['field_sources'][ $key ]; } } }
         $s['roles'] = array();
         if ( Schema::enabled( 'msc_person' ) ) { foreach ( $s['credits'] as $credit ) { foreach ( $credit['roles'] as $role ) { $field = Schema::get( $type )['fields'][ $role ] ?? array(); if ( 'relationship_list' === ( $field['type'] ?? '' ) && 'msc_person' === ( $field['target'] ?? '' ) ) { $s['roles'][ $role ][] = $credit['name']; } } } }
+        $s['person_matches'] = PersonIdentity::review( $s['credits'] ); $s['person_candidates'] = ! $r ? $person_match['possible'] : array();
         $s += array( 'target' => $r['uuid'] ?? '', 'version' => (int) ( $r['version'] ?? 0 ) );
         $s['owner'] = array( get_current_network_id(), get_current_blog_id(), get_current_user_id() );
         $s['token'] = wp_generate_uuid4(); set_site_transient( 'msc_open_preview_' . $s['token'], $s, 30 * MINUTE_IN_SECONDS ); return $s;
@@ -100,28 +102,38 @@ final class OpenImport {
             return array( 'site_id' => get_current_blog_id(), 'attachment_id' => (int) $attachment );
         } finally { if ( is_file( $tmp ) ) { wp_delete_file( $tmp ); } }
     }
-    private static function person( array $credit ): array {
-        return self::locked( array( $credit['provider'] => $credit['id'] ), static function () use ( $credit ) {
-            $ids = array( $credit['provider'] => $credit['id'] ); $matches = self::matches( 'msc_person', $ids );
-            if ( count( $matches ) > 1 ) { throw new SourceError( 'A credited Person has duplicate source IDs. Resolve the duplicate first.', 409 ); }
-            if ( $matches ) { self::compatible( $matches[0], $ids ); return $matches[0]; }
+    private static function person( array $credit, string $choice ): array {
+        $ids = PersonIdentity::credit_ids( $credit );
+        return self::locked( $ids, static function () use ( $credit, $choice, $ids ) {
+            $existing = PersonIdentity::resolve( $credit['name'], $ids, $credit['fields']['birth_date'] ?? '', $choice );
+            if ( $existing ) {
+                self::compatible( $existing, $ids ); $values = array();
+                $external = array_replace( (array) ( $existing['data']['external_ids'] ?? array() ), $ids );
+                if ( $external !== ( $existing['data']['external_ids'] ?? array() ) ) { Permissions::require( 'msc_edit_global', 'msc_person' ); $values['external_ids'] = $external; }
+                if ( current_user_can( 'msc_edit_global' ) && 'multiselect' === ( Schema::get( 'msc_person' )['fields']['professions']['type'] ?? '' ) ) { $professions = PersonIdentity::professions( $existing, $credit['roles'] ); if ( $professions !== ( $existing['data']['professions'] ?? array() ) ) { $values['professions'] = $professions; } }
+                if ( current_user_can( 'msc_edit_global' ) && empty( $existing['data']['birth_date'] ) && ! empty( $credit['fields']['birth_date'] ) && 'date' === ( Schema::get( 'msc_person' )['fields']['birth_date']['type'] ?? '' ) ) { $values['birth_date'] = $credit['fields']['birth_date']; }
+                if ( ! $values ) { return $existing; }
+                $values['additional_metadata'] = self::provenance( $existing['data'], $values, $credit + array( 'field_sources' => array() ) );
+                return PersonIdentity::remember( Plugin::store()->update( $existing['uuid'], $values, (int) $existing['version'] ) );
+            }
             Permissions::require( 'msc_create_global', 'msc_person' ); $warnings = array(); $values = self::fit( 'msc_person', $credit['fields'], $warnings );
             $schema = Schema::get( 'msc_person' ); if ( 'json' !== ( $schema['fields']['external_ids']['type'] ?? '' ) || 'json' !== ( $schema['fields']['additional_metadata']['type'] ?? '' ) ) { throw new SourceError( 'People need identity and attribution JSON fields before importing credits.' ); }
             $professions = array(); foreach ( $credit['roles'] as $role ) { $professions[] = array( 'actors' => 'Actor', 'directors' => 'Director', 'screenwriters' => 'Writer', 'producers' => 'Producer', 'creators' => 'Creator' )[ $role ]; }
             if ( 'multiselect' === ( $schema['fields']['professions']['type'] ?? '' ) ) { $values['professions'] = array_values( array_unique( $professions ) ); }
             $values['external_ids'] = $ids; $values['additional_metadata'] = self::provenance( array(), $values, $credit + array( 'field_sources' => array() ) );
-            return Plugin::store()->create( 'msc_person', $values );
+            return PersonIdentity::remember( Plugin::store()->create( 'msc_person', $values ) );
         } );
     }
     public static function import( array $request ): array {
         if ( ! is_string( $request['nonce'] ?? null ) || ! wp_verify_nonce( $request['nonce'], 'msc_open_import' ) ) { throw new SourceError( 'The import security token expired. Open a fresh preview.', 403 ); }
         $s = self::snapshot( is_string( $request['token'] ?? null ) ? $request['token'] : '', 'preview' );
-        $selected = $request['fields'] ?? array(); $roles = $request['roles'] ?? array();
+        $selected = $request['fields'] ?? array(); $roles = $request['roles'] ?? array(); $choices = $request['people'] ?? array();
+        if ( ! is_array( $choices ) || array_diff_key( $choices, $s['credits'] ) || array_filter( $choices, static fn( $value ) => ! is_string( $value ) ) || isset( $request['distinct_person'] ) && ! in_array( $request['distinct_person'], array( '', '1' ), true ) ) { throw new SourceError( 'Review the Person choices from this preview.' ); }
         if ( ! is_array( $selected ) || ! array_is_list( $selected ) || array_filter( $selected, static fn( $x ) => ! is_string( $x ) ) || array_diff( $selected, array_keys( $s['fields'] ) ) || ! is_array( $roles ) || ! array_is_list( $roles ) || array_filter( $roles, static fn( $x ) => ! is_string( $x ) ) || array_diff( $roles, array_keys( $s['roles'] ) ) ) { throw new SourceError( 'The selected fields do not match this preview.' ); }
         if ( ! $selected && ! $roles && empty( $request['image'] ) ) { throw new SourceError( 'Select at least one field to import.' ); }
         self::validate_type( $s['type'] );
-        $locks = $s['external_ids']; foreach ( $s['credits'] as $credit ) { if ( array_intersect( $roles, $credit['roles'] ) ) { $locks[ $credit['provider'] ] = array_merge( (array) ( $locks[ $credit['provider'] ] ?? array() ), array( $credit['id'] ) ); } }
-        return self::locked( $locks, static function () use ( $s, $selected, $roles, $request ) {
+        $locks = $s['external_ids']; foreach ( $s['credits'] as $credit ) { if ( array_intersect( $roles, $credit['roles'] ) ) { foreach ( PersonIdentity::credit_ids( $credit ) as $provider => $id ) { $locks[ $provider ] = array_merge( (array) ( $locks[ $provider ] ?? array() ), array( $id ) ); } } }
+        return self::locked( $locks, static function () use ( $s, $selected, $roles, $choices, $request ) {
             $matches = self::matches( $s['type'], $s['external_ids'] ); $r = $s['target'] ? Plugin::store()->get( $s['target'] ) : null;
             if ( count( $matches ) > 1 || $r && $matches && $matches[0]['uuid'] !== $r['uuid'] ) { throw new SourceError( 'The source identity changed. Open a fresh preview.', 409 ); }
             if ( ! $s['target'] && $matches ) { self::compatible( $matches[0], $s['external_ids'] ); return array( 'record' => $matches[0], 'people' => array(), 'warnings' => array( 'Already imported. The existing shared record was retained.' ) ); }
@@ -143,18 +155,22 @@ final class OpenImport {
                 catch ( SourceError $e ) { if ( 403 === $e->status ) { throw $e; } $warnings[] = 'Image download failed. Selected text was saved and the previous image retained. Retry from a fresh preview.'; }
             }
             try {
-                $saved = Database::transaction( static function () use ( $s, $r, $values, $roles, &$people ) {
+                $saved = PersonIdentity::locked( static function () use ( $s, $r, $values, $roles, $choices, $request, &$people ) { return Database::transaction( static function () use ( $s, $r, $values, $roles, $choices, $request, &$people ) {
+                    if ( 'msc_person' === $s['type'] && ! $r ) {
+                        $existing = PersonIdentity::resolve( $s['fields']['title'] ?? '', $s['external_ids'], $s['fields']['birth_date'] ?? '', ! empty( $request['distinct_person'] ) ? 'new_distinct' : 'new' );
+                        if ( $existing ) { throw new SourceError( 'This Person now exists. Open a fresh preview to update the existing record.', 409 ); }
+                    }
                     foreach ( $roles as $role ) { $values[ $role ] = array(); }
-                    foreach ( $s['credits'] as $credit ) {
+                    foreach ( $s['credits'] as $credit_key => $credit ) {
                         $used = array_intersect( $roles, $credit['roles'] ); if ( ! $used ) { continue; }
-                        $person = self::person( $credit ); $people[ $person['uuid'] ] = $person['uuid'];
+                        $person = self::person( $credit, $choices[ $credit_key ] ?? 'auto' ); $people[ $person['uuid'] ] = $person['uuid'];
                         foreach ( $used as $role ) { $values[ $role ][] = $person['uuid']; }
                     }
                     $values['additional_metadata'] = self::provenance( $r['data'] ?? array(), $values, $s );
                     return $r ? Plugin::store()->update( $r['uuid'], $values, $s['version'] ) : Plugin::store()->create( $s['type'], $values );
-                } );
+                } ); } );
             } catch ( \Throwable $e ) { if ( $media ) { wp_delete_attachment( $media['attachment_id'], true ); } throw $e; }
-            foreach ( array_merge( array_values( $people ), array( $saved['uuid'] ) ) as $uuid ) { try { $record = Plugin::store()->get( $uuid ); Plugin::materializer()->sync( (int) $record['id'], get_current_blog_id() ); } catch ( \Throwable $e ) { $warnings[] = 'Saved globally; local post synchronization remains queued.'; } }
+            foreach ( array_merge( array_values( $people ), array( $saved['uuid'] ) ) as $uuid ) { try { Propagation::send( Plugin::store()->get( $uuid ) ); } catch ( \Throwable $e ) { $warnings[] = 'Saved globally; delivery remains queued on one or more sites.'; } }
             return array( 'record' => $saved, 'people' => array_values( $people ), 'warnings' => array_values( array_unique( $warnings ) ) );
         } );
     }
