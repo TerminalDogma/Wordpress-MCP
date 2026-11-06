@@ -4,7 +4,7 @@ A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Cu
 
 ## Shared TV Shows, Episodes, Movies and People
 
-The optional **Multisite Shared Content 1.5.2** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+The optional **Multisite Shared Content 1.6.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
 
 ```sh
 sh bin/shared-content.sh setup
@@ -88,3 +88,7 @@ MSC 1.3 includes the optional Screening Room theme, three distinct demo identiti
 ### Search and import content
 
 MSC 1.5 adds keyless TVmaze TV/episode data, Wikidata Movie/Person facts, Wikipedia biographies, and individually licensed Commons images. **Shared Content → Import Content** includes reviewed field selection, persistent attribution and a resumable Show → season → Episode importer. Sources permit commercial reuse under their stated licences; CC BY-SA obligations still apply. Legacy OMDb screens are disabled by default and previously imported content needs review. See [the import and Mac update guide](multisite-shared-content/docs/import-content.md).
+
+### Episode administration
+
+MSC 1.6 organizes backend Episode lists by parent TV Show, season and episode number. Show editors link directly to related Episodes and parent-prefilled creation; native lists honor local overrides while the Shared Content catalog displays global relationships. See [the administration guide](multisite-shared-content/docs/episode-administration.md).

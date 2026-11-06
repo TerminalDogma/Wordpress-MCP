@@ -67,7 +67,7 @@ The worker is a local development convenience. A production network needs a supe
 
 ## Install the ZIP elsewhere
 
-Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.5.2.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
+Build with `python3 tools/package-msc.py`, then upload `dist/multisite-shared-content-1.6.0.zip` from **Network Admin → Plugins → Add New → Upload Plugin** and choose **Network Activate**. Activate ACF separately if you want its controls. Open **Network Admin → Shared Content**, enter each participating site ID and its complete type selection, and save. Activation alone does not enroll every site or copy every record.
 
 ## Automated testing
 
@@ -85,3 +85,7 @@ Read the [editor guide](../multisite-shared-content/docs/editor.md), [administra
 ## Search and import content
 
 Open **Shared Content → Import Content**. No API key is required. Movies and People use Wikidata/Wikipedia; Shows and Episodes use TVmaze. To import Episodes, search for the Show, connect/import it first, choose a season and select Episodes. The batch saves progress after each Episode and can be resumed. Review field selection and licences, and publish drafts separately. See [the complete import guide](../multisite-shared-content/docs/import-content.md), including how to connect older Episode records without duplicating them.
+
+## Manage Episodes by TV Show
+
+Use **Episodes** beneath a TV Show in the native post list, or **View Episodes** in its editor. Episode lists show their Show and SxxExx numbering, sort by Show/season/episode, and support Show and season filters. **Add Episode** preselects the parent. Native lists use local relationships; Shared Content → Episodes shows the global catalog. See [the Episode administration guide](../multisite-shared-content/docs/episode-administration.md).

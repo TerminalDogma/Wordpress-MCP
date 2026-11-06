@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 1.6.0
+
+Adds Show-aware Episode administration: parent/season/episode/air-date columns, numeric default ordering, Show and season filters, contextual row titles, and direct Show-to-Episode navigation. Native lists respect local parent and numbering overrides; the paginated Shared Content catalog uses global relationships and supports Show-title search. Scoped Add Episode links preselect the Show, including the native Add New action in a filtered list. Native, ACF and full-field editors expose parent/sibling navigation. Stored titles and canonical UUID relationships are preserved. Includes real WordPress query/permission tests and a browser workflow. See [the guide](episode-administration.md).
+
 ## 1.5.2
 
 TV Show episode lists display episode numbers, linked titles and dates without images or synopses. Episode titles use 18px text on desktop and 16px text on mobile. Source credits apply only to the fields displayed in each row. Episode detail pages and catalog cards retain their images and descriptions.

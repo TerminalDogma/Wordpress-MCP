@@ -32,6 +32,8 @@ jobs:
           sh bin/shared-content.sh demo
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/browser.py
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/presentation-browser.py
+      - name: Browser Show and Episode administration
+        run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/episode-admin-browser.py
       - name: Browser OMDb search and import workflow
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
@@ -43,7 +45,7 @@ jobs:
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-1.5.2
+          name: multisite-shared-content-1.6.0
           path: dist/
       - name: Stop services
         if: always()

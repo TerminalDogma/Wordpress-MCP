@@ -88,6 +88,7 @@ final class Admin {
 		foreach ( Schema::all() as $key => $s ) { if ( Schema::enabled( $key ) ) { echo '<a class="nav-tab" href="' . esc_url( admin_url( 'admin.php?page=msc&type=' . $key ) ) . '">' . esc_html( $s['label'] ) . '</a>'; } }
 		echo '</nav>';
 		if ( ! $r && empty( $_GET['new'] ) ) {
+			if ( 'msc_episode' === $type ) { EpisodeAdmin::shared_list(); echo '</div>'; return; }
 			if ( current_user_can( 'msc_create_global' ) ) { echo '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=msc&type=' . $type . '&new=1' ) ) . '">Create global record</a></p>'; }
 			echo '<p>Use the regular post list for local publishing, search, bulk changes, and Gutenberg editing.</p><table class="widefat striped"><thead><tr><th>Title</th><th>Global identifier</th><th>Actions</th></tr></thead><tbody>';
 			$after = absint( $_GET['after'] ?? 0 ); $ids = Plugin::store()->query( $type, array(), 0, 50, $after );
@@ -98,7 +99,9 @@ final class Admin {
 		}
 		$global = ! $r || 'global' === ( $_GET['mode'] ?? '' );
 		if ( ! current_user_can( $global ? ( $r ? 'msc_edit_global' : 'msc_create_global' ) : 'msc_override_local' ) ) { echo '<p>You do not have permission for this editing mode.</p></div>'; return; }
+		if ( ! $r ) { EpisodeAdmin::new_context( $type ); }
 		if ( $r ) {
+			EpisodeAdmin::context( $r, $global );
 			if ( function_exists( 'acf_form' ) ) { echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( $global ? 'global' : 'local' ) ) ) . '">Edit supported fields with ACF</a></p>'; }
 			echo '<p><code>' . esc_html( $r['uuid'] ) . '</code> · Global revision ' . esc_html( $r['version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( $global ? 'local' : 'global' ) ) ) . '">' . ( $global ? 'Switch to local overrides' : 'Switch to global editing' ) . '</a></p>';
 			if ( ! $r['mapping'] ) { Queue::sync( (int) $r['id'], get_current_blog_id() ); echo '<p>Local post is queued. Refresh after synchronization.</p></div>'; return; }
@@ -124,7 +127,7 @@ final class Admin {
 			echo '</select></label><p class="description">Removed deletes only the local post. Choosing another status recreates it with its overrides preserved.</p>';
 		}
 		submit_button( $global ? 'Save global record' : 'Save local overrides' ); echo '</form>';
-		if ( $r && 'msc_show' === $r['type'] ) { self::episodes( $r ); }
+		if ( $r && $global && 'msc_show' === $r['type'] ) { self::episodes( $r ); }
 		if ( $r && current_user_can( 'msc_edit_global' ) ) {
 			echo '<details><summary>Global revision history and recovery</summary><ul>';
 			foreach ( Plugin::store()->revisions( $r['id'] ) as $v ) { echo '<li>Revision ' . esc_html( $v['version'] ) . ' · ' . esc_html( $v['created_at'] ) . ' UTC · user ' . esc_html( $v['actor'] ) . '</li>'; }
@@ -137,10 +140,10 @@ final class Admin {
 		echo '</div>';
 	}
 	private static function episodes( array $show ): void {
-		echo '<h2>Episodes by season</h2><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&type=msc_episode&new=1&parent=' . $show['uuid'] ) ) . '">Add episode to this show</a></p>';
+		echo '<h2>Global Episodes by season</h2>';
 		foreach ( Relationships::seasons( $show['uuid'] ) as $season => $episodes ) {
-			echo '<h3>Season ' . esc_html( $season ) . '</h3><ul>';
-			foreach ( $episodes as $e ) { echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $e['uuid'] ) ) . '">' . esc_html( ( $e['data']['episode_number'] ?? '?' ) . '. ' . ( $e['data']['title'] ?? '(Untitled)' ) ) . '</a> · ' . esc_html( $e['data']['release_date'] ?? '' ) . '</li>'; }
+			echo '<h3>' . esc_html( 'unknown' === $season ? 'Season not set' : 'Season ' . $season ) . '</h3><ul>';
+			foreach ( $episodes as $e ) { echo '<li><a href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $e['uuid'] ) ) . '">' . esc_html( EpisodeAdmin::position( $e['data'] ) . ' — ' . ( $e['data']['title'] ?? '(Untitled)' ) ) . '</a> · ' . esc_html( $e['data']['release_date'] ?? '' ) . '</li>'; }
 			echo '</ul>';
 		}
 	}
@@ -151,10 +154,10 @@ final class Admin {
 	public static function metabox( \WP_Post $post ): void {
 		$r = Plugin::store()->by_post( $post->ID );
 		if ( ! $r ) { echo '<p>The first save creates a global record. Only users with Create Global permission can do this.</p>'; return; }
+		EpisodeAdmin::context( Plugin::store()->resolved( (int) $r['id'] ) );
 		$m = Plugin::store()->mapping( (int) $r['id'] );
 		self::hidden( 'msc_expected_version', $m['local_version'] );
 		echo '<p>Editing title, content, excerpt, or slug here creates a <strong>local override</strong>. Use Manage fields to view global values, reset inheritance, edit media, or make a global change.</p><p><code>' . esc_html( $r['uuid'] ) . '</code> · ' . esc_html( count( Plugin::store()->overrides( (int) $r['id'] ) ) ) . ' overrides · local revision ' . esc_html( $m['local_version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">Manage fields and inheritance</a></p>';
-		if ( 'msc_show' === $r['type'] ) { self::episodes( $r ); }
 	}
 	public static function network_page(): void {
 		echo '<div class="wrap msc"><h1>Shared Content Network</h1><h2>Synchronization</h2><p>' . esc_html( wp_json_encode( Queue::status() ) ) . '</p><p>Run a real system cron every minute for reliable propagation: <code>wp msc queue --limit=100</code>. Pending does not mean propagated.</p>';
