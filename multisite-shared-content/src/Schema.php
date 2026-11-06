@@ -62,6 +62,18 @@ final class Schema {
 			'country' => array( 'type' => 'text' ), 'professions' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_profession' ),
 			'official_website' => array( 'type' => 'url' ), 'external_ids' => array( 'type' => 'json' ),
 		);
+		$game = $common + array(
+			'release_date' => array( 'type' => 'date', 'indexed' => true, 'label' => 'First exact release date' ),
+			'release_dates' => array( 'type' => 'json', 'label' => 'Platform and regional release dates' ),
+			'platforms' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_game_platform', 'label' => 'Platforms' ),
+			'platform_ids' => array( 'type' => 'json', 'label' => 'IGDB platform identifiers' ),
+			'genres' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_genre' ),
+			'developers' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_game_developer' ),
+			'publishers' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_game_publisher' ),
+			'game_modes' => array( 'type' => 'multiselect', 'taxonomy' => 'msc_game_mode' ),
+			'poster' => array( 'type' => 'media', 'label' => 'Cover image' ), 'promotional_images' => array( 'type' => 'media_list' ),
+			'official_website' => array( 'type' => 'url' ), 'external_ids' => array( 'type' => 'json' ),
+		);
 		// Taxonomy values remain portable names, never site-specific term IDs.
 		$categories = array( 'genres' => 'msc_genre', 'network' => 'msc_network', 'streaming_service' => 'msc_platform', 'country' => 'msc_country', 'language' => 'msc_language', 'status' => 'msc_show_status', 'release_status' => 'msc_movie_status', 'content_rating' => 'msc_rating' );
 		foreach ( array( &$show, &$episode, &$movie, &$person ) as &$fields ) {
@@ -73,22 +85,23 @@ final class Schema {
 			'msc_episode' => array( 'label' => 'Episodes', 'slug' => 'episodes', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $episode ),
 			'msc_movie' => array( 'label' => 'Movies', 'slug' => 'movies', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $movie ),
 			'msc_person' => array( 'label' => 'People', 'slug' => 'people', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $person ),
+			'msc_game' => array( 'label' => 'Video Games', 'slug' => 'games', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $game ),
 		);
 	}
 	/** Add new built-ins and missing fields once, retaining saved schema choices. */
 	public static function upgrade_defaults(): void {
 		$network = get_current_network_id();
-		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 4 ) { return; }
+		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 5 ) { return; }
 		Database::lock( 'builtin-schema', static function () use ( $network ) {
 			// Another request may have completed the upgrade while this one waited.
 			foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) { wp_cache_delete( $network . ':' . $option, 'site-options' ); }
-			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 4 ) { return; }
+			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 5 ) { return; }
 			$previous_version = (int) get_network_option( $network, 'msc_builtin_schema_version', 0 );
 			$saved = get_network_option( $network, 'msc_schemas', false );
 			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
 			$schemas = false === $saved ? self::defaults() : $saved;
 			foreach ( self::defaults() as $type => $default ) {
-				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 ) { $schemas[ $type ] = $default; } continue; }
+				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 || 'msc_game' === $type && $previous_version < 5 ) { $schemas[ $type ] = $default; } continue; }
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
@@ -104,7 +117,7 @@ final class Schema {
 				}
 			}
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
-			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 4 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 4 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
+			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 5 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 5 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );
 	}
 	public static function register_type( string $name, callable $sanitize ): void { self::$types[ $name ] = $sanitize; }
@@ -198,7 +211,7 @@ final class Schema {
 		$schema = self::get( $type ); $clean = array();
 		foreach ( $values as $key => $value ) {
 			if ( ! isset( $schema['fields'][ $key ] ) ) { throw new \InvalidArgumentException( 'Unknown field: ' . $key ); }
-			$clean[ $key ] = self::sanitize( $schema['fields'][ $key ], $value );
+			$clean[ $key ] = 'msc_game' === $type && 'release_dates' === $key ? GameFields::sanitize( $value ) : self::sanitize( $schema['fields'][ $key ], $value );
 		}
 		return $clean;
 	}

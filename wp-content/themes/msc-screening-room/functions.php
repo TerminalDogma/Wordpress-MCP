@@ -1,6 +1,6 @@
 <?php
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '1.8.0' ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.0.0' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.0.0' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.0.0', true ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
 function msc_screen_chips( array $r ): void {
@@ -28,4 +28,17 @@ function msc_screen_grid( string $type, int $limit = 6 ): void {
     foreach ( $posts as $post ) { $global = function_exists( 'msc_from_post' ) ? msc_from_post( $post->ID ) : null; $r = $global ? \MSC\Presentation::record( $global['id'] ) : null; if ( $r ) { \MSC\Presentation::card( $r ); ++$count; } }
     if ( ! $count ) { echo '<p class="empty-state">No published entries in this section.</p>'; }
     echo '</div>';
+}
+function msc_network_switcher(): void {
+    if ( ! is_multisite() ) { return; }
+    foreach ( get_sites( array( 'number' => 100 ) ) as $site ) { $key = \MSC\NetworkSites::key( $site->path ); if ( $key ) { echo '<a href="' . esc_url( get_home_url( (int) $site->blog_id, '/' ) ) . '"' . ( (int) $site->blog_id === get_current_blog_id() ? ' aria-current="page"' : '' ) . '>Site ' . esc_html( strtoupper( $key ) ) . '</a>'; } }
+}
+function msc_news_category_url( string $name ): string { $term = get_term_by( 'slug', sanitize_title( $name ), 'category' ); return $term ? (string) get_category_link( $term->term_id ) : add_query_arg( 's', $name, home_url( '/' ) ); }
+function msc_news_art( WP_Post $post, string $class = '' ): void { $art = min( 7, max( 0, (int) get_post_meta( $post->ID, '_msc_demo_art', true ) ) ); echo '<span class="news-art art-' . $art . ' ' . esc_attr( $class ) . '" role="img" aria-label="Original artwork for ' . esc_attr( $post->post_title ) . '"></span>'; }
+function msc_news_card( WP_Post $post, string $class = '', bool $score = false ): void {
+    $category = get_the_category( $post->ID ); $label = $category[0]->name ?? 'News';
+    echo '<article class="news-card ' . esc_attr( $class ) . '"><a href="' . esc_url( get_permalink( $post ) ) . '"><div class="news-art-wrap">';
+    $art = min( 7, max( 0, (int) get_post_meta( $post->ID, '_msc_demo_art', true ) ) ); echo '<span class="news-art art-' . $art . '" role="img" aria-label="Original artwork for ' . esc_attr( $post->post_title ) . '">'; if ( $score ) { echo '<span class="review-score" aria-label="Demo review score ' . esc_attr( get_post_meta( $post->ID, '_msc_review_score', true ) ?: '8' ) . ' out of 10">' . esc_html( get_post_meta( $post->ID, '_msc_review_score', true ) ?: '8' ) . '</span>'; } echo '</span></div><div class="news-copy"><span class="news-category">' . esc_html( $label ) . '</span><h3>' . esc_html( $post->post_title ) . '</h3>';
+    if ( 'list-card' === $class ) { echo '<p class="news-excerpt">' . esc_html( wp_trim_words( $post->post_excerpt, 22 ) ) . '</p>'; }
+    echo '<p class="news-byline">Network demo editorial · ' . esc_html( get_the_date( 'M j', $post ) ) . '</p></div></a></article>';
 }

@@ -4,11 +4,7 @@ namespace MSC;
 /** Public presentation helpers always enforce this site's publication state. */
 final class Presentation {
 	public static function identities(): array {
-		return array(
-			'a' => array( 'name' => 'Site A', 'label' => 'Site A', 'tagline' => 'Shared content demo', 'color' => '#a9e34b', 'ink' => '#142012' ),
-			'b' => array( 'name' => 'Site B', 'label' => 'Site B', 'tagline' => 'Shared content demo', 'color' => '#b33123', 'ink' => '#fff8ec' ),
-			'c' => array( 'name' => 'Site C', 'label' => 'Site C', 'tagline' => 'Shared content demo', 'color' => '#c4a4ff', 'ink' => '#1b1037' ),
-		);
+		return NetworkSites::profiles();
 	}
 	public static function identity(): array {
 		$key = get_option( 'msc_site_identity', 'a' ); return self::identities()[ $key ] ?? self::identities()['a'];
@@ -26,7 +22,7 @@ final class Presentation {
 	}
 	public static function record( $id ): ?array {
 		$r = Plugin::store()->resolved( $id );
-		return $r && Schema::enabled( $r['type'] ) && 'active' === $r['state'] && ! empty( $r['mapping']['post_id'] ) && empty( $r['mapping']['suppressed'] ) && 'publish' === $r['mapping']['status'] && 'publish' === get_post_status( (int) $r['mapping']['post_id'] ) && ! post_password_required( (int) $r['mapping']['post_id'] ) ? $r : null;
+		return $r && Schema::enabled( $r['type'] ) && GamePolicy::accepts( $r ) && 'active' === $r['state'] && ! empty( $r['mapping']['post_id'] ) && empty( $r['mapping']['suppressed'] ) && 'publish' === $r['mapping']['status'] && 'publish' === get_post_status( (int) $r['mapping']['post_id'] ) && ! post_password_required( (int) $r['mapping']['post_id'] ) ? GamePolicy::project( $r ) : null;
 	}
 	public static function url( array $r ): string { return (string) get_permalink( (int) $r['mapping']['post_id'] ); }
 	/** Only published, accessible local Episodes contribute seasons or rows. */
@@ -46,13 +42,13 @@ final class Presentation {
 		return array( 'seasons' => $seasons, 'season' => $selected, 'episodes' => array_values( array_filter( array_map( array( self::class, 'record' ), $ids ) ) ), 'total' => $total, 'page' => $page, 'pages' => $pages );
 	}
 	public static function image( array $r, string $class = '', string $size = 'large' ): string {
-		$d = $r['data']; $keys = array( 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_person' => 'headshot' );
+		$d = $r['data']; $keys = array( 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_person' => 'headshot', 'msc_game' => 'poster' );
 		$url = Media::url( (array) ( $d[ $keys[ $r['type'] ] ?? 'featured_image' ] ?? array() ), $size );
 		if ( ! $url ) { $url = Media::url( (array) ( $d['featured_image'] ?? array() ), $size ); }
 		return $url ? '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $url ) . '" alt="' . esc_attr( $d['title'] ?? '' ) . '" loading="lazy" decoding="async">' : '<div class="art-placeholder ' . esc_attr( $class ) . '" aria-label="No image available"><span>' . esc_html( mb_substr( $d['title'] ?? '?', 0, 1 ) ) . '</span></div>';
 	}
 	public static function card( array $r ): void {
-		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person' )[ $r['type'] ] ?? 'Content';
+		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person', 'msc_game' => 'Video Game' )[ $r['type'] ] ?? 'Content';
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . self::image( $r, 'card-art', 'medium_large' ) . '<div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::collect( $r, array( 'title', 'excerpt' ) ) . Attribution::collect_image( $r ) . '</article>';
 	}
 	public static function credits( array $r ): void {

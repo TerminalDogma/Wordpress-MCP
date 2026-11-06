@@ -1,6 +1,8 @@
 <?php
 namespace MSC;
 final class CLI {
+	/** Configure the four network presentation sites and their default content types once. */
+	public function sites(): void { NetworkSites::setup(); \WP_CLI::success( 'Four site identities, content-type profiles and release calendars are ready.' ); }
 	/** One-time Site A catch-up. Promotes source overrides and resets conflicting destination overrides. */
 	public function reconcile(): void { \WP_CLI::success( 'Site A catch-up: ' . wp_json_encode( SiteAUpdate::run() ) ); }
 	/** Process durable jobs. ## OPTIONS

@@ -113,6 +113,7 @@ final class Store {
 			if ( empty( $field['indexed'] ) || ! isset( $data[ $key ] ) || ! is_scalar( $data[ $key ] ) ) { continue; }
 			Database::check( $wpdb->insert( Database::table( 'lookup' ), array( 'record_id' => $r['id'], 'site_id' => $site, 'field' => $key, 'text_value' => (string) $data[ $key ], 'number_value' => is_numeric( $data[ $key ] ) ? $data[ $key ] : null ) ) );
 		}
+		ReleaseCalendar::index( $r, $site, $data );
 	}
 	/** Indexed global/site-materialized queries. Returns IDs; pagination is bounded. */
 	public function query( string $type, array $filters = array(), int $site = 0, int $limit = 50, int $after = 0 ): array {

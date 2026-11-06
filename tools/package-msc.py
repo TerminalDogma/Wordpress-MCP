@@ -11,7 +11,7 @@ version = re.search(r'\* Version: ([0-9.]+)', (plugin / 'multisite-shared-conten
 out = root / 'dist'
 out.mkdir(exist_ok=True)
 out.chmod(0o755)
-names = ['Dockerfile', 'README.md', 'VERIFICATION.md', 'compose.yaml', 'compose.shared-content.yaml', '.dockerignore', '.gitignore', 'bin', 'docker', 'docs', 'wp-content', 'multisite-shared-content', 'tests', 'tools', '.github']
+names = ['DESIGN.md', 'Dockerfile', 'README.md', 'VERIFICATION.md', 'compose.yaml', 'compose.shared-content.yaml', '.dockerignore', '.gitignore', 'bin', 'docker', 'docs', 'wp-content', 'multisite-shared-content', 'tests', 'tools', '.github']
 source = []
 for name in names:
     path = root / name

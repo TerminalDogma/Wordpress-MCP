@@ -1,1 +1,3 @@
-<?php get_header(); while ( have_posts() ) : the_post(); ?><article class="reading-width"><h1><?php the_title(); ?></h1><?php the_content(); ?></article><?php endwhile; get_footer();
+<?php get_header(); while ( have_posts() ) : the_post(); ?>
+<article class="news-article"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span>/</span><span>News and Features</span></nav><p class="eyebrow">Fictional presentation feature</p><h1><?php the_title(); ?></h1><p class="article-byline">Network demo editorial · <?php echo esc_html( get_the_date() ); ?></p><?php msc_news_art( get_post(), 'article-art' ); ?><div class="prose"><?php the_content(); ?></div><a class="text-link" href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">View the release calendar →</a></article>
+<?php endwhile; get_footer(); ?>

@@ -37,7 +37,8 @@ final class OpenSources {
     }
     public static function search( string $type, string $query, string $provider = '', int $offset = 0 ): array {
         $query = trim( sanitize_text_field( $query ) );
-        if ( '' === $query || strlen( $query ) > 160 || ! in_array( $type, array( 'msc_movie', 'msc_show', 'msc_person', 'msc_episode' ), true ) || $offset < 0 || $offset > 200 ) { throw new SourceError( 'Enter a title or person name (up to 160 characters).' ); }
+        if ( '' === $query || strlen( $query ) > 160 || ! in_array( $type, array( 'msc_movie', 'msc_show', 'msc_person', 'msc_episode', 'msc_game' ), true ) || $offset < 0 || $offset > 200 ) { throw new SourceError( 'Enter a title or person name (up to 160 characters).' ); }
+        if ( 'msc_game' === $type ) { return IgdbSource::search( $query, $offset ); }
         if ( in_array( $type, array( 'msc_show', 'msc_episode' ), true ) || 'msc_person' === $type && 'tvmaze' === $provider ) {
             $people = 'msc_person' === $type; $rows = OpenClient::get( 'tvmaze', $people ? 'search/people' : 'search/shows', array( 'q' => $query ) ); $result = array();
             foreach ( array_slice( $rows, 0, 30 ) as $row ) { $item = $row[ $people ? 'person' : 'show' ] ?? array(); if ( empty( $item['id'] ) || '' === ( $item['name'] ?? '' ) ) { continue; } $result[] = array( 'provider' => 'tvmaze', 'id' => (string) $item['id'], 'title' => sanitize_text_field( $item['name'] ), 'description' => $people ? ( $item['country']['name'] ?? '' ) : implode( ' · ', array_filter( array( $item['premiered'] ?? '', $item['network']['name'] ?? $item['webChannel']['name'] ?? '', $item['language'] ?? '' ) ) ) ); }
@@ -183,6 +184,7 @@ final class OpenSources {
         return array( 'provider' => 'wikidata', 'id' => $id, 'type' => $type, 'fields' => $fields, 'external_ids' => $ids, 'source' => $source, 'field_sources' => $field_sources, 'credits' => $credits, 'image' => $image, 'warnings' => $warnings, 'parent_tvmaze' => '', 'details' => array( 'dates' => $dates, 'description' => sanitize_text_field( $e['descriptions']['en']['value'] ?? '' ) ) );
     }
     public static function details( string $provider, string $id, string $type ): array {
+        if ( 'igdb' === $provider && 'msc_game' === $type ) { return IgdbSource::details( $id ); }
         if ( 'tvmaze' === $provider ) { return self::tv( $id, $type ); }
         if ( 'wikidata' === $provider ) { return self::wiki( $id, $type ); }
         throw new SourceError( 'Choose a supported source.' );

@@ -47,6 +47,7 @@ final class Acf {
 	public static function prepare( $field ) {
 		if ( ! isset( self::$fields[ $field['key'] ?? '' ] ) ) { return $field; }
 		$definition = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ];
+		if ( self::$editing && in_array( $definition['type'], array( 'relationship', 'relationship_list' ), true ) && ! Schema::enabled( $definition['target'] ) ) { return false; }
 		if ( ! empty( $definition['taxonomy'] ) ) {
 			$current = self::$editing ? ( self::$global ? self::$editing['global'] : self::$editing['data'] )[ $field['msc_name'] ] ?? array() : $field['value'] ?? array();
 			$choices = Taxonomies::choices( $definition, $current ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array();

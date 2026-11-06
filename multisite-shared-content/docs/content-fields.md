@@ -61,3 +61,7 @@ The one-time additive schema upgrade adds Movies and missing built-in fields to 
 People have a name, biography, synopsis, headshot, professions, country, birth date, website and external IDs, in addition to common SEO/media fields. Movies, TV Shows and Episodes link ordered Person lists using `actors`, `directors`, `screenwriters` and `producers`; TV Shows also use `creators`. The original Movie `director`, `writers` and `cast` text remains available for legacy/character-role notes.
 
 The source of field definitions remains the network schema. Custom field definitions take precedence over new defaults. ACF supports scalar controls, category selectors, single/multiple relationships and owner-aware media previews. JSON uses the full editor. Category-backed fields materialize native taxonomies; genres/professions support multiple choices. See [the presentation and editing guide](presentation.md) for all category names, image controls, Person links and per-site templates.
+
+## Video Games — `msc_game`
+
+First exact release date (`release_date`), platform/regional date rows (`release_dates`), platforms and IGDB platform IDs, genres, developers, publishers, game modes, cover (`poster`), promotional images, official website and external IDs. Categories and covers use supported ACF controls. The full editor provides editable date/platform/region rows. IGDB IDs prevent duplicate source imports. Exact days enter the calendar; partial windows stay on the title page. See [the 2.0 guide](../../docs/update-2.0.md).

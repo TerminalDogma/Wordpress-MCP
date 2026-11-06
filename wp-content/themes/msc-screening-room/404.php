@@ -1,0 +1,1 @@
+<?php get_header(); ?><section class="reading-width"><p class="eyebrow">404</p><h1>Page unavailable</h1><p>This page is not available on this site.</p><a class="text-link" href="<?php echo esc_url( home_url( '/' ) ); ?>">Return to the homepage →</a></section><?php get_footer(); ?>

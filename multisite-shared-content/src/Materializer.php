@@ -12,7 +12,7 @@ final class Materializer {
 			try {
 				$schema = Schema::get( $r['type'] );
 				if ( ! post_type_exists( $r['type'] ) ) { Plugin::register_posts(); }
-				$m = $store->mapping( $id, $site ); $enabled = Schema::enabled( $r['type'], $site );
+				$m = $store->mapping( $id, $site ); $enabled = Schema::enabled( $r['type'], $site ) && GamePolicy::accepts( $store->resolved( $id, $site ), $site );
 				if ( ! $m && ! $enabled ) { return; }
 				if ( ! $m ) {
 					Database::check( $wpdb->insert( Database::table( 'maps' ), array( 'record_id' => $id, 'site_id' => $site, 'status' => $schema['default_status'] ?? 'draft' ) ) );
@@ -46,6 +46,7 @@ final class Materializer {
 				if ( ! empty( $media['attachment_id'] ) && (int) $media['site_id'] === $site ) { set_post_thumbnail( $post_id, $media['attachment_id'] ); }
 				else { delete_post_meta( $post_id, '_thumbnail_id' ); }
 				update_post_meta( $post_id, '_msc_override_count', count( $store->overrides( $id, $site ) ) );
+				if ( 'msc_game' === $r['type'] ) { update_post_meta( $post_id, '_msc_game_eligible', $enabled ? '1' : '0' ); }
 				update_post_meta( $post_id, '_msc_baseline', $values );
 				Database::check( $wpdb->update( Database::table( 'maps' ), array( 'post_id' => $post_id, 'version' => $r['version'] ), array( 'record_id' => $id, 'site_id' => $site ) ) );
 				$store->index( $r, $site, $values ); clean_post_cache( $post_id );

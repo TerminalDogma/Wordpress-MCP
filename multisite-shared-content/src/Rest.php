@@ -28,12 +28,12 @@ final class Rest {
 	}
 	public static function can_read( $q ): bool {
 		$r = Plugin::store()->get( $q['uuid'] );
-		if ( ! $r || ! Schema::enabled( $r['type'] ) ) { return false; }
+		if ( ! $r || ! Schema::enabled( $r['type'] ) || ! GamePolicy::accepts( Plugin::store()->resolved( $r['uuid'] ) ) ) { return false; }
 		$m = Plugin::store()->mapping( (int) $r['id'] );
-		return ( $m && $m['post_id'] && current_user_can( 'edit_post', (int) $m['post_id'] ) ) || ( 'active' === $r['state'] && $m && ! $m['suppressed'] && 'publish' === $m['status'] && 'publish' === get_post_status( (int) $m['post_id'] ) );
+		return ( $m && $m['post_id'] && current_user_can( 'edit_post', (int) $m['post_id'] ) ) || ( 'active' === $r['state'] && $m && ! $m['suppressed'] && 'publish' === $m['status'] && 'publish' === get_post_status( (int) $m['post_id'] ) && ! post_password_required( (int) $m['post_id'] ) );
 	}
 	public static function read( $q ) {
-		$r = Plugin::store()->resolved( $q['uuid'] );
+		$r = GamePolicy::project( Plugin::store()->resolved( $q['uuid'] ) );
 		$m = $r['mapping'];
 		if ( ! current_user_can( 'edit_post', (int) ( $m['post_id'] ?? 0 ) ) ) { return array( 'uuid' => $r['uuid'], 'type' => $r['type'], 'data' => $r['data'] ); }
 		return $r;
@@ -44,7 +44,7 @@ final class Rest {
 			if ( ! Schema::enabled( $type ) ) { return array(); }
 			$ids = Plugin::store()->query( $type, (array) ( $q['filters'] ?? array() ), get_current_blog_id(), (int) ( $q['limit'] ?? 50 ), (int) ( $q['after'] ?? 0 ) );
 			$result = array();
-			foreach ( $ids as $id ) { $r = Plugin::store()->resolved( $id ); if ( self::can_read( array( 'uuid' => $r['uuid'] ) ) ) { $result[] = array( 'id' => $id, 'uuid' => $r['uuid'], 'type' => $type, 'data' => $r['data'] ); } }
+			foreach ( $ids as $id ) { $r = GamePolicy::project( Plugin::store()->resolved( $id ) ); if ( self::can_read( array( 'uuid' => $r['uuid'] ) ) ) { $result[] = array( 'id' => $id, 'uuid' => $r['uuid'], 'type' => $type, 'data' => $r['data'] ); } }
 			return $result;
 		} );
 	}

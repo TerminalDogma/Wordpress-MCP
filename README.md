@@ -2,9 +2,9 @@
 
 A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Custom Fields Free 6.8.10**. This repository contains the configuration and setup automation; a running site needs Docker or a PHP/database hosting service. GitHub Pages cannot run this installation.
 
-## Shared TV Shows, Episodes, Movies and People
+## Four branded sites with shared catalogs
 
-The optional **Multisite Shared Content 1.8.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+The **Multisite Shared Content 2.0.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
 
 For existing installations, [the 1.8 update guide](docs/update-1.8.md) covers the one-time Site A catch-up, duplicate Person checks, Select all import data, global defaults and delivery status, public season pages and footer credits.
 
@@ -13,7 +13,7 @@ sh bin/shared-content.sh setup
 sh bin/shared-content.sh demo
 ```
 
-This creates Sites A, B and C and runs a local synchronization worker. See [the ACF guide](multisite-shared-content/docs/acf.md) and [verification/limits](VERIFICATION.md). Build the installable ZIP with `python3 tools/package-msc.py`. See [the TV/Movie field lists and upgrade instructions](multisite-shared-content/docs/content-fields.md).
+This creates four branded sites: ComingSoon, SuperHeroHype, GameRevolution and PlayStation LifeStyle, with fictional news, Video Games via IGDB, per-site content-type controls, Sony filtering and dynamic release calendars. Follow [the 2.0 update guide](docs/update-2.0.md) for Mac update commands and private IGDB configuration. It runs a local synchronization worker. See [the ACF guide](multisite-shared-content/docs/acf.md) and [verification/limits](VERIFICATION.md). Build the installable ZIP with `python3 tools/package-msc.py`. See [the TV/Movie field lists and upgrade instructions](multisite-shared-content/docs/content-fields.md).
 
 ## Mac multisite testing
 
@@ -85,7 +85,7 @@ docker compose run --rm -T setup
 
 ### Site designs, People, categories and image previews
 
-MSC 1.3 includes the optional Screening Room theme, three distinct demo identities, Movie/TV Show/Episode/Person templates, linked cast and crew, reusable categories, and ACF image previews. See [the update and editing guide](multisite-shared-content/docs/presentation.md). Existing shared values and site overrides are retained.
+MSC 2.0 includes the optional Screening Room theme, four network brands, Movie/TV Show/Episode/Person/Video Game templates, linked cast and crew, reusable categories, and ACF image previews. See [the update and editing guide](multisite-shared-content/docs/presentation.md). Existing shared values and site overrides are retained.
 
 ### Search and import content
 

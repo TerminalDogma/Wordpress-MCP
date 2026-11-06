@@ -8,21 +8,24 @@ case "${1:-setup}" in
     mkdir -p dist
     sh bin/start.sh multisite
     if ! wp site list --field=path | grep -Fxq /site-c/; then wp site create --slug=site-c --title="Test Site C" --private; fi
+    if ! wp site list --field=path | grep -Fxq /site-d/; then wp site create --slug=site-d --title="Test Site D" --private; fi
     wp plugin activate multisite-shared-content --network
-    wp eval 'wp_set_current_user(1); foreach(get_sites(["number"=>0]) as $site){if(in_array($site->path,["/site-a/","/site-b/","/site-c/"],true)){\MSC\Schema::participate((int)$site->blog_id,array_keys(\MSC\Schema::all()));}}'
+    wp --user=1 msc sites
     wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Queue did not drain");}echo "Shared content ready on Sites A, B and C.\n";'
     wp --user=1 msc reconcile
     wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Site A catch-up queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Site A catch-up is incomplete");}'
-    wp eval-file /msc-examples/style-demo.php
+    wp eval-file /msc-examples/network-demo.php
     docker compose up -d shared-worker
     ;;
   wp) shift; wp "$@" ;;
   queue) wp msc queue --limit=1000 ;;
-  demo) wp eval-file /msc-examples/style-demo.php; wp eval-file /msc-examples/create-demo.php ;;
+  demo) wp eval-file /msc-examples/network-demo.php ;;
+  legacy-demo) wp eval-file /msc-examples/style-demo.php; wp eval-file /msc-examples/create-demo.php ;;
   style) wp eval-file /msc-examples/style-demo.php ;;
   test)
     [ "${MSC_DISPOSABLE_TESTS:-}" = 1 ] || { echo 'Tests create fixtures. Use MSC_DISPOSABLE_TESTS=1 only in a disposable test network.' >&2; exit 2; }
     docker compose stop shared-worker
+    wp eval-file /msc-tests/legacy-participation.php
     wp eval-file /msc-tests/integration.php "${MSC_TEST_RECORDS:-205}"
     site_a_url="$(wp site list --field=url | grep '/site-a/$')"
     wp --url="$site_a_url" eval-file /msc-tests/http.php
@@ -34,6 +37,7 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/open-import.php
     wp --url="$site_a_url" eval-file /msc-tests/episode-admin.php
     wp --url="$site_a_url" eval-file /msc-tests/import-review.php
+    wp --url="$site_a_url" eval-file /msc-tests/network-games.php
     ;;
   stop) docker compose down ;;
   *) echo 'Usage: sh bin/shared-content.sh setup|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;

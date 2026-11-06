@@ -49,6 +49,7 @@ final class Admin {
 	private static function text( $value ): string { return is_array( $value ) || is_bool( $value ) ? wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) : (string) $value; }
 	private static function input( string $key, array $field, $value ): void {
 		$name = 'fields[' . $key . ']'; $type = $field['type']; $id = 'msc-' . $key;
+		if ( 'release_dates' === $key && 'json' === $type ) { GameFields::control( (array) $value ); return; }
 		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
 			Media::control( $name, $id, $value, 'media_list' === $type );
 		} elseif ( ! empty( $field['taxonomy'] ) || 'multiselect' === $type && ! empty( $field['options'] ) || in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
@@ -80,7 +81,8 @@ final class Admin {
 	}
 	public static function page(): void {
 		echo '<div class="wrap msc"><h1>Shared Content</h1><p>Global information is shared across participating sites. Local overrides affect only this website.</p>';
-		$type = sanitize_key( $_GET['type'] ?? 'msc_show' );
+		$available = array_values( array_filter( array_keys( Schema::all() ), static fn( $t ) => Schema::enabled( $t ) ) );
+		$type = sanitize_key( $_GET['type'] ?? ( $available[0] ?? 'msc_show' ) );
 		try { $schema = Schema::get( $type ); } catch ( \Throwable $e ) { echo '<p>Unknown type.</p></div>'; return; }
 		$id = sanitize_text_field( $_GET['record'] ?? '' ); $r = $id ? Plugin::store()->resolved( $id ) : null;
 		if ( $id && ! $r ) { echo '<p>Record not found.</p></div>'; return; }
@@ -166,7 +168,7 @@ final class Admin {
 	}
 	public static function global_scope( $scope ): bool { return 'global' === $scope || '' === $scope && current_user_can( 'msc_edit_global' ); }
 	public static function network_page(): void {
-		echo '<div class="wrap msc"><h1>Shared Content Network</h1><h2>Synchronization</h2><p>' . esc_html( wp_json_encode( Queue::status() ) ) . '</p><p>Run a real system cron every minute for reliable propagation: <code>wp msc queue --limit=100</code>. Pending does not mean propagated.</p>';
+		echo '<div class="wrap msc"><h1>Shared Content Network</h1><p><a class="button button-primary" href="' . esc_url( network_admin_url( 'admin.php?page=msc-sites' ) ) . '">Sites and Content Types</a> <a class="button" href="' . esc_url( network_admin_url( 'admin.php?page=msc-igdb-settings' ) ) . '">IGDB API settings</a></p><h2>Synchronization</h2><p>' . esc_html( wp_json_encode( Queue::status() ) ) . '</p><p>Run a real system cron every minute for reliable propagation: <code>wp msc queue --limit=100</code>. Pending does not mean propagated.</p>';
 		global $wpdb; $jobs = $wpdb->get_results( 'SELECT job_key,attempts,state,last_error FROM ' . Database::table( 'jobs' ) . " WHERE last_error<>'' ORDER BY id LIMIT 50", ARRAY_A );
 		if ( $jobs ) { echo '<pre>' . esc_html( wp_json_encode( $jobs, JSON_PRETTY_PRINT ) ) . '</pre>'; }
 		self::form_start( 'retry' ); submit_button( 'Retry failed jobs', 'secondary' ); echo '</form><h2>Site participation</h2><p>Enable types per site. Disabling a type unpublishes its local posts in batches; global records and overrides remain.</p>';

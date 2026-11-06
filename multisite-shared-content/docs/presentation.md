@@ -1,42 +1,25 @@
 # Screening Room: sites, templates, people, categories and images
 
-Version 1.3 adds a reusable **Person** post type (the **People** menu), linked credits, native WordPress taxonomies and image previews in both shared-field editors. The optional **MSC Screening Room** theme supplies complete Movie, TV Show, Episode and Person templates, collection archives, search and a catalog homepage.
-
-## Update your Mac installation
-
-Run these commands from the existing `Wordpress-MCP` folder with Docker Desktop running:
-
-```sh
-git pull --ff-only
-sh bin/shared-content.sh setup
-sh bin/shared-content.sh demo
-```
-
-If `docker` is still missing from your shell, run this first:
+Version 2.0 supplies four branded editorial homepages with actual network logos and fictional articles, plus Movie, TV Show, Episode, Person and Video Game templates. See [the Mac update guide](../../docs/update-2.0.md) for complete setup, private IGDB configuration and release-calendar instructions.
 
 ```sh
 export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+git pull --ff-only
+sh bin/shared-content.sh setup
 ```
 
-`setup` recreates containers to mount the new theme, adds Person participation on the three named demo sites, and rematerializes their existing shared records. The database volumes and credentials are retained. `demo` adds fictional people, categories and original geometric artwork. Existing demo field values (including intentionally empty values), local overrides and dates are retained; only missing demo fields are filled. People created by the demo are published on all three sites.
+Setup adds Site D, applies the profiles once and seeds missing fictional examples without replacing saved records or subsequent content-type choices. The site ribbon switches between the four sites, and the admin bar identifies the current brand.
 
-With the default port, open:
-
-| Site | URL | Visual identity |
+| Site | Brand | Shared catalog |
 | --- | --- | --- |
-| A | http://localhost:8080/site-a/ | **Site A** — forest green, lime, editorial serif |
-| B | http://localhost:8080/site-b/ | **Site B** — warm cream, red, print-inspired typography |
-| C | http://localhost:8080/site-c/ | **Site C** — purple, lavender, rounded cards |
+| A | ComingSoon.net | Movies, TV Shows, People; child Episodes |
+| B | SuperHeroHype | Movies, TV Shows; child Episodes |
+| C | GameRevolution | Video Games, all platforms |
+| D | PlayStation LifeStyle | Video Games, Sony consoles and handhelds |
 
-Use your configured port if it differs. The site ribbon links between sites; colored badges also identify the current site in the WordPress admin bar. The sample Movie, Show and Episode have detail links from the homepage. Click a cast member to open their Person page and published credits.
+Open `/site-a/`, `/site-b/`, `/site-c/` or `/site-d/` on your configured local domain and port. Each site links to its enabled catalogs and Release Calendar. The matrix under **Network Admin → Shared Content → Sites and Content Types** controls participation. Shared records and overrides remain stored when a site disables a type.
 
-To reapply only the demo themes and identities:
-
-```sh
-sh bin/shared-content.sh style
-```
-
-These commands activate the supplied theme on `/site-a/`, `/site-b/`, and `/site-c/`. The network main site and other sites retain their themes. Plugin activation by itself does not switch themes. Change an individual site's theme through **My Sites → [site] → Dashboard → Appearance → Themes**; shared records and overrides remain independent of the theme.
+`sh bin/shared-content.sh style` reapplies the supplied theme and identities only to these four named subsites. Other sites retain their themes. `sh bin/shared-content.sh demo` adds missing fictional presentation content and retains saved edits. Sources and image credits are collected in the footer.
 
 ## People and linked credits
 
@@ -47,7 +30,7 @@ These commands activate the supplied theme on `/site-a/`, `/site-b/`, and `/site
 
 Links store immutable global UUIDs. The ACF adapter translates these to the correct local post IDs. People must be enrolled and synchronized on the editing site for ACF selection. The full Shared Content form can also link global People by name, including those without a local projection. Its initial list contains 500 active records plus current selections; ACF provides search for larger catalogs. If an existing related Person is unavailable locally, ACF rejects a submission that could silently drop the link; use the full form to resolve it.
 
-The original Movie `director`, `writers` and `cast` text fields are retained. They are never guessed or automatically converted into people. Link real People using the new fields; the theme prefers linked directors and writers and retains cast notes. The Person template derives a filmography from that site's published, effective credits; draft/private/removed People and credits do not appear publicly. Filmographies show up to 100 entries; TV season guides show up to 500 episodes.
+The original Movie `director`, `writers` and `cast` text fields are retained. They are never guessed or automatically converted into people. Link real People using the new fields; the theme prefers linked directors and writers and retains cast notes. The Person template derives a filmography from that site's published, effective credits; draft/private/removed People and credits do not appear publicly. Filmographies show up to 100 entries; TV season guides paginate 50 episodes within the selected season.
 
 For a non-demo site, enable `msc_person` together with the other required types in **Network Admin → Shared Content → Site participation**. Schema upgrades never automatically enroll additional sites.
 
@@ -71,6 +54,8 @@ Saving a record projects its effective categories into native terms on each part
 
 Custom schema labels, field types, choices and locks survive the additive upgrade. Existing category option restrictions still apply. The new `taxonomy` schema property may be set to `false` to opt a customized field out of category selectors and projection. After changing schemas, re-save site participation to rebuild projections. Category archives retain the noindex policy of their attached shared types.
 
+Video Game platforms, developers, publishers and modes use `msc_game_platform`, `msc_game_developer`, `msc_game_publisher` and `msc_game_mode` categories.
+
 ## Images and galleries
 
 Both **ACF Shared Fields** and **All fields and publishing** show thumbnail cards for featured images, posters, episode images, Person headshots and promotional image galleries. Use **Choose image or media** / **Choose gallery images** to select or upload an asset from the current site's WordPress media library. **Remove** clears the field; in local mode it checks the override box so the removal applies only here. Uncheck Override and save to restore the shared image.
@@ -85,9 +70,12 @@ The theme lives in `wp-content/themes/msc-screening-room/`:
 - `single-msc_show.php` → `parts/detail-show.php`: series information, season/episode guide, linked cast/creators and gallery.
 - `single-msc_episode.php` → `parts/detail-episode.php`: landscape image, episode numbering, calendar date/time/time zone, parent Show link and credits.
 - `single-msc_person.php` → `parts/detail-person.php`: headshot, biography, professions and filmography.
-- `index.php` / `archive.php`: catalog homepage, archives, category results, search and pagination.
-- `style.css`: three palettes, responsive layouts, keyboard focus and reduced-motion styling.
+- `front-page.php`: four branded fictional news layouts; `single.php`: local news/features.
+- `index.php` / `archive.php`: catalog archives, category results, search and pagination.
+- `single-msc_game.php` → `parts/detail-game.php`: cover, game details and regional/platform release table.
+- `page.php`: regular pages, including the release calendar shortcode.
+- `style.css` and `assets/network.css`: catalog layouts and four network identities, with local fonts, responsive menus, keyboard focus and reduced-motion styling. [DESIGN.md](../../DESIGN.md) documents reference sources, assets and adaptations.
 
 Create a child theme for your changes; parent theme updates replace tracked files. Reuse `MSC\Presentation::record()`, `image()`, `credits()` and `filmography()` in your own templates. `record()` enforces the current site's publication and password protection rules. General `msc_get_record()` / `msc_related_list()` helpers are trusted PHP APIs and do not themselves filter for public display.
 
-A separately installable `msc-screening-room-1.4.0.zip` is included in the CI release artifacts and generated by `python3 tools/package-msc.py`. On an existing non-Docker network, upload and network-enable the theme, then activate it per site. The plugin ZIP remains independently installable. No ACF Pro fields are required.
+A separately installable `msc-screening-room-2.0.0.zip` is included in the CI release artifacts and generated by `python3 tools/package-msc.py`. On an existing non-Docker network, upload and network-enable the theme, then activate it per site. The plugin ZIP remains independently installable. No ACF Pro fields are required.

@@ -23,6 +23,7 @@ final class Plugin {
 	public static function boot(): void {
 		if ( ! is_multisite() ) { return; }
 		Schema::upgrade_defaults();
+		GameFields::boot();
 		add_filter( 'cron_schedules', static function ( $s ) { $s['msc_minute'] = array( 'interval' => 60, 'display' => 'Every minute (MSC)' ); return $s; } );
 		add_action( 'init', static function () { if ( 1 !== (int) get_network_option( get_current_network_id(), 'msc_db_version' ) ) { Database::migrate(); } self::register_posts(); }, 8 );
 		add_action( 'init', static function () {
@@ -65,7 +66,7 @@ final class Plugin {
 			return $url ? '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $data['title'] ?? '' ) . '" loading="lazy">' : '';
 		}, 10, 2 );
 		add_filter( 'has_post_thumbnail', static function ( $has, $post ) { $post = get_post( $post ); if ( ! $post ) { return $has; } $r = self::store()->by_post( (int) $post->ID ); return $r ? (bool) Media::url( (array) ( self::store()->resolved( $r['id'] )['data']['featured_image'] ?? array() ) ) : $has; }, 10, 2 );
-		Seo::boot(); Admin::boot(); Acf::boot(); Presentation::boot(); OpenAdmin::boot(); EpisodeAdmin::boot(); PersonReview::boot(); Propagation::boot(); if ( defined( 'MSC_ENABLE_LEGACY_OMDB' ) && MSC_ENABLE_LEGACY_OMDB ) { OmdbAdmin::boot(); }
+		Seo::boot(); Admin::boot(); Acf::boot(); Presentation::boot(); OpenAdmin::boot(); EpisodeAdmin::boot(); PersonReview::boot(); Propagation::boot(); GamePolicy::boot(); NetworkSites::boot(); IgdbAdmin::boot(); ReleaseCalendar::boot(); if ( defined( 'MSC_ENABLE_LEGACY_OMDB' ) && MSC_ENABLE_LEGACY_OMDB ) { OmdbAdmin::boot(); }
 		if ( defined( 'WP_CLI' ) && WP_CLI ) { \WP_CLI::add_command( 'msc', CLI::class ); }
 		do_action( 'msc_register_field_types' );
 	}
@@ -73,13 +74,13 @@ final class Plugin {
 		foreach ( Schema::all() as $type => $schema ) {
 			if ( ! Schema::enabled( $type ) || post_type_exists( $type ) ) { continue; }
 			register_post_type( $type, array(
-				'label' => $schema['label'], 'labels' => array_filter( array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode' )[ $type ] ?? $schema['label'], 'all_items' => 'msc_episode' === $type ? 'All Episodes' : null ) ), 'public' => true, 'show_in_rest' => true,
-				'show_in_menu' => 'msc_episode' === $type && Schema::enabled( 'msc_show' ) ? 'msc-episodes' : true,
+				'label' => $schema['label'], 'labels' => array_filter( array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_game' => 'Video Game' )[ $type ] ?? $schema['label'], 'all_items' => 'msc_episode' === $type ? 'All Episodes' : null ) ), 'public' => true, 'show_in_rest' => true,
+				'show_in_menu' => 'msc_episode' === $type && Schema::enabled( 'msc_show' ) ? ( get_option( 'msc_episodes_as_children' ) ? 'edit.php?post_type=msc_show' : 'msc-episodes' ) : true,
 				'has_archive' => (bool) ( $schema['archive'] ?? true ), 'rewrite' => array( 'slug' => $schema['slug'] ),
 				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'custom-fields' ),
 				'capability_type' => 'post', 'map_meta_cap' => true,
 				'capabilities' => array( 'create_posts' => 'msc_create_global', 'publish_posts' => 'msc_publish_local' ),
-				'menu_icon' => array( 'msc_person' => 'dashicons-admin-users', 'msc_movie' => 'dashicons-video-alt2', 'msc_show' => 'dashicons-desktop', 'msc_episode' => 'dashicons-playlist-video' )[ $type ] ?? 'dashicons-networking',
+				'menu_icon' => array( 'msc_person' => 'dashicons-admin-users', 'msc_movie' => 'dashicons-video-alt2', 'msc_show' => 'dashicons-desktop', 'msc_episode' => 'dashicons-playlist-video', 'msc_game' => 'dashicons-games' )[ $type ] ?? 'dashicons-networking',
 			) );
 		}
 		Taxonomies::register();

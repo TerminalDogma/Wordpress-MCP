@@ -6,7 +6,11 @@ final class Taxonomies {
 	private static string $registered = '';
 	public static function definitions(): array {
 		return array(
-			'msc_genre' => array( 'Genres', 'genre', array( 'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Science Fiction', 'Thriller' ) ),
+			'msc_game_platform' => array( 'Game Platforms', 'game-platform', array( 'PlayStation', 'PlayStation 2', 'PlayStation 3', 'PlayStation 4', 'PlayStation 5', 'PlayStation Portable', 'PlayStation Vita', 'PlayStation VR', 'PlayStation VR2', 'PC (Microsoft Windows)', 'Mac', 'Linux', 'Xbox', 'Xbox 360', 'Xbox One', 'Xbox Series X|S', 'Nintendo Switch', 'Nintendo Switch 2', 'iOS', 'Android' ) ),
+			'msc_game_developer' => array( 'Game Developers', 'game-developer', array() ),
+			'msc_game_publisher' => array( 'Game Publishers', 'game-publisher', array() ),
+			'msc_game_mode' => array( 'Game Modes', 'game-mode', array( 'Single player', 'Multiplayer', 'Co-operative', 'Split screen', 'Massively Multiplayer Online (MMO)', 'Battle Royale' ) ),
+			'msc_genre' => array( 'Genres', 'genre', array( 'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Science Fiction', 'Thriller', 'Role-playing (RPG)', 'Racing', 'Shooter', 'Strategy', 'Indie', 'Puzzle', 'Platform', 'Simulator', 'Sport' ) ),
 			'msc_network' => array( 'TV Networks', 'network', array( 'Demo Network', 'BBC', 'HBO', 'NBC', 'ABC', 'CBS', 'Fox' ) ),
 			'msc_platform' => array( 'Streaming Services', 'streaming-service', array( 'Netflix', 'Prime Video', 'Disney+', 'Apple TV+', 'Hulu', 'Max', 'Paramount+', 'Peacock' ) ),
 			'msc_country' => array( 'Countries', 'country', array( 'United States', 'United Kingdom', 'Canada', 'Australia', 'France', 'Germany', 'India', 'Japan', 'South Korea' ) ),

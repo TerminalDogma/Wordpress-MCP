@@ -1,6 +1,12 @@
-# Shared Content 1.8.0 verification
+# Shared Content 2.0.0 verification
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
+
+## Four-site catalogs and calendars
+
+Version 2.0 adds four actual network logos and locally bundled OFL fonts, fictional editorial homepages, a Video Game schema and detail template, private Twitch/IGDB configuration, selective title imports and cover previews, a per-site content matrix, Sony console/handheld filtering and effective-date release calendars. `network-games.php` exercises real WordPress storage with deterministic IGDB OAuth/API/image fixtures. It checks caching, quoted queries, refreshed tokens, throttling/backoff, malformed/transport errors, identity reuse, retained overrides, exact versus partial dates, Sony projection, site toggles, calendar publication/password filters and anonymous REST. `network-browser.py` checks all four brands and menus at desktop/mobile widths, fictional article links, category archives, calendar month/back navigation, content switches, child Episodes, game import, cover previews, structured date editing and calendar updates.
+
+Live IGDB access requires the user's Twitch credentials and has not been verified against their account. Fixture tests verify the integration contract, not an approved commercial partnership. Earlier regression suites use broader disposable-only enrollment; the four-site browser suite then applies the requested production profiles. No production defaults are broadened for testing. The design references and presentation adaptations are documented in [DESIGN.md](DESIGN.md).
 
 ## Import review, global delivery and public navigation
 

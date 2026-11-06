@@ -38,13 +38,13 @@ async def main():
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         backgrounds = []
-        for letter, brand in [('a', 'Site A'), ('b', 'Site B'), ('c', 'Site C')]:
+        for letter, brand in [('a', 'ComingSoon.net'), ('b', 'SuperHeroHype'), ('c', 'GameRevolution')]:
             prefix = '/site-' + letter + '/'
             response = await page.goto(base + prefix)
             assert response.status == 200, ('homepage', letter, response.status)
-            assert brand in await page.locator('header .brand').inner_text(), ('brand', letter, await page.locator('header .brand').inner_text())
+            assert brand == await page.locator('header .brand img').get_attribute('alt')
             assert await page.locator('body').get_attribute('data-identity') == letter, "Browser assertion at line 45: await page.locator('body').get_attribute('data-identity') == letter"
-            backgrounds.append(await page.locator('body').evaluate('(el) => getComputedStyle(el).backgroundColor'))
+            backgrounds.append(await page.locator('.network-masthead').evaluate('(el) => getComputedStyle(el).backgroundColor'))
             await page.locator('img').evaluate_all("imgs => Promise.all(imgs.map(img => { img.loading = 'eager'; return img.decode().catch(() => {}); }))")
             await page.screenshot(path=str(screenshots / ('site-' + letter + '-home.png')), full_page=True)
             for kind in ['movie', 'show', 'episode', 'actor']:
@@ -81,7 +81,7 @@ async def main():
         await page.wait_for_url('**/wp-admin/**')
         url = base + '/site-b/wp-admin/admin.php?page=msc-acf&record=' + records['movie'] + '&scope=local'
         await page.goto(url)
-        assert await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B', "Browser assertion at line 82: await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B'"
+        assert await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B · SuperHeroHype', "Browser assertion at line 82: await page.locator('#wp-admin-bar-msc-identity').inner_text() == 'Site B'"
         poster = page.locator('.acf-field[data-name="msc_poster"]')
         assert await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0'), "Browser assertion at line 84: await poster.locator('.msc-media-control .msc-media-previews img').first.evaluate('(el) => el.complete && el.naturalWidth > 0')"
         value = json.loads(await poster.locator('.msc-media-value').input_value())

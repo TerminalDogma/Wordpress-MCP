@@ -2,6 +2,8 @@ name: wordpress-acf
 
 x-wordpress-environment: &wordpress-environment
   OMDB_API_KEY: ${OMDB_API_KEY:-}
+  IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
+  IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
   WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8080}
   WORDPRESS_DB_HOST: db:3306
   WORDPRESS_DB_NAME: wordpress

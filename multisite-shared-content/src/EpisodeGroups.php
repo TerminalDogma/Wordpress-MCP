@@ -5,10 +5,11 @@ namespace MSC;
 final class EpisodeGroups {
     public static function boot(): void {
         add_action( 'admin_menu', array( self::class, 'menu' ) );
-        add_filter( 'parent_file', static function ( $parent ) { return Schema::enabled( 'msc_show' ) && Schema::enabled( 'msc_episode' ) && 'msc_episode' === ( get_current_screen()->post_type ?? '' ) ? 'msc-episodes' : $parent; } );
+        add_filter( 'parent_file', static function ( $parent ) { return Schema::enabled( 'msc_show' ) && Schema::enabled( 'msc_episode' ) && 'msc_episode' === ( get_current_screen()->post_type ?? '' ) ? ( get_option( 'msc_episodes_as_children' ) ? 'edit.php?post_type=msc_show' : 'msc-episodes' ) : $parent; } );
     }
     public static function menu(): void {
         if ( ! Schema::enabled( 'msc_episode' ) || ! Schema::enabled( 'msc_show' ) ) { return; }
+        if ( get_option( 'msc_episodes_as_children' ) ) { add_submenu_page( 'edit.php?post_type=msc_show', 'Episodes by TV Show', 'Episodes', 'edit_posts', 'msc-episodes', array( self::class, 'page' ) ); return; }
         add_menu_page( 'Episodes by TV Show', 'Episodes', 'edit_posts', 'msc-episodes', array( self::class, 'page' ), 'dashicons-playlist-video', 22 );
         add_submenu_page( 'msc-episodes', 'Episodes by TV Show', 'By TV Show', 'edit_posts', 'msc-episodes', array( self::class, 'page' ), 0 );
     }

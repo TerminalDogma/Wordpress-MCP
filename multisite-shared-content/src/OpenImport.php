@@ -3,13 +3,13 @@ namespace MSC;
 
 /** Reviewed global imports; local overrides and publication settings remain authoritative. */
 final class OpenImport {
-    public const TYPES = array( 'msc_movie' => 'Movies', 'msc_show' => 'TV Shows', 'msc_episode' => 'Episodes', 'msc_person' => 'People' );
+    public const TYPES = array( 'msc_movie' => 'Movies', 'msc_show' => 'TV Shows', 'msc_episode' => 'Episodes', 'msc_person' => 'People', 'msc_game' => 'Video Games' );
     public static function allowed(): bool {
         return ( current_user_can( 'msc_create_global' ) || current_user_can( 'msc_edit_global' ) ) && (bool) array_filter( array_keys( self::TYPES ), static fn( $type ) => isset( Schema::all()[ $type ] ) && Schema::enabled( $type ) );
     }
     public static function matches( string $type, array $ids ): array {
         global $wpdb; $clauses = array(); $params = array( $type );
-        foreach ( array( 'wikidata', 'tvmaze', 'imdb' ) as $provider ) {
+        foreach ( array( 'wikidata', 'tvmaze', 'imdb', 'igdb' ) as $provider ) {
             if ( ! isset( $ids[ $provider ] ) || '' === (string) $ids[ $provider ] ) { continue; }
             $clauses[] = "JSON_UNQUOTE(JSON_EXTRACT(data,'$.external_ids." . $provider . "'))=%s"; $params[] = (string) $ids[ $provider ];
         }
@@ -87,7 +87,8 @@ final class OpenImport {
     private static function image( array $image, string $title ): array {
         if ( ! current_user_can( 'upload_files' ) ) { throw new SourceError( 'Media upload permission is required.', 403 ); }
         $p = wp_parse_url( $image['url'] );
-        if ( 'https' !== ( $p['scheme'] ?? '' ) || 'upload.wikimedia.org' !== ( $p['host'] ?? '' ) || ! empty( $p['user'] ) || ! empty( $p['port'] ) || ! empty( $p['query'] ) ) { throw new SourceError( 'Unsupported Commons image URL.' ); }
+        $allowed = 'upload.wikimedia.org' === ( $p['host'] ?? '' ) || 'images.igdb.com' === ( $p['host'] ?? '' ) && preg_match( '#^/igdb/image/upload/t_cover_big_2x/[A-Za-z0-9_-]+\.jpg$#D', $p['path'] ?? '' );
+        if ( 'https' !== ( $p['scheme'] ?? '' ) || ! $allowed || ! empty( $p['user'] ) || ! empty( $p['port'] ) || ! empty( $p['query'] ) ) { throw new SourceError( 'Unsupported source image URL.' ); }
         require_once ABSPATH . 'wp-admin/includes/file.php'; require_once ABSPATH . 'wp-admin/includes/media.php'; require_once ABSPATH . 'wp-admin/includes/image.php';
         $tmp = wp_tempnam( 'msc-commons' ); if ( ! $tmp ) { throw new SourceError( 'Could not prepare an image download.' ); }
         try {
@@ -147,6 +148,7 @@ final class OpenImport {
             }
             if ( ! $r ) { $title = false; foreach ( Schema::get( $s['type'] )['fields'] as $key => $field ) { if ( 'post_title' === ( $field['property'] ?? '' ) && '' !== (string) ( $values[ $key ] ?? '' ) ) { $title = true; } } if ( ! $title ) { throw new SourceError( 'Select the title field when creating a record.' ); } }
             $values['external_ids'] = array_replace( (array) ( $r['data']['external_ids'] ?? array() ), $s['external_ids'] );
+            if ( 'msc_game' === $s['type'] && ! GamePolicy::accepts( array( 'type' => 'msc_game', 'data' => array_replace( $r['data'] ?? array(), $values ) ) ) ) { throw new SourceError( 'Select Sony platforms or Sony platform release dates when creating a game on this site.' ); }
             Schema::values( $s['type'], $values ); $warnings = $s['warnings']; $media = null; $people = array();
             if ( ! empty( $request['image'] ) ) {
                 $key = 'msc_person' === $s['type'] ? 'headshot' : 'poster';

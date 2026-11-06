@@ -8,12 +8,12 @@ permissions:
 jobs:
   plugin:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       COMPOSE_PROJECT_NAME: msc-ci
     steps:
       - uses: actions/checkout@v4
-      - name: Install ACF and the three-site shared-content test network
+      - name: Install ACF and the four-site shared-content test network
         run: sh bin/shared-content.sh setup
       - name: PHP syntax
         run: |
@@ -29,7 +29,7 @@ jobs:
           python3 -m venv /tmp/msc-browser-env
           /tmp/msc-browser-env/bin/pip install playwright==1.62.0
           /tmp/msc-browser-env/bin/python -m playwright install --with-deps chromium
-          sh bin/shared-content.sh demo
+          sh bin/shared-content.sh legacy-demo
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/browser.py
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/presentation-browser.py
       - name: Browser Show and Episode administration
@@ -42,10 +42,14 @@ jobs:
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
           MSC_DISPOSABLE_TESTS=1 sh bin/open-import-browser-tests.sh
+      - name: Browser four-site brands, IGDB and release calendars
+        run: |
+          export PATH="/tmp/msc-browser-env/bin:$PATH"
+          MSC_DISPOSABLE_TESTS=1 sh bin/network-browser-tests.sh
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-1.8.0
+          name: multisite-shared-content-2.0.0
           path: dist/
       - name: Stop services
         if: always()
