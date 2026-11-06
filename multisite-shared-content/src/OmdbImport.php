@@ -157,6 +157,8 @@ final class OmdbImport {
             $used = array_filter( $s['credits'], static fn( $credit ) => (bool) array_intersect( $roles, $credit['roles'] ) );
             foreach ( $used as $key => $credit ) {
                 $choice = $choices[ $key ] ?? '';
+                if ( '' === $choice ) { throw new OmdbError( 'Review the Person choice for ' . $credit['name'] . ' before importing this credit field.', 409 ); }
+                if ( 'skip' === $choice ) { continue; }
                 if ( in_array( $choice, array( 'new', 'new_distinct' ), true ) ) { Permissions::require( 'msc_create_global', 'msc_person' ); self::person_data( $credit, $roles, $s['imdb'] ); }
                 elseif ( $choice ) { $person = Plugin::store()->get( $choice ); if ( ! $person || 'msc_person' !== $person['type'] || 'active' !== $person['state'] ) { throw new OmdbError( 'A selected Person is unavailable. Open a fresh preview.' ); } }
             }
@@ -171,7 +173,7 @@ final class OmdbImport {
                 $saved = PersonIdentity::locked( static function () use ( $s, $values, $used, $choices, $roles, $r, &$created, &$touched ) { return Database::transaction( static function () use ( $s, $values, $used, $choices, $roles, $r, &$created, &$touched ) {
                     $linked = array();
                     foreach ( $used as $key => $credit ) {
-                        $choice = $choices[ $key ] ?? ''; if ( ! $choice ) { continue; }
+                        $choice = $choices[ $key ] ?? ''; if ( 'skip' === $choice ) { continue; }
                         $person = PersonIdentity::resolve( $credit['name'], array(), '', $choice );
                         if ( ! $person ) { $person = PersonIdentity::remember( Plugin::store()->create( 'msc_person', self::person_data( $credit, $roles, $s['imdb'] ) ) ); $created[] = $person['uuid']; }
                         elseif ( current_user_can( 'msc_edit_global' ) && 'multiselect' === ( Schema::get( 'msc_person' )['fields']['professions']['type'] ?? '' ) ) { $professions = PersonIdentity::professions( $person, array_intersect( $roles, $credit['roles'] ) ); if ( $professions !== ( $person['data']['professions'] ?? array() ) ) { $person = PersonIdentity::remember( Plugin::store()->update( $person['uuid'], array( 'professions' => $professions ), (int) $person['version'] ) ); } }

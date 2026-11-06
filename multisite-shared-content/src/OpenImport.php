@@ -163,6 +163,7 @@ final class OpenImport {
                     foreach ( $roles as $role ) { $values[ $role ] = array(); }
                     foreach ( $s['credits'] as $credit_key => $credit ) {
                         $used = array_intersect( $roles, $credit['roles'] ); if ( ! $used ) { continue; }
+                        if ( 'skip' === ( $choices[ $credit_key ] ?? '' ) ) { continue; }
                         $person = self::person( $credit, $choices[ $credit_key ] ?? 'auto' ); $people[ $person['uuid'] ] = $person['uuid'];
                         foreach ( $used as $role ) { $values[ $role ][] = $person['uuid']; }
                     }

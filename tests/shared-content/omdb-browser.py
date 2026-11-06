@@ -69,6 +69,13 @@ async def main():
 
         await search()
         assert await page.get_by_role('button', name='Create shared record from OMDb', exact=True).count() == 1
+        # The contract suite imported these named fixture People already; explicitly reuse them.
+        for select in await page.locator('.msc-person-choices select').all():
+            for option in await select.locator('option').all():
+                value = await option.get_attribute('value')
+                if value and re.fullmatch('[a-f0-9-]{36}', value):
+                    await select.select_option(value)
+                    break
         await page.locator('input[name="fields[]"][value=content]').uncheck()
         await page.screenshot(path=str(screenshots / 'omdb-preview.png'), full_page=True)
         form = page.locator('form:has(input[name=action][value=msc_omdb_import])')

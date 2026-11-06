@@ -11,7 +11,7 @@ final class PersonReview {
         echo '<table class="widefat striped msc-person-choices"><thead><tr><th>Credited Person</th><th>Person record</th></tr></thead><tbody>';
         foreach ( $credits as $key => $credit ) {
             $match = $matches[ $key ]; echo '<tr><th>' . esc_html( $credit['name'] ) . '<br><small>' . esc_html( implode( ', ', $credit['roles'] ) ) . '</small></th><td><select name="people[' . esc_attr( $key ) . ']" aria-label="Person for ' . esc_attr( $credit['name'] ) . '">';
-            echo '<option value="">' . ( $match['possible'] ? 'Choose an existing Person or confirm a distinct person' : 'Do not link' ) . '</option>';
+            echo '<option value="">' . ( $match['possible'] ? 'Choose an existing Person or confirm a distinct person' : 'Choose a Person record' ) . '</option><option value="skip">Do not link this Person</option>';
             foreach ( $match['strong'] + $match['possible'] as $r ) { echo '<option value="' . esc_attr( $r['uuid'] ) . '"' . selected( $match['suggested'], $r['uuid'], false ) . disabled( 'active' !== $r['state'], true, false ) . '>' . esc_html( 'Reuse: ' . PersonIdentity::label( $r ) ) . '</option>'; }
             if ( ! $match['strong'] && current_user_can( 'msc_create_global' ) ) { $new = $match['possible'] ? 'new_distinct' : 'new'; echo '<option value="' . $new . '"' . selected( $match['suggested'], $new, false ) . '>' . esc_html( $match['possible'] ? 'Create a distinct person with this name' : 'Create new Person: ' . $credit['name'] ) . '</option>'; }
             echo '</select>'; if ( $match['possible'] ) { echo '<p class="description">Possible duplicate found. Check the existing record’s identity before creating another draft.</p>'; } echo '</td></tr>';
