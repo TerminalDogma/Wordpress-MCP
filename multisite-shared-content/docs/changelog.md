@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.1.1
+
+Replaces generic catalog archives with poster, series, cover, portrait, profile, hardware and Episode layouts. Listings omit excerpts and use concise metadata, clear catalog headings, next-release/calendar links and site-specific styling. Adds scoped title/name search, category/year/platform filters, sorting, 20-entry pagination and AJAX/history with ordinary form/link fallbacks. Counts and options follow effective values, current publication state and Sony policies; stored excerpts and detail overviews are retained.
+
 ## 2.1.0
 
 Adds seven shared entity types for production companies, distributors, game developers, game publishers, game consoles/platforms, streaming services and TV networks. Additive ACF relationships and matching legacy names produce published, site-aware sidebar links and related-title profiles. Setup enrolls relevant types once and retains later exclusions. Sony policies also apply to console pages and linked games. TV Shows omit Episode sections when no public Episodes exist. Calendars add week navigation, date selection and 3/5/10/all daily display limits with native expandable overflow. Console/platform launches enter release calendars.

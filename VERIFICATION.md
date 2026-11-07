@@ -1,4 +1,8 @@
-# Shared Content 2.1.0 verification
+# Shared Content 2.1.1 verification
+
+## Bespoke catalog archives
+
+Version 2.1.1 gives each archive family its own layout and metadata without rendering excerpts. Integration checks cover scoped search, combined filters, stable sorting/undated values, local title/date/category overrides, taxonomy scope, published parent Shows, retained source text and exclusion of protected records from results/facets. Sony checks include a stale native PC projection after a policy change and the correct projected release year. Browser coverage exercises all twelve built-in type archives, custom taxonomy listings, all four identities, mobile layouts, pagination/filter resets, history, failed requests/retry, overlapping requests and no-JavaScript forms/links. Models read records/overrides in batches, keep only card fields and do not claim high-traffic or large-catalog performance certification.
 
 ## Linked entities, empty Episodes and weekly calendars
 

@@ -4,6 +4,8 @@ Follow [the 2.0 setup and update guide](update-2.0.md) for full instructions, si
 
 The [2.1 guide](update-2.1.md) covers linked company/platform/service pages, hidden empty Episode sections, weekly calendars and expandable busy days.
 
+The [archive guide](catalog-archives.md) covers the bespoke catalog listings, metadata, filters, sorting and excerpt-free cards.
+
 From your existing checkout, with Docker Desktop running:
 
 ```sh

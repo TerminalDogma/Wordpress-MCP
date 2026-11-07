@@ -56,10 +56,12 @@ jobs:
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/acf-publication-browser.py
       - name: Browser linked catalog entities and expandable weekly calendars
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/entities-calendar-browser.py
+      - name: Browser bespoke catalog archives and filters
+        run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/archive-browser.py
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.1.0
+          name: multisite-shared-content-2.1.1
           path: dist/
       - name: Stop services
         if: always()
