@@ -40,7 +40,7 @@ final class GamePolicy {
         }, 0 );
         add_action( 'pre_get_posts', static function ( $q ) {
             if ( ! $q->is_main_query() ) { return; } $type = $q->get( 'post_type' );
-            if ( is_admin() && 'msc_game' === $type && 'all' !== self::mode() ) { $filters = array( 'relation' => 'OR', array( 'key' => '_msc_game_eligible', 'value' => '1' ), array( 'key' => '_msc_game_eligible', 'compare' => 'NOT EXISTS' ) ); $old = $q->get( 'meta_query' ); $q->set( 'meta_query', $old ? array( 'relation' => 'AND', $old, $filters ) : $filters ); }
+            if ( is_admin() && in_array( $type, array( 'msc_game', 'msc_console' ), true ) && 'all' !== self::mode() ) { $filters = array( 'relation' => 'OR', array( 'key' => '_msc_game_eligible', 'value' => '1' ), array( 'key' => '_msc_game_eligible', 'compare' => 'NOT EXISTS' ) ); $old = $q->get( 'meta_query' ); $q->set( 'meta_query', $old ? array( 'relation' => 'AND', $old, $filters ) : $filters ); }
             if ( ! is_admin() && is_string( $type ) && isset( Schema::all()[ $type ] ) && ! Schema::enabled( $type ) ) { $q->set( 'post__in', array( 0 ) ); }
             if ( ! is_admin() && ( 'any' === $type || $q->is_search() && ! $type ) ) { $q->set( 'post_type', array_merge( array( 'post', 'page' ), array_values( array_filter( array_keys( Schema::all() ), static fn( $t ) => Schema::enabled( $t ) ) ) ) ); }
         }, 30 );

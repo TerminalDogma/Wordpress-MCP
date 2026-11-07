@@ -12,6 +12,15 @@ final class ReleaseCalendar {
         if ( ! is_string( $value ) || ! preg_match( '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $value ) ) { return ''; }
         $d = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value, new \DateTimeZone( 'UTC' ) ); return $d && $d->format( 'Y-m-d' ) === $value ? $value : '';
     }
+    private static function platforms( array $record, int $site ): array {
+        if ( 'msc_console' === $record['type'] ) { return array_filter( array( $record['data']['title'] ?? '' ) ); }
+        if ( 'msc_game' !== $record['type'] ) { return array(); }
+        $values = (array) ( $record['data']['platforms'] ?? array() );
+        $switched = $site && $site !== get_current_blog_id(); if ( $switched ) { switch_to_blog( $site ); }
+        try { foreach ( (array) ( $record['data']['console_records'] ?? array() ) as $uuid ) { $console = $site ? Presentation::record( $uuid ) : Plugin::store()->get( $uuid ); if ( $console && 'msc_console' === $console['type'] && 'active' === $console['state'] && ! empty( $console['data']['title'] ) ) { $values[] = $console['data']['title']; } } }
+        finally { if ( $switched ) { restore_current_blog(); } }
+        return array_values( array_unique( $values ) );
+    }
     public static function events( array $record, int $site ): array {
         if ( ! isset( self::FIELDS[ $record['type'] ] ) || $site && ( ! Schema::enabled( $record['type'], $site ) || ! GamePolicy::accepts( $record, $site ) ) ) { return array(); }
         if ( $site ) { $record = GamePolicy::project( $record, $site ); } $data = $record['data']; $events = array();
@@ -24,7 +33,7 @@ final class ReleaseCalendar {
             }
         }
         if ( ! $events ) {
-            foreach ( self::FIELDS[ $record['type'] ] as $field => $kind ) { $date = self::date( $data[ $field ] ?? '' ); if ( $date ) { $events[ $field ] = array( 'date' => $date, 'kind' => $kind, 'field' => $field, 'region' => '', 'platforms' => 'msc_game' === $record['type'] ? (array) ( $data['platforms'] ?? array() ) : array() ); } }
+            foreach ( self::FIELDS[ $record['type'] ] as $field => $kind ) { $date = self::date( $data[ $field ] ?? '' ); if ( $date ) { $events[ $field ] = array( 'date' => $date, 'kind' => $kind, 'field' => $field, 'region' => '', 'platforms' => self::platforms( $record, $site ) ); } }
         }
         foreach ( $events as &$event ) { $event['platforms'] = array_values( array_unique( $event['platforms'] ) ); $event['id'] = hash( 'sha256', $record['uuid'] . '|' . $event['date'] . '|' . $event['field'] . '|' . $event['region'] ); } unset( $event ); return array_values( $events );
     }

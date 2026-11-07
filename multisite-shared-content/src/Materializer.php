@@ -46,7 +46,7 @@ final class Materializer {
 				if ( ! empty( $media['attachment_id'] ) && (int) $media['site_id'] === $site ) { set_post_thumbnail( $post_id, $media['attachment_id'] ); }
 				else { delete_post_meta( $post_id, '_thumbnail_id' ); }
 				update_post_meta( $post_id, '_msc_override_count', count( $store->overrides( $id, $site ) ) );
-				if ( 'msc_game' === $r['type'] ) { update_post_meta( $post_id, '_msc_game_eligible', $enabled ? '1' : '0' ); }
+				if ( in_array( $r['type'], array( 'msc_game', 'msc_console' ), true ) ) { update_post_meta( $post_id, '_msc_game_eligible', $enabled ? '1' : '0' ); }
 				update_post_meta( $post_id, '_msc_baseline', $values );
 				Database::check( $wpdb->update( Database::table( 'maps' ), array( 'post_id' => $post_id, 'version' => $r['version'] ), array( 'record_id' => $id, 'site_id' => $site ) ) );
 				$store->index( $r, $site, $values ); clean_post_cache( $post_id );
