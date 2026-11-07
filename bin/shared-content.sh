@@ -35,6 +35,7 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/presentation.php
     wp --url="$site_a_url" eval-file /msc-tests/omdb.php
     wp --url="$site_a_url" eval-file /msc-tests/open-import.php
+    wp --url="$site_a_url" eval-file /msc-tests/movie-search.php
     wp --url="$site_a_url" eval-file /msc-tests/episode-admin.php
     wp --url="$site_a_url" eval-file /msc-tests/import-review.php
     wp --url="$site_a_url" eval-file /msc-tests/network-games.php

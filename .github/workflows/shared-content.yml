@@ -42,6 +42,10 @@ jobs:
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
           MSC_DISPOSABLE_TESTS=1 sh bin/open-import-browser-tests.sh
+      - name: Browser cold Movie searches and source pacing
+        run: |
+          export PATH="/tmp/msc-browser-env/bin:$PATH"
+          MSC_DISPOSABLE_TESTS=1 sh bin/movie-search-browser-tests.sh
       - name: Browser four-site brands, IGDB and release calendars
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
@@ -61,7 +65,7 @@ jobs:
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.1.1
+          name: multisite-shared-content-2.1.2
           path: dist/
       - name: Stop services
         if: always()

@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.1.2
+
+Fixes Movie searches exhausting the plugin's own source-request allowance while validating each result separately. Film subclass checks now traverse candidates together in claims-only batches, with separate full-entity caches. Search actions wait briefly for local rate slots; Wikidata previews share a bounded wait budget across their lookups. Network request caps and real provider cooldowns remain enforced. Malformed/future local rate windows recover automatically. Regression fixtures reproduce the previous cold-search failure and verify request counts, subclass/cycle handling, cache separation, pacing, permissions and the WordPress admin flow.
+
 ## 2.1.1
 
 Replaces generic catalog archives with poster, series, cover, portrait, profile, hardware and Episode layouts. Listings omit excerpts and use concise metadata, clear catalog headings, next-release/calendar links and site-specific styling. Adds scoped title/name search, category/year/platform filters, sorting, 20-entry pagination and AJAX/history with ordinary form/link fallbacks. Counts and options follow effective values, current publication state and Sony policies; stored excerpts and detail overviews are retained.

@@ -1,4 +1,8 @@
-# Shared Content 2.1.1 verification
+# Shared Content 2.1.2 verification
+
+## Movie search request pacing
+
+The previous implementation reproduces “Please wait a few seconds before requesting more source data” on a cold twelve-result fixture: fifteen requests are needed and the local twelve-request allowance rejects the thirteenth. Version 2.1.2 completes the same search with four requests. Eighteen WordPress checks cover batched subclass levels, negative/full/claims cache handling, permission checks, short automatic waits, bounded nested waits, invalid future-window recovery and preserved upstream Retry-After behavior. Browser checks exercise search, preview, future-window recovery and cached results during provider cooldowns. Provider tests use deterministic fixtures; this does not assert live searches on the user's Mac or remove real upstream quotas.
 
 ## Bespoke catalog archives
 

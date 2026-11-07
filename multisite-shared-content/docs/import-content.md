@@ -71,3 +71,17 @@ Previews are server-side, user/site/network-bound and expire after 30 minutes. I
 Automated tests use provider-shaped fixtures with the real WordPress HTTP, media, storage, ACF and synchronization APIs. Chromium exercises Show → season → batch progress/reload, Movie/Person imports, licensed images and attribution. Public endpoint shapes were also read independently. This development cloud restricts direct outbound requests to the source services, so these automated tests do not establish a live WordPress-to-provider connection; perform your first live search on your Mac. No source API key is needed.
 
 Official references: [TVmaze API/licence](https://www.tvmaze.com/api), [TVmaze staff on commercial data and images](https://www.tvmaze.com/threads/6552/using-posters-and-data-from-tvmaze-api-on-a-commercial-website), [Wikidata licensing](https://www.wikidata.org/wiki/Wikidata:Licensing), [Wikimedia content reuse](https://developer.wikimedia.org/en-gb/use-content/content/), [Wikipedia reuse](https://en.wikipedia.org/wiki/Wikipedia:Reusing_Wikipedia_content), [Commons file reuse](https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia).
+
+## Movie search rate-limit recovery (2.1.2)
+
+If Movie searches repeatedly showed **Please wait a few seconds before requesting more source data**, update to 2.1.2 with the usual Mac commands:
+
+```sh
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+git pull --ff-only
+sh bin/shared-content.sh setup
+```
+
+That message came from the plugin's local request budget. One cold search could consume it while checking film subclasses for individual results. Checks now run in batches across the result set. Lightweight class lookups request only claims in batches of up to 50, following the [official wbgetentities API limits](https://www.wikidata.org/wiki/Special:ApiHelp/wbgetentities); full entity/credit lookups retain smaller batches and a separate cache.
+
+Human-initiated searches can wait up to 12 seconds in total for local request slots, and Wikidata previews up to 20 seconds. The shared allowance remains twelve uncached requests per provider per ten-second window. Real source Retry-After/maxlag cooldowns still show a retry notice rather than being bypassed. Cached results remain available to authorized editors during cooldowns. No record deletion, API-key change or manual cache reset is required for this update.

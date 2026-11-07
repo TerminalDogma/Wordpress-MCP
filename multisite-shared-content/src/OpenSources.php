@@ -23,19 +23,28 @@ final class OpenSources {
         return self::exact_date( substr( ltrim( $value['time'] ?? '', '+' ), 0, 10 ) );
     }
     private static function kind( array $entity, string $type ): bool {
-        $ids = self::ids( $entity, 'P31' );
-        if ( 'msc_person' === $type ) { return in_array( 'Q5', $ids, true ); }
-        $seen = array();
-        for ( $depth = 0; $depth < 5 && $ids; ++$depth ) {
-            if ( in_array( 'Q11424', $ids, true ) ) { return true; }
-            $ids = array_values( array_diff( $ids, $seen ) ); if ( ! $ids || count( $ids ) > 50 ) { break; }
-            $seen = array_merge( $seen, $ids ); $next = array();
-            foreach ( OpenClient::entities( $ids ) as $class ) { $next = array_merge( $next, self::ids( $class, 'P279' ) ); }
-            $ids = array_values( array_unique( $next ) );
+        return isset( self::kinds( array( 'item' => $entity ), $type )['item'] );
+    }
+    /** Traverse all candidates together instead of issuing a class request per result. */
+    private static function kinds( array $entities, string $type ): array {
+        $pending = array(); $seen = array(); $found = array();
+        foreach ( $entities as $id => $entity ) { $ids = self::ids( $entity, 'P31' ); if ( 'msc_person' === $type ) { if ( in_array( 'Q5', $ids, true ) ) { $found[ $id ] = true; } } else { $pending[ $id ] = $ids; $seen[ $id ] = array(); } }
+        for ( $depth = 0; $depth < 5 && $pending; ++$depth ) {
+            $load = array();
+            foreach ( $pending as $id => $ids ) {
+                if ( in_array( 'Q11424', $ids, true ) ) { $found[ $id ] = true; unset( $pending[ $id ] ); continue; }
+                $ids = array_values( array_diff( $ids, $seen[ $id ] ) ); if ( ! $ids || count( $ids ) > 50 ) { unset( $pending[ $id ] ); continue; }
+                $pending[ $id ] = $ids; $seen[ $id ] = array_merge( $seen[ $id ], $ids ); $load = array_merge( $load, $ids );
+            }
+            if ( ! $load ) { break; } $classes = OpenClient::entities( array_values( array_unique( $load ) ), true );
+            foreach ( $pending as $id => $ids ) { $next = array(); foreach ( $ids as $class ) { $next = array_merge( $next, self::ids( $classes[ $class ] ?? array(), 'P279' ) ); } $pending[ $id ] = array_values( array_unique( $next ) ); }
         }
-        return false;
+        return $found;
     }
     public static function search( string $type, string $query, string $provider = '', int $offset = 0 ): array {
+        return OpenClient::paced( static fn() => self::search_page( $type, $query, $provider, $offset ) );
+    }
+    private static function search_page( string $type, string $query, string $provider, int $offset ): array {
         $query = trim( sanitize_text_field( $query ) );
         if ( '' === $query || strlen( $query ) > 160 || ! in_array( $type, array( 'msc_movie', 'msc_show', 'msc_person', 'msc_episode', 'msc_game' ), true ) || $offset < 0 || $offset > 200 ) { throw new SourceError( 'Enter a title or person name (up to 160 characters).' ); }
         if ( 'msc_game' === $type ) { return IgdbSource::search( $query, $offset ); }
@@ -45,9 +54,9 @@ final class OpenSources {
             return array( 'items' => $result, 'next' => null );
         }
         $response = OpenClient::get( 'wikidata', '', array( 'action' => 'wbsearchentities', 'search' => $query, 'language' => 'en', 'uselang' => 'en', 'type' => 'item', 'limit' => 12, 'continue' => $offset ) );
-        $entities = OpenClient::entities( array_column( $response['search'] ?? array(), 'id' ) ); $result = array();
+        $entities = OpenClient::entities( array_column( $response['search'] ?? array(), 'id' ) ); $kinds = self::kinds( $entities, $type ); $result = array();
         foreach ( $response['search'] ?? array() as $row ) {
-            $entity = $entities[ $row['id'] ] ?? array(); if ( ! self::kind( $entity, $type ) ) { continue; }
+            $entity = $entities[ $row['id'] ] ?? array(); if ( ! isset( $kinds[ $row['id'] ] ) ) { continue; }
             $result[] = array( 'provider' => 'wikidata', 'id' => $row['id'], 'title' => self::label( $entity ), 'description' => sanitize_text_field( $entity['descriptions']['en']['value'] ?? '' ) );
         }
         return array( 'items' => $result, 'next' => isset( $response['search-continue'] ) ? (int) $response['search-continue'] : null );
@@ -136,6 +145,9 @@ final class OpenSources {
         return array( 'url' => $url, 'filename' => sanitize_file_name( $filename ), 'source' => array( 'provider' => 'commons', 'url' => $description, 'license' => $plain( 'LicenseShortName' ), 'license_url' => $license_url, 'attribution' => $plain( 'Artist' ), 'credit' => $plain( 'Credit' ), 'changes' => 'Resized by Wikimedia/WordPress; displayed as a cropped catalog image.' ) );
     }
     public static function wiki( string $id, string $type ): array {
+        return OpenClient::paced( static fn() => self::wiki_details( $id, $type ), 20 );
+    }
+    private static function wiki_details( string $id, string $type ): array {
         OpenClient::qid( $id );
         if ( ! in_array( $type, array( 'msc_movie', 'msc_person' ), true ) ) { throw new SourceError( 'Use TVmaze for TV Shows and Episodes.' ); }
         $e = OpenClient::entities( array( $id ) )[ $id ] ?? array();
