@@ -41,6 +41,7 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/image-import.php
     wp --url="$site_a_url" eval-file /msc-tests/image-search.php
     wp --url="$site_a_url" eval-file /msc-tests/acf-publication.php
+    wp --url="$site_a_url" eval-file /msc-tests/entities-calendar.php
     ;;
   stop) docker compose down ;;
   *) echo 'Usage: sh bin/shared-content.sh setup|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;

@@ -2,6 +2,8 @@
 
 Follow [the 2.0 setup and update guide](update-2.0.md) for full instructions, site URLs, content types, IGDB authentication, publishing, calendars and saving Docker data. First-time users can install Docker and clone the repository using [the Mac multisite guide](mac-multisite.md).
 
+The [2.1 guide](update-2.1.md) covers linked company/platform/service pages, hidden empty Episode sections, weekly calendars and expandable busy days.
+
 From your existing checkout, with Docker Desktop running:
 
 ```sh

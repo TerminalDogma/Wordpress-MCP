@@ -77,7 +77,7 @@ final class Acf {
 	private static function from_acf( array $field, $value ) {
 		$definition = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ];
 		if ( in_array( $definition['type'], array( 'media', 'media_list' ), true ) && is_string( $value ) ) { $value = json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }
-		if ( 'relationship_list' === $definition['type'] ) { $value = array_map( static function( $post ) { $r = Plugin::store()->by_post( (int) $post ); if ( ! $r ) { throw new \InvalidArgumentException( 'Related Person is not a shared record on this site.' ); } return $r['uuid']; }, (array) ( $value ?: array() ) ); }
+		if ( 'relationship_list' === $definition['type'] ) { $value = array_map( static function( $post ) { $r = Plugin::store()->by_post( (int) $post ); if ( ! $r ) { throw new \InvalidArgumentException( 'Related record is not a shared record on this site.' ); } return $r['uuid']; }, (array) ( $value ?: array() ) ); }
 		if ( 'relationship' === $definition['type'] && ! $value ) { $value = ''; }
 		if ( 'date' === $definition['type'] && preg_match( '/^\d{8}$/D', (string) $value ) ) { $value = substr( $value, 0, 4 ) . '-' . substr( $value, 4, 2 ) . '-' . substr( $value, 6, 2 ); }
 		if ( 'relationship' === $definition['type'] && $value ) { $related = Plugin::store()->by_post( (int) $value ); if ( ! $related ) { throw new \InvalidArgumentException( 'Related post is not a shared record on this site.' ); } $value = $related['uuid']; }
@@ -114,7 +114,7 @@ final class Acf {
 			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; }
 			else {
-				if ( 'relationship_list' === $definition['type'] ) { $previous = 'global' === $scope ? $r['data'][ $name ] ?? array() : Plugin::store()->resolved( $r['id'] )['data'][ $name ] ?? array(); foreach ( (array) $previous as $uuid ) { if ( ! msc_local_post_id( $uuid ) ) { throw new \InvalidArgumentException( 'A related Person is unavailable on this site. Use All fields and publishing to manage these links.' ); } } }
+				if ( 'relationship_list' === $definition['type'] ) { $previous = 'global' === $scope ? $r['data'][ $name ] ?? array() : Plugin::store()->resolved( $r['id'] )['data'][ $name ] ?? array(); foreach ( (array) $previous as $uuid ) { if ( ! msc_local_post_id( $uuid ) ) { throw new \InvalidArgumentException( 'A related record is unavailable on this site. Use All fields and publishing to manage these links.' ); } } }
 				if ( 'global' === $scope && 'relationship' === $definition['type'] && ! $raw && ! empty( $r['data'][ $name ] ) && ! msc_local_post_id( $r['data'][ $name ] ) ) { throw new \InvalidArgumentException( 'Related record is unavailable on this site. Use the Shared Content UUID editor.' ); }
 				$values[ $name ] = self::from_acf( $field, $raw );
 			}

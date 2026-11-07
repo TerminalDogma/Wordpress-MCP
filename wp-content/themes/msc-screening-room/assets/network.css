@@ -17,3 +17,4 @@ body[data-identity=b],body[data-identity=c]{--bg:#fff;--surface:#f4f5f6;--surfac
 body[data-identity=c]{--heading:Play,sans-serif}
 .news-section-title{max-width:none}.site-footer p{color:#c5d2dc}.site-footer .msc-igdb-credit{color:#e1ebf1}body[data-identity=c] .site-footer p{color:#52616e}.calendar-nav-link>span{font-family:system-ui,sans-serif}
 .episode-load-status{font-size:13px;color:var(--muted);min-height:20px;margin:0 0 12px}.episode-guide[data-loading=true] .episode-list{opacity:.55}
+.entity-hero .detail-art{object-fit:contain;background:var(--surface,#f5f6f8)}.details-panel .related-records a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}.details-panel .related-records dd{line-height:1.7}

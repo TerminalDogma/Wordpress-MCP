@@ -56,7 +56,7 @@ async def main():
             assert await page.locator('.calendar-event').count() > 0
             assert not await page.locator('.calendar-event.type-msc_person').count()
             if key in ('c', 'd'):
-                assert await page.locator('select[name=release_type] option').all_text_contents() == ['All release types', 'Video Games']
+                assert await page.locator('select[name=release_type] option').all_text_contents() == ['All release types', 'Video Games', 'Game Consoles and Platforms']
                 if key == 'd':
                     assert 'PC (Microsoft Windows)' not in await page.locator('#release-calendar').inner_text()
                     assert 'PlayStation Vita' in await page.locator('#release-calendar').inner_text()

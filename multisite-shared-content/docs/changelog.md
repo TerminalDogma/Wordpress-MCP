@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.1.0
+
+Adds seven shared entity types for production companies, distributors, game developers, game publishers, game consoles/platforms, streaming services and TV networks. Additive ACF relationships and matching legacy names produce published, site-aware sidebar links and related-title profiles. Setup enrolls relevant types once and retains later exclusions. Sony policies also apply to console pages and linked games. TV Shows omit Episode sections when no public Episodes exist. Calendars add week navigation, date selection and 3/5/10/all daily display limits with native expandable overflow. Console/platform launches enter release calendars.
+
 ## 2.0.2
 
 Image fields show Google Images results inside the editor through a privately configured Serper account. Results include previews, dimensions, source pages, paging and direct imports for posters, headshots and galleries. Searches use server-side credentials, caching and request limits. Successful season changes clear the loading message and no longer move focus to the season heading.

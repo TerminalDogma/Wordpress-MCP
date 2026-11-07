@@ -1,4 +1,8 @@
-# Shared Content 2.0.2 verification
+# Shared Content 2.1.0 verification
+
+## Linked entities, empty Episodes and weekly calendars
+
+Version 2.1 adds seven entity schemas and ACF Post Object relationships without changing stored legacy field types. Integration tests cover additive upgrades with saved data/custom labels, explicit and matched-name links, deduplication, local empty overrides, private/password-protected destinations, reverse links, Sony console membership, platform launch dates, disabled-type preservation and draft-only Episode sections. Calendar checks cover adjacent-month week data, site start-of-week settings, DST, daily overflow/all entries, malformed input and anonymous REST. Chromium exercises all seven templates, sidebar links, empty/published Episode sections, daily expansion/collapse, view/filter navigation, history, retry, responsive week rendering and no-JavaScript navigation/expansion. Existing season navigation and publication workflows remain in CI.
 
 ## Catalog overview and season loading
 

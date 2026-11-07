@@ -1,6 +1,6 @@
 <?php
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.0.2' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.0.2' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.0.2', true ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.1.0' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.1.0' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.1.0', true ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
 function msc_screen_chips( array $r ): void {
@@ -15,6 +15,7 @@ function msc_screen_chips( array $r ): void {
 function msc_screen_facts( array $r, array $fields ): void {
     echo '<dl class="facts">';
     foreach ( $fields as $key => $label ) {
+        if ( in_array( $key, \MSC\EntityCatalog::legacy_fields( $r['type'] ), true ) ) { continue; }
         $value = $r['data'][ $key ] ?? ''; if ( '' === $value || null === $value || is_array( $value ) ) { continue; }
         if ( str_ends_with( $key, '_date' ) ) { $value = wp_date( 'M j, Y', strtotime( $value . ' 12:00:00 UTC' ), new DateTimeZone( 'UTC' ) ); }
         if ( 'runtime' === $key ) { $value .= ' min'; }
@@ -47,4 +48,4 @@ function msc_screen_overview( array $record ): string {
     $data = $record['data']; $content = trim( (string) ( $data['content'] ?? '' ) );
     return wp_kses_post( apply_filters( 'the_content', '' !== $content ? $content : ( $data['excerpt'] ?? '' ) ) );
 }
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.0.2', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.1.0', true ); } } );

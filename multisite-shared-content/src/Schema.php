@@ -2,6 +2,7 @@
 namespace MSC;
 
 final class Schema {
+	public const BUILTIN_VERSION = 6;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -80,32 +81,33 @@ final class Schema {
 			foreach ( $categories as $key => $taxonomy ) { if ( isset( $fields[ $key ] ) ) { $fields[ $key ]['taxonomy'] = $taxonomy; } }
 		}
 		unset( $fields );
+		foreach ( array( 'msc_show' => &$show, 'msc_episode' => &$episode, 'msc_movie' => &$movie, 'msc_game' => &$game ) as $type => &$fields ) { $fields += EntityCatalog::fields( $type ); } unset( $fields );
 		return array(
 			'msc_show' => array( 'label' => 'TV Shows', 'slug' => 'shows', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $show ),
 			'msc_episode' => array( 'label' => 'Episodes', 'slug' => 'episodes', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $episode ),
 			'msc_movie' => array( 'label' => 'Movies', 'slug' => 'movies', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $movie ),
 			'msc_person' => array( 'label' => 'People', 'slug' => 'people', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $person ),
 			'msc_game' => array( 'label' => 'Video Games', 'slug' => 'games', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $game ),
-		);
+		) + EntityCatalog::schemas( $common );
 	}
 	/** Add new built-ins and missing fields once, retaining saved schema choices. */
 	public static function upgrade_defaults(): void {
 		$network = get_current_network_id();
-		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 5 ) { return; }
+		if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= self::BUILTIN_VERSION ) { return; }
 		Database::lock( 'builtin-schema', static function () use ( $network ) {
 			// Another request may have completed the upgrade while this one waited.
 			foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) { wp_cache_delete( $network . ':' . $option, 'site-options' ); }
-			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= 5 ) { return; }
+			if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= self::BUILTIN_VERSION ) { return; }
 			$previous_version = (int) get_network_option( $network, 'msc_builtin_schema_version', 0 );
 			$saved = get_network_option( $network, 'msc_schemas', false );
 			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
 			$schemas = false === $saved ? self::defaults() : $saved;
 			foreach ( self::defaults() as $type => $default ) {
-				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 || 'msc_game' === $type && $previous_version < 5 ) { $schemas[ $type ] = $default; } continue; }
+				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 || 'msc_game' === $type && $previous_version < 5 || isset( EntityCatalog::definitions()[ $type ] ) && $previous_version < 6 ) { $schemas[ $type ] = $default; } continue; }
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) ) { continue; }
+					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -117,7 +119,7 @@ final class Schema {
 				}
 			}
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
-			if ( ! update_network_option( $network, 'msc_builtin_schema_version', 5 ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== 5 ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
+			if ( ! update_network_option( $network, 'msc_builtin_schema_version', self::BUILTIN_VERSION ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== self::BUILTIN_VERSION ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );
 	}
 	public static function register_type( string $name, callable $sanitize ): void { self::$types[ $name ] = $sanitize; }

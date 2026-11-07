@@ -14,15 +14,18 @@ final class GamePolicy {
         return in_array( strtolower( trim( $label ) ), $labels, true );
     }
     public static function accepts( array $record, ?int $site = null ): bool {
+        if ( 'msc_console' === $record['type'] ) { return self::platform_allowed( $record['data']['platform_id'] ?? 0, $record['data']['title'] ?? '', $site ); }
         if ( 'msc_game' !== $record['type'] || 'all' === self::mode( $site ) ) { return true; }
         foreach ( (array) ( $record['data']['platform_ids'] ?? array() ) as $id ) { if ( self::platform_allowed( $id, '', $site ) ) { return true; } }
         foreach ( (array) ( $record['data']['platforms'] ?? array() ) as $name ) { if ( is_string( $name ) && self::platform_allowed( 0, $name, $site ) ) { return true; } }
+        foreach ( (array) ( $record['data']['console_records'] ?? array() ) as $uuid ) { $console = Plugin::store()->get( $uuid ); if ( $console && 'msc_console' === $console['type'] && 'active' === $console['state'] && self::accepts( $console, $site ) ) { return true; } }
         foreach ( (array) ( $record['data']['release_dates'] ?? array() ) as $row ) { if ( is_array( $row ) && self::platform_allowed( $row['platform_id'] ?? 0, $row['platform'] ?? '', $site ) ) { return true; } } return false;
     }
     public static function project( array $record, ?int $site = null ): array {
         if ( 'msc_game' !== $record['type'] || 'all' === self::mode( $site ) ) { return $record; } $d = &$record['data'];
         $d['platform_ids'] = array_values( array_filter( (array) ( $d['platform_ids'] ?? array() ), static fn( $id ) => self::platform_allowed( $id, '', $site ) ) );
         $d['platforms'] = array_values( array_filter( (array) ( $d['platforms'] ?? array() ), static fn( $label ) => is_string( $label ) && self::platform_allowed( 0, $label, $site ) ) );
+        if ( isset( $d['console_records'] ) ) { $d['console_records'] = array_values( array_filter( (array) $d['console_records'], static function ( $uuid ) use ( $site ) { $console = Plugin::store()->get( $uuid ); return $console && 'msc_console' === $console['type'] && 'active' === $console['state'] && self::accepts( $console, $site ); } ) ); }
         $d['release_dates'] = array_values( array_filter( (array) ( $d['release_dates'] ?? array() ), static fn( $r ) => is_array( $r ) && self::platform_allowed( $r['platform_id'] ?? 0, $r['platform'] ?? '', $site ) ) );
         $dates = array(); foreach ( $d['release_dates'] as $r ) { if ( 'day' === ( $r['precision'] ?? 'day' ) && ReleaseCalendar::date( $r['date'] ?? '' ) ) { $dates[] = $r['date']; } } sort( $dates );
         if ( ! array_key_exists( 'release_date', $record['overrides'] ?? array() ) && $dates ) { $d['release_date'] = $dates[0]; }
