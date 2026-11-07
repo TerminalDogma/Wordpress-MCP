@@ -17,6 +17,7 @@ final class Admin {
 				wp_enqueue_media();
 				wp_enqueue_script( 'msc-media', plugins_url( 'assets/media.js', MSC_FILE ), array( 'media-editor' ), MSC_VERSION, true );
 				wp_add_inline_script( 'msc-media', 'window.mscMediaSite=' . (int) get_current_blog_id() . ';', 'before' );
+				wp_add_inline_script( 'msc-media', 'window.mscMediaImport=' . wp_json_encode( array( 'url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( MediaImport::nonce_action() ) ) ) . ';', 'before' );
 			}
 		} );
 		foreach ( Schema::all() as $type => $schema ) {
@@ -51,7 +52,7 @@ final class Admin {
 		$name = 'fields[' . $key . ']'; $type = $field['type']; $id = 'msc-' . $key;
 		if ( 'release_dates' === $key && 'json' === $type ) { GameFields::control( (array) $value ); return; }
 		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
-			Media::control( $name, $id, $value, 'media_list' === $type );
+			Media::control( $name, $id, $value, 'media_list' === $type, $key );
 		} elseif ( ! empty( $field['taxonomy'] ) || 'multiselect' === $type && ! empty( $field['options'] ) || in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
 			$multiple = in_array( $type, array( 'multiselect', 'relationship_list' ), true );
 			$options = array();

@@ -89,7 +89,10 @@ async def main():
         url = wp('wp_set_current_user(1);$r=\\MSC\\Plugin::store()->resolved("' + show + '");\\MSC\\Plugin::store()->local($r["uuid"],[],[],(int)$r["mapping"]["local_version"],"publish");foreach([0,1,7,9] as $s){$e=\\MSC\\Plugin::store()->create("msc_episode",["title"=>"Season ".$s." Episode","parent_show"=>$r["uuid"],"season_number"=>$s,"episode_number"=>1]);\\MSC\\Plugin::materializer()->sync((int)$e["id"],get_current_blog_id());if($s!==9){$m=\\MSC\\Plugin::store()->mapping((int)$e["id"]);\\MSC\\Plugin::store()->local($e["uuid"],[],[],(int)$m["local_version"],"publish");}}echo wp_json_encode(get_permalink(msc_local_post_id($r["uuid"])));')
         await page.goto(url)
         assert await page.locator('.season-pagination a').count() == 3
-        await click(page.get_by_role('link', name='Season 7', exact=True))
+        await page.evaluate('window.mscSeasonDocument = true')
+        await page.get_by_role('link', name='Season 7', exact=True).click()
+        await page.wait_for_function('document.querySelector(".season-heading").textContent === "Season 7"')
+        assert await page.evaluate('window.mscSeasonDocument === true'), 'Season selection must preserve the document'
         assert await page.locator('.season-pagination [aria-current=page]').inner_text() == 'Season 7'
         assert await page.locator('.episode-list strong').all_inner_texts() == ['Season 7 Episode']
         assert await page.locator('.episode-list img,.episode-list p').count() == 0
@@ -99,7 +102,9 @@ async def main():
         await page.screenshot(path='/tmp/msc-review-season-seven.png', full_page=True)
         await page.set_viewport_size({'width': 390, 'height': 844})
         assert await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth + 1')
-        await click(page.get_by_role('link', name='Season 1', exact=True))
+        await page.get_by_role('link', name='Season 1', exact=True).click()
+        await page.wait_for_function('document.querySelector(".season-heading").textContent === "Season 1"')
+        assert await page.evaluate('window.mscSeasonDocument === true')
         assert await page.locator('.episode-list strong').all_inner_texts() == ['Season 1 Episode']
         assert not errors, errors
         await browser.close()

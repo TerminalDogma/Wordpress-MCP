@@ -10,7 +10,13 @@ ACF Free is optional. Without it, the plugin's complete Shared Content editor an
 4. Switch to **LOCAL EDITING**. Check **Override on this site** for each field you want to change. A checked field can be intentionally empty, zero, false, or an empty list.
 5. Uncheck a field's Override control and save to resume inheritance from the newest global value.
 
-The controls are on a dedicated ACF form inside WordPress admin. They are not silently attached to the ordinary Gutenberg save operation. Native title/body saves retain their documented local-override behavior. The ACF form does not create new records or change publication status; use **All fields and publishing** for those actions.
+The controls are on a dedicated ACF form inside WordPress admin. Native title/body saves retain their documented local-override behavior. Create records through **All fields and publishing**; existing records can be published directly from ACF.
+
+### Publish from ACF
+
+**Save and publish on this site** saves the displayed fields in the selected editing mode and publishes the current site's post. Network administrators also have **Save and publish globally**, which publishes this record on participating sites where its type and platform rules allow it. Existing local field overrides and explicit local removals are preserved. Missing eligible projections are created automatically.
+
+The selected editing mode still controls the field changes: global mode updates shared fields; local mode updates only this site's overrides. Global publication changes publication status across eligible sites. The status above the form shows the current site's state and a **View post** link after publication. The original Save buttons retain the existing publication state. Archived records require restoration before publication. Permission checks, revision tokens and transaction rollback apply to the combined save/publish action.
 
 Global and local forms carry separate revision tokens. Stale forms return HTTP 409 and save no changes; reload and review the latest record before retrying. The action verifies its nonce, current-site post editing permission, field/type ownership, participation and the appropriate MSC capability. A local editor cannot turn a local form into a global save by changing its submitted scope.
 

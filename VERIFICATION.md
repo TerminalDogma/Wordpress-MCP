@@ -1,4 +1,12 @@
-# Shared Content 2.0.0 verification
+# Shared Content 2.0.1 verification
+
+## Catalog overview and season loading
+
+Version 2.0.1 removes the repeated synopsis beneath catalog detail titles and retains the Overview/Biography section. When description content is empty, that section uses the stored synopsis. Excerpt data and archive cards remain available. TV Show seasons and 50-Episode pagination load through fetch without replacing the document, using the existing published-only server-rendered list. Links continue to work without JavaScript. The browser workflow checks all five detail types, excerpt-only fallback, both TV sites, numeric season selection, pagination resets, Back/Forward, source credits, failed requests/retry, rapid selections and mobile rendering.
+
+Image fields in both editors provide a Google Images link and a direct URL importer. Google opens in a separate tab; no Google API key or embedded result service is used. WordPress download fixtures check local attachments, portable ownership, format/size limits, public URL and redirect validation, permission checks and temporary-file cleanup. The browser workflow checks title search links, actual image imports/previews, global propagation, local ACF overrides/reset, gallery appends, headshot searches, failed imports, CSRF and footer-only credits. Provider image responses are mocked; external Google search results and third-party host availability are not part of these automated checks.
+
+ACF offers save-and-publish actions for this site and, for network administrators, all eligible sites. Integration checks cover existing overrides, excluded content types/platforms, missing projections, local removals, editor permissions, stale publication tokens and rollback after an injected destination failure. Browser checks exercise both buttons and verify that field changes retain their selected global/local scope.
 
 This is an installable release candidate for local/staging testing, with actual WordPress, ACF and browser coverage. It is not a certification of every production-readiness requirement in the original project brief.
 

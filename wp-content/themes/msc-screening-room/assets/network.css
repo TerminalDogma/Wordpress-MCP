@@ -16,3 +16,4 @@ body[data-identity=b] .masthead-top{height:105px}body[data-identity=b] .brand im
 body[data-identity=b],body[data-identity=c]{--bg:#fff;--surface:#f4f5f6;--surface2:#e9edf1;--muted:#647078;--line:#dde2e5;--accent-ink:#fff;--radius:0px}
 body[data-identity=c]{--heading:Play,sans-serif}
 .news-section-title{max-width:none}.site-footer p{color:#c5d2dc}.site-footer .msc-igdb-credit{color:#e1ebf1}body[data-identity=c] .site-footer p{color:#52616e}.calendar-nav-link>span{font-family:system-ui,sans-serif}
+.episode-load-status{font-size:13px;color:var(--muted);min-height:20px;margin:0 0 12px}.episode-guide[data-loading=true] .episode-list{opacity:.55}.season-heading:focus{outline:2px solid var(--accent);outline-offset:5px}

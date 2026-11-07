@@ -19,7 +19,7 @@ Preserve your `.env` and Docker volumes. Setup adds the fourth site, configures 
 
 Open `http://localhost:8080/site-a/`, `/site-b/`, `/site-c/`, `/site-d/` using your configured port. Each site's navigation includes its catalog and Release Calendar. Append `wp-admin/` for its editor. Use the existing administrator credentials from your private `.env`.
 
-Configure types at **Network Admin → Shared Content → Sites and Content Types** and private API credentials at **IGDB API**. Imports and edits default to global scope; local overrides remain explicit. New catalog entries follow the type's publication default, normally draft. Publish each site's projection through **All fields and publishing → Switch to local overrides**.
+Configure types at **Network Admin → Shared Content → Sites and Content Types** and private API credentials at **IGDB API**. Imports and edits default to global scope; local overrides remain explicit. New catalog entries follow the type's publication default, normally draft. ACF provides **Save and publish on this site** and a network-administrator **Save and publish globally** button. The full editor also has per-site publication controls.
 
 ```sh
 sh bin/shared-content.sh queue  # process queued synchronization

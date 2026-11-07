@@ -37,8 +37,9 @@ final class Attribution {
     public static function media_html( array $ref ): string {
         if ( empty( $ref['site_id'] ) || empty( $ref['attachment_id'] ) ) { return ''; }
         switch_to_blog( (int) $ref['site_id'] );
-        try { $source = get_post_meta( (int) $ref['attachment_id'], '_msc_open_source', true ); }
+		try { $source = get_post_meta( (int) $ref['attachment_id'], '_msc_open_source', true ); $manual = get_post_meta( (int) $ref['attachment_id'], '_msc_manual_image_source', true ); }
         finally { restore_current_blog(); }
+		if ( is_array( $manual ) && ( ! empty( $manual['source_page'] ) || ! empty( $manual['credit'] ) ) ) { $parts = array(); if ( ! empty( $manual['source_page'] ) ) { $parts[] = '<a href="' . esc_url( $manual['source_page'] ) . '" rel="noopener">Image source</a>'; } if ( ! empty( $manual['credit'] ) ) { $parts[] = esc_html( $manual['credit'] ); } return '<div class="msc-image-credit"><small>Image: ' . implode( ' · ', $parts ) . '</small></div>'; }
         return is_array( $source ) ? '<div class="msc-image-credit"><small>Image: ' . self::source_html( $source ) . '</small></div>' : '';
     }
 }

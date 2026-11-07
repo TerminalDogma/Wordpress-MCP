@@ -103,6 +103,9 @@ final class Acf {
 		if ( ! $r || ! current_user_can( 'edit_post', $post ) || ! wp_verify_nonce( $request['nonce'] ?? '', 'msc_acf_' . $post ) ) { throw new \RuntimeException( 'Invalid request or permission denied.' ); }
 		$scope = $request['scope'] ?? ''; if ( ! in_array( $scope, array( 'global', 'local' ), true ) ) { throw new \InvalidArgumentException( 'Choose global or local scope.' ); }
 		Permissions::require( 'global' === $scope ? 'msc_edit_global' : 'msc_override_local', $r['type'] );
+		$publication = $request['publication'] ?? '';
+		if ( ! is_string( $publication ) || ! in_array( $publication, array( '', 'site', 'global' ), true ) ) { throw new \InvalidArgumentException( 'Invalid publication action.' ); }
+		if ( $publication ) { Publication::require( $publication, $r ); }
 		$values = array(); $reset = array();
 		foreach ( (array) ( $request['acf'] ?? array() ) as $key => $raw ) {
 			$field = self::$fields[ $key ] ?? null;
@@ -116,11 +119,16 @@ final class Acf {
 				$values[ $name ] = self::from_acf( $field, $raw );
 			}
 		}
-		if ( 'global' === $scope ) { return Plugin::store()->update( $r['id'], $values, (int) ( $request['version'] ?? 0 ) ); }
-		return Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) );
+		$save = static function () use ( $r, $values, $reset, $request, $scope ) { return 'global' === $scope ? Plugin::store()->update( $r['id'], $values, (int) ( $request['version'] ?? 0 ) ) : Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) ); };
+		if ( ! $publication ) { return $save(); }
+		return Database::transaction( static function () use ( $save, $scope, $request, $publication, $r ) {
+			$saved = $save(); $version = 'local' === $scope ? (int) $saved['mapping']['local_version'] : (int) ( $request['local_version'] ?? 0 );
+			$result = Publication::publish( (int) $r['id'], $publication, $version );
+			$saved = 'global' === $scope ? Plugin::store()->get( $r['id'] ) : Plugin::store()->resolved( $r['id'] ); $saved['publication'] = $result; return $saved;
+		} );
 	}
 	public static function handle(): void {
-		try { $r = self::save( wp_unslash( $_POST ) ); if ( 'global' === $_POST['scope'] ) { Propagation::send( $r ); } wp_safe_redirect( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . sanitize_key( $_POST['scope'] ) . '&updated=1' ) ); exit; }
+		try { $r = self::save( wp_unslash( $_POST ) ); if ( 'global' === $_POST['scope'] ) { Propagation::send( $r ); } if ( ! empty( $r['publication'] ) ) { Admin::notice( 'Fields saved. Published on ' . count( $r['publication']['sites'] ) . ( 1 === count( $r['publication']['sites'] ) ? ' site.' : ' sites.' ) ); } wp_safe_redirect( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . sanitize_key( $_POST['scope'] ) . '&updated=1' ) ); exit; }
 		catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ), 'Shared fields were not saved', array( 'response' => str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : ( $e instanceof \InvalidArgumentException ? 400 : 403 ), 'back_link' => true ) ); }
 	}
 	public static function override_control( array $field ): void {
@@ -142,11 +150,19 @@ final class Acf {
 		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( self::$global ? 'global' : 'local' ) ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
 		EpisodeAdmin::context( $r, self::$global );
 		PersonReview::notice( $r );
+		$status = get_post_status_object( get_post_status( (int) $r['mapping']['post_id'] ) );
+		echo '<p class="msc-acf-publication-status"><strong>Publication on this site: ' . esc_html( $status->label ?? 'Unavailable' ) . '</strong>' . ( 'publish' === get_post_status( (int) $r['mapping']['post_id'] ) ? ' · <a href="' . esc_url( get_permalink( (int) $r['mapping']['post_id'] ) ) . '" target="_blank" rel="noopener">View post</a>' : '' ) . '</p>';
 		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. See Site synchronization below for global delivery and local overrides.</p></div>'; }
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
 		acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'field_groups' => array( 'group_msc_' . $r['type'] ), 'form' => false, 'honeypot' => false ) );
-		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' ); echo '</form>'; if ( self::$global ) { Propagation::render( $r ); } echo '</div>';
+		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' );
+		if ( current_user_can( 'msc_publish_local' ) && 'active' === $r['state'] ) {
+			echo '<div class="msc-acf-publish-actions"><button type="submit" class="button button-secondary" name="publication" value="site">Save and publish on this site</button>';
+			if ( Publication::global_allowed() ) { echo ' <button type="submit" class="button button-secondary" name="publication" value="global">Save and publish globally</button>'; }
+			echo '<p class="description">Field changes follow the selected editing mode. Global publication targets enabled sites, preserves local field overrides and excludes local removals and unsupported platforms.</p></div>';
+		}
+		echo '</form>'; if ( self::$global ) { Propagation::render( $r ); } echo '</div>';
 		self::$editing = null;
 	}
 }

@@ -4,7 +4,11 @@ A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Cu
 
 ## Four branded sites with shared catalogs
 
-The **Multisite Shared Content 2.0.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md).
+The **Multisite Shared Content 2.0.1** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
+
+Poster and other image fields also include **Google Images / image URL**: search in a new tab, import the chosen image URL, preview it and save. See [the image workflow](multisite-shared-content/docs/presentation.md#google-images-and-image-urls).
+
+ACF includes **Save and publish on this site** and a network-administrator **Save and publish globally** action. See [the ACF publishing guide](multisite-shared-content/docs/acf.md#publish-from-acf).
 
 For existing installations, [the 1.8 update guide](docs/update-1.8.md) covers the one-time Site A catch-up, duplicate Person checks, Select all import data, global defaults and delivery status, public season pages and footer credits.
 
