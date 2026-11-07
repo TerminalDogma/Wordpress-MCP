@@ -39,9 +39,47 @@
         if (useTitle && title && title.value.trim() && !panel.dataset.queryEdited) {
             query.value = title.value.trim() + ' ' + panel.dataset.imageKind;
         }
-        var url = new URL('https://www.google.com/search');
-        url.searchParams.set('tbm', 'isch'); url.searchParams.set('q', query.value.trim());
-        panel.querySelector('.msc-search-google').href = url.href;
+    }
+    var searches = new WeakMap();
+    function resultCard(item) {
+        var article = document.createElement('article'); article.className = 'msc-image-result'; article.dataset.imageUrl = item.url;
+        var preview = document.createElement('div'); preview.className = 'msc-image-result-preview';
+        if (item.thumbnail) {
+            var image = document.createElement('img'); image.src = item.thumbnail; image.alt = item.title; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
+            image.addEventListener('error', function () { preview.textContent = 'Preview unavailable'; }); preview.appendChild(image);
+        } else preview.textContent = 'Preview unavailable';
+        article.appendChild(preview);
+        var title = document.createElement('strong'); title.textContent = item.title; article.appendChild(title);
+        var facts = document.createElement('small'); facts.textContent = (item.width && item.height ? item.width + ' × ' + item.height + ' · ' : '') + (item.source || 'Image source'); article.appendChild(facts);
+        if (item.source_url) { var link = document.createElement('a'); link.href = item.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Source page'; article.appendChild(link); }
+        var use = document.createElement('button'); use.type = 'button'; use.className = 'button msc-import-search-image'; use.textContent = 'Import image'; use.mscImageResult = item; article.appendChild(use);
+        return article;
+    }
+    async function searchImages(panel, page) {
+        var query = panel.querySelector('.msc-image-query').value.trim();
+        var area = panel.querySelector('.msc-image-search-results'), grid = panel.querySelector('.msc-image-result-grid'), status = panel.querySelector('.msc-image-search-status');
+        var button = panel.querySelector('.msc-search-google'), more = panel.querySelector('.msc-image-search-more');
+        area.hidden = false;
+        if (!query || Array.from(query).length > 160) { status.textContent = 'Enter search terms up to 160 characters.'; return; }
+        if (!window.mscMediaImport) { status.textContent = 'Refresh the editor before searching.'; return; }
+        var previous = searches.get(panel); if (previous && previous.controller) previous.controller.abort();
+        var state = {controller: new AbortController(), query: query, page: page, next: null}; searches.set(panel, state);
+        if (page === 1) grid.replaceChildren();
+        grid.setAttribute('aria-busy', 'true'); button.disabled = true; more.hidden = true; status.textContent = 'Searching Google Images…';
+        try {
+            var response = await fetch(window.mscMediaImport.url, {method: 'POST', credentials: 'same-origin', signal: state.controller.signal,
+                body: new URLSearchParams({action: 'msc_search_images', nonce: window.mscMediaImport.nonce, query: query, page: page})});
+            var result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.data && result.data.message || 'Image search failed. Please retry.');
+            if (searches.get(panel) !== state || !state.controller || state.controller.signal.aborted) return;
+            result.data.items.forEach(function (item) { if (!Array.from(grid.children).some(function (card) { return card.dataset.imageUrl === item.url; })) grid.appendChild(resultCard(item)); });
+            state.next = result.data.next_page; more.hidden = !state.next;
+            status.textContent = grid.children.length ? grid.children.length + ' images · Page ' + result.data.page : 'No images found. Try different search terms.';
+        } catch (error) {
+            if (error.name !== 'AbortError' && searches.get(panel) === state && state.controller) status.textContent = error.message && !(error instanceof TypeError) && !(error instanceof SyntaxError) ? error.message : 'Image search failed. Please retry.';
+        } finally {
+            if (searches.get(panel) === state) { grid.setAttribute('aria-busy', 'false'); button.disabled = false; }
+        }
     }
     async function importImage(button) {
         var panel = button.closest('.msc-web-image'), control = button.closest('.msc-media-control');
@@ -51,6 +89,7 @@
         catch (_) { status.textContent = 'Paste a complete HTTPS image URL.'; return; }
         if (!window.mscMediaImport) { status.textContent = 'Refresh the editor before importing an image.'; return; }
         button.disabled = true; status.textContent = 'Importing image…';
+        var originalLabel = button.textContent; button.textContent = 'Importing…';
         try {
             var title = document.querySelector('#msc-title');
             var response = await fetch(window.mscMediaImport.url, {
@@ -76,16 +115,19 @@
             previews.appendChild(card(model)); changed(control);
             panel.querySelector('.msc-image-url').value = '';
             status.textContent = 'Image added to this site’s media library. Save the record to apply it.';
+            if (button.classList.contains('msc-import-search-image')) button.dataset.imported = '1';
         } catch (error) {
             status.textContent = error.message && !(error instanceof TypeError) && !(error instanceof SyntaxError) ? error.message : 'The image could not be imported. Check the image URL and try again.';
-        } finally { button.disabled = false; }
+        } finally { button.disabled = button.dataset.imported === '1'; button.textContent = button.disabled ? 'Imported' : originalLabel; }
     }
     document.addEventListener('toggle', function (event) {
         if (event.target.matches('.msc-web-image') && event.target.open) googleQuery(event.target, true);
     }, true);
     document.addEventListener('input', function (event) {
         if (event.target.matches('.msc-image-query')) {
-            var panel = event.target.closest('.msc-web-image'); panel.dataset.queryEdited = 'true'; googleQuery(panel, false);
+            var panel = event.target.closest('.msc-web-image'); panel.dataset.queryEdited = 'true';
+            var state = searches.get(panel); if (state && state.controller) { state.controller.abort(); state.controller = null; panel.querySelector('.msc-image-result-grid').setAttribute('aria-busy', 'false'); panel.querySelector('.msc-search-google').disabled = false; panel.querySelector('.msc-image-search-status').textContent = ''; }
+            panel.querySelector('.msc-image-search-more').hidden = true;
         }
     });
     document.addEventListener('keydown', function (event) {
@@ -94,6 +136,10 @@
         if (event.target.matches('.msc-image-url')) { event.preventDefault(); event.target.closest('.msc-web-image').querySelector('.msc-import-image-url').click(); }
     });
     document.addEventListener('click', function (event) {
+        var searchButton = event.target.closest('.msc-search-google,.msc-image-search-more');
+        if (searchButton) { var searchPanel = searchButton.closest('.msc-web-image'); var searchState = searches.get(searchPanel); var more = searchButton.classList.contains('msc-image-search-more') && searchState && searchState.query === searchPanel.querySelector('.msc-image-query').value.trim(); searchImages(searchPanel, more ? searchState.next : 1); return; }
+        var selected = event.target.closest('.msc-import-search-image');
+        if (selected) { if (selected.disabled) return; var selectedPanel = selected.closest('.msc-web-image'); selectedPanel.querySelector('.msc-image-url').value = selected.mscImageResult.url; selectedPanel.querySelector('.msc-image-source-url').value = selected.mscImageResult.source_url || ''; importImage(selected); return; }
         var importButton = event.target.closest('.msc-import-image-url');
         if (importButton) { if (!importButton.disabled) importImage(importButton); return; }
         var remove = event.target.closest('.msc-remove-media');

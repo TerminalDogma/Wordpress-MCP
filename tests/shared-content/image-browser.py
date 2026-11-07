@@ -1,4 +1,4 @@
-"""Google Images links and URL imports in full/ACF editors, galleries and inheritance."""
+"""Embedded Google Images results and URL imports in full/ACF editors and galleries."""
 import asyncio
 import json
 import os
@@ -27,49 +27,65 @@ async def main():
         async def route(request):
             host = urlparse(request.request.url).hostname
             if host in ('localhost','127.0.0.1'): await request.continue_()
-            elif host == 'www.google.com': await request.fulfill(status=200,content_type='text/html',body='<h1>Google Images link fixture</h1>')
+            elif host == 'encrypted-tbn0.gstatic.com': await request.fulfill(status=200,content_type='image/svg+xml',body='<svg xmlns="http://www.w3.org/2000/svg" width="60" height="90"><rect width="60" height="90" fill="#187daf"/></svg>')
             else: await request.abort()
         await context.route('**/*',route)
-        page = await context.new_page(); errors=[]; page.on('pageerror',lambda e:errors.append(str(e)))
+        page = await context.new_page(); errors=[]; popups=[]; provider_requests=[]; page.on('pageerror',lambda e:errors.append(str(e))); page.on('popup',lambda popup:popups.append(popup)); page.on('request',lambda r:provider_requests.append(r.url) if urlparse(r.url).hostname == 'google.serper.dev' else None)
         await page.goto(base + '/wp-login.php'); await page.fill('#user_login',config['WORDPRESS_ADMIN_USER']); await page.fill('#user_pass',config['WORDPRESS_ADMIN_PASSWORD']); await page.click('#wp-submit'); await page.wait_for_url('**/wp-admin/**')
+        search_key = 'fixture-search-' + data['record']
+        await page.goto(base + '/wp-admin/network/admin.php?page=msc-image-search')
+        await page.fill('#msc-serper-key', search_key)
+        await page.get_by_role('button',name='Save image search settings',exact=True).click()
+        await page.wait_for_url('**saved=1')
+        assert await page.locator('#msc-serper-key').input_value() == ''
+        assert search_key not in await page.content()
         await page.goto(base + '/site-a/wp-admin/admin.php?page=msc&record=' + data['record'])
         poster = page.locator('#msc-poster').locator('..'); panel = poster.locator('.msc-web-image')
         await panel.locator('summary').first.click()
         await expect(panel.locator('.msc-image-query')).to_have_value(data['title'] + ' poster')
         await panel.locator('.msc-image-query').fill(data['title'] + ' official poster')
-        async with page.expect_popup() as popup_info: await panel.locator('.msc-search-google').click()
-        popup = await popup_info.value; await popup.wait_for_load_state()
-        assert parse_qs(urlparse(popup.url).query) == {'tbm':['isch'],'q':[data['title'] + ' official poster']}
-        await popup.close()
-        await panel.locator('.msc-image-url').fill('https://93.184.216.34/msc-url-fixture-image.png?tag=' + data['record'])
+        await page.evaluate('window.mscImageSearchEditor = true')
+        await panel.locator('.msc-search-google').click()
+        await expect(panel.locator('.msc-image-result-grid')).to_have_attribute('aria-busy','false')
+        await expect(panel.locator('.msc-image-result')).to_have_count(10)
+        assert not popups and not provider_requests
+        assert await panel.locator('.msc-image-result img').first.get_attribute('referrerpolicy') == 'no-referrer'
+        await panel.locator('.msc-image-search-more').click()
+        await expect(panel.locator('.msc-image-result')).to_have_count(12)
+        assert await panel.locator('.msc-image-search-more').is_hidden()
         await panel.locator('.msc-image-source summary').click()
-        await panel.locator('.msc-image-source-url').fill('https://93.184.216.34/image-source')
         await panel.locator('.msc-image-credit-input').fill('Fixture photographer')
-        await panel.locator('.msc-import-image-url').click()
-        await expect(panel.locator('.msc-image-import-status')).to_contain_text('Image added')
+        await panel.locator('.msc-import-search-image').first.click()
+        await expect(panel.locator('.msc-import-search-image').first).to_have_text('Imported')
         await expect(poster.locator('.msc-media-previews img')).to_be_visible()
         assert await poster.locator('.msc-media-previews img').evaluate('(el)=>el.complete && el.naturalWidth>0')
+        assert await panel.locator('.msc-image-source-url').input_value() == 'http://93.184.216.34/image-source-1'
+        assert await page.evaluate('window.mscImageSearchEditor === true')
+        assert search_key not in await page.content()
         inherited = json.loads(await poster.locator('.msc-media-value').input_value()); assert inherited['site_id'] == data['a']
         await page.get_by_role('button',name='Save global record',exact=True).click(); await page.wait_for_url('**mode=global')
         state = wp(r'$r=\MSC\Plugin::store()->resolved("' + data['record'] + '",' + str(data['b']) + ');echo wp_json_encode($r["data"]["poster"]);')
         assert state == inherited
         await page.goto(data['public']); assert 'Fixture photographer' in await page.locator('#msc-source-footer').inner_html()
         assert not await page.locator('main .msc-image-credit').count()
-        print('PASS: Google Images title search, real local poster import/preview, global propagation and footer credit.',flush=True)
+        print('PASS: Embedded Google Images results, pagination, one-click poster import/preview, private key isolation, global propagation and footer credit.',flush=True)
 
         await page.goto(base + '/site-b/wp-admin/admin.php?page=msc-acf&record=' + data['record'] + '&scope=local')
         poster = page.locator('.acf-field[data-name=msc_poster]'); panel = poster.locator('.msc-web-image')
         await panel.locator('summary').first.click()
-        await panel.locator('.msc-image-url').fill('https://93.184.216.34/msc-url-fixture-image.png?local=' + data['record'])
-        await panel.locator('.msc-import-image-url').click(); await expect(panel.locator('.msc-image-import-status')).to_contain_text('Image added')
+        await panel.locator('.msc-search-google').click()
+        await expect(panel.locator('.msc-image-result')).to_have_count(10)
+        await panel.locator('.msc-import-search-image').nth(1).click()
+        await expect(panel.locator('.msc-import-search-image').nth(1)).to_have_text('Imported')
         local = json.loads(await poster.locator('.msc-media-value').input_value()); assert local['site_id'] == data['b']
         assert await poster.locator('input[name="override[poster]"]').is_checked()
         gallery = page.locator('.acf-field[data-name=msc_promotional_images]'); gallery_panel = gallery.locator('.msc-web-image')
         await gallery_panel.locator('summary').first.click()
+        await gallery_panel.locator('.msc-search-google').click()
+        await expect(gallery_panel.locator('.msc-image-result')).to_have_count(10)
         for i in range(2):
-            await gallery_panel.locator('.msc-image-url').fill('https://93.184.216.34/msc-url-fixture-image.png?gallery=' + str(i) + data['record'])
-            await gallery_panel.locator('.msc-import-image-url').click()
-            await expect(gallery_panel.locator('.msc-image-url')).to_have_value('')
+            await gallery_panel.locator('.msc-import-search-image').nth(i).click()
+            await expect(gallery_panel.locator('.msc-import-search-image').nth(i)).to_have_text('Imported')
         assert len(json.loads(await gallery.locator('.msc-media-value').input_value())) == 2
         assert await gallery.locator('.msc-media-previews img').count() == 2
         await page.get_by_role('button',name='Save local overrides',exact=True).click(); await page.wait_for_url('**updated=1')
@@ -79,17 +95,32 @@ async def main():
         await page.get_by_role('button',name='Save local overrides',exact=True).click(); await page.wait_for_url('**updated=1')
         assert json.loads(await poster.locator('.msc-media-value').input_value()) == inherited
         panel = poster.locator('.msc-web-image'); await panel.locator('summary').first.click()
+        await panel.locator('.msc-image-query').fill('empty ' + data['record'])
+        await panel.locator('.msc-search-google').click()
+        await expect(panel.locator('.msc-image-search-status')).to_contain_text('No images found')
+        await panel.locator('.msc-image-query').fill('badkey ' + data['record'])
+        await panel.locator('.msc-search-google').click()
+        await expect(panel.locator('.msc-image-search-status')).to_contain_text('not authorized')
+        assert json.loads(await poster.locator('.msc-media-value').input_value()) == inherited
+        await panel.locator('.msc-image-query').fill(data['title'] + ' poster')
+        await panel.locator('.msc-search-google').click()
+        await expect(panel.locator('.msc-image-result')).to_have_count(10)
+        await panel.locator('.msc-image-url-options>summary').click()
         await panel.locator('.msc-image-url').fill('https://127.0.0.1/private.png')
         await panel.locator('.msc-import-image-url').click()
         await expect(panel.locator('.msc-image-import-status')).to_contain_text('public HTTPS')
         assert json.loads(await poster.locator('.msc-media-value').input_value()) == inherited
         response = await context.request.post(base + '/site-b/wp-admin/admin-ajax.php', form={'action':'msc_import_image_url','nonce':'invalid','url':'https://93.184.216.34/msc-url-fixture-image.png'})
         assert response.status == 403
+        response = await context.request.post(base + '/site-b/wp-admin/admin-ajax.php', form={'action':'msc_search_images','nonce':'invalid','query':'poster','page':'1'})
+        assert response.status == 403
         await page.screenshot(path='/tmp/msc-google-image-picker.png',full_page=True)
         await page.goto(base + '/site-a/wp-admin/admin.php?page=msc-acf&record=' + data['person'])
         headshot = page.locator('.acf-field[data-name=msc_headshot] .msc-web-image')
         await headshot.locator('summary').first.click(); assert 'headshot' in await headshot.locator('.msc-image-query').input_value()
         assert not errors, errors
+        assert not popups and not provider_requests
+        assert search_key not in await page.content()
         await browser.close()
         print('PASS: ACF image import, local ownership/override/reset, appended galleries, headshot search, failed URL preservation and CSRF.',flush=True)
 

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!content || !status) return;
     let request;
 
-    async function loadSeason(url, pushHistory, moveFocus) {
+    async function loadSeason(url, pushHistory) {
         if (request) request.abort();
         const controller = new AbortController(); request = controller;
         guide.dataset.loading = 'true';
@@ -30,10 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const footer = document.querySelector('#msc-source-footer');
             if (footer && nextFooter) footer.replaceChildren(...nextFooter.childNodes);
             if (pushHistory) history.pushState({}, '', url.href);
-            const heading = content.querySelector('.season-heading');
-            const page = content.querySelector('.episode-pagination>span');
-            status.textContent = heading ? `${heading.textContent} loaded${page ? ' · ' + page.textContent : ''}.` : 'Episode list updated.';
-            if (moveFocus && heading) heading.focus({preventScroll: true});
+            status.textContent = '';
         } catch (error) {
             if (error.name !== 'AbortError' && request === controller) {
                 status.textContent = 'Episodes could not be loaded. Please try the season link again.';
@@ -52,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = new URL(link.href);
         if (url.origin !== location.origin || url.pathname !== location.pathname) return;
         event.preventDefault();
-        loadSeason(url, true, true);
+        loadSeason(url, true);
     });
-    window.addEventListener('popstate', () => loadSeason(new URL(location.href), false, false));
+    window.addEventListener('popstate', () => loadSeason(new URL(location.href), false));
 });

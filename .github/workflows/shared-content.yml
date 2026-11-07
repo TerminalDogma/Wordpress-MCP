@@ -48,7 +48,7 @@ jobs:
           MSC_DISPOSABLE_TESTS=1 sh bin/network-browser-tests.sh
       - name: Browser catalog overview and asynchronous season navigation
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/season-browser.py
-      - name: Browser Google Images links and URL image imports
+      - name: Browser embedded Google Images search and image imports
         run: |
           export PATH="/tmp/msc-browser-env/bin:$PATH"
           MSC_DISPOSABLE_TESTS=1 sh bin/image-browser-tests.sh
@@ -57,7 +57,7 @@ jobs:
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.0.1
+          name: multisite-shared-content-2.0.2
           path: dist/
       - name: Stop services
         if: always()

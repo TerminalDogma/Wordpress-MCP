@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.0.2
+
+Image fields show Google Images results inside the editor through a privately configured Serper account. Results include previews, dimensions, source pages, paging and direct imports for posters, headshots and galleries. Searches use server-side credentials, caching and request limits. Successful season changes clear the loading message and no longer move focus to the season heading.
+
 ## 1.8.0
 
 Person imports check existing drafts across roles/providers and require review of possible name matches. Confirmed identities reuse one Person and accumulate professions. Duplicate People lists existing possible matches. Import previews include Select all. Editors and standard Edit links default to global mode when permitted. Global saves attempt immediate delivery and show per-site status/retry controls. Setup runs the requested recovery-backed Site A catch-up, resetting conflicting destination overrides. Public TV Show pages paginate by season; source and image credits appear together in the footer. See the source package's `docs/update-1.8.md`.

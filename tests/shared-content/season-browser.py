@@ -36,12 +36,14 @@ async def main():
             await expect(page.locator('.story-copy .prose').first).to_contain_text(record['text'])
         print('PASS: One overview/biography on all five catalog types, including an excerpt-only fallback.', flush=True)
 
-        async def assert_season(label, count):
+        async def assert_season(label, count, status=''):
             await expect(page.locator('.season-heading')).to_have_text(label)
             await expect(page.locator('.episode-guide-content')).to_have_attribute('aria-busy', 'false')
             await expect(page.locator('.episode-list li')).to_have_count(count)
             assert await page.evaluate('window.mscOriginalDocument === true'), 'Unexpected page refresh'
             assert await page.locator('.episode-list img,.episode-list p').count() == 0
+            await expect(page.locator('.episode-load-status')).to_have_text(status)
+            assert await page.evaluate('document.activeElement?.className !== "season-heading" && String(window.getSelection()) === ""'), 'Season changes must not focus or select the heading'
 
         for site, url in data['sites'].items():
             await page.goto(url)
@@ -86,7 +88,7 @@ async def main():
         await page.get_by_role('link', name='Season 7', exact=True).click()
         await expect(page.locator('.episode-load-status')).to_contain_text('could not be loaded')
         assert page.url == old_url
-        await assert_season('Season 0', 1)
+        await assert_season('Season 0', 1, 'Episodes could not be loaded. Please try the season link again.')
         await page.unroute('**/*season=7*', unavailable)
         await page.get_by_role('link', name='Season 7', exact=True).click()
         await assert_season('Season 7', 2)

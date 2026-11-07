@@ -6,17 +6,17 @@ final class MediaImport {
     public const MAX_BYTES = 8 * MB_IN_BYTES;
     public static function allowed(): bool { return current_user_can( 'upload_files' ) && ( current_user_can( 'msc_create_global' ) || current_user_can( 'msc_edit_global' ) || current_user_can( 'msc_override_local' ) ); }
     public static function nonce_action(): string { return 'msc_image_url_' . get_current_blog_id(); }
-    private static function url( string $url ): string {
+    private static function url( string $url, bool $https_only = true ): string {
         if ( strlen( $url ) > 4096 ) { throw new \InvalidArgumentException( 'The image URL is too long.' ); }
         $parts = wp_parse_url( $url );
-        if ( ! is_array( $parts ) || 'https' !== ( $parts['scheme'] ?? '' ) || ! empty( $parts['user'] ) || ! empty( $parts['pass'] ) || isset( $parts['port'] ) && 443 !== (int) $parts['port'] || ! wp_http_validate_url( $url ) ) { throw new \InvalidArgumentException( 'Use a public HTTPS image URL without a username, password or custom port.' ); }
+        if ( ! is_array( $parts ) || ! in_array( $parts['scheme'] ?? '', $https_only ? array( 'https' ) : array( 'http', 'https' ), true ) || ! empty( $parts['user'] ) || ! empty( $parts['pass'] ) || isset( $parts['port'] ) && ( 'https' === ( $parts['scheme'] ?? '' ) ? 443 : 80 ) !== (int) $parts['port'] || ! wp_http_validate_url( $url ) ) { throw new \InvalidArgumentException( $https_only ? 'Use a public HTTPS image URL without a username, password or custom port.' : 'Use a public HTTP or HTTPS source page URL without credentials or a custom port.' ); }
         $host = trim( $parts['host'], '[]' ); $ip = filter_var( $host, FILTER_VALIDATE_IP ) ? $host : gethostbyname( $host );
         if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE ) ) { throw new \InvalidArgumentException( 'Use a public HTTPS image URL. Local and reserved network addresses are not supported.' ); }
-        return esc_url_raw( $url, array( 'https' ) );
+        return esc_url_raw( $url, $https_only ? array( 'https' ) : array( 'http', 'https' ) );
     }
     public static function import( string $url, string $title = '', string $source_page = '', string $credit = '' ): array {
         if ( ! self::allowed() ) { throw new \RuntimeException( 'Image upload and shared-content editing permission are required.' ); }
-        $url = self::url( trim( $url ) ); $source_page = trim( $source_page ); if ( $source_page ) { $source_page = self::url( $source_page ); }
+        $url = self::url( trim( $url ) ); $source_page = trim( $source_page ); if ( $source_page ) { $source_page = self::url( $source_page, false ); }
         $title = mb_substr( sanitize_text_field( $title ), 0, 200 ); $credit = mb_substr( sanitize_text_field( $credit ), 0, 500 );
         require_once ABSPATH . 'wp-admin/includes/file.php'; require_once ABSPATH . 'wp-admin/includes/media.php'; require_once ABSPATH . 'wp-admin/includes/image.php';
         $tmp = wp_tempnam( 'msc-image-url' ); if ( ! $tmp ) { throw new \RuntimeException( 'The image download could not be prepared.' ); }

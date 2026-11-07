@@ -32,6 +32,7 @@ services:
       OMDB_API_KEY: ${OMDB_API_KEY:-}
       IGDB_CLIENT_ID: ${IGDB_CLIENT_ID:-}
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET:-}
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
     volumes:
       - wordpress_data:/var/www/html
       - ./multisite-shared-content:/var/www/html/wp-content/plugins/multisite-shared-content:ro

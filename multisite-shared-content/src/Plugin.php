@@ -25,6 +25,7 @@ final class Plugin {
 		Schema::upgrade_defaults();
 		GameFields::boot();
 		MediaImport::boot();
+		ImageSearch::boot();
 		add_filter( 'cron_schedules', static function ( $s ) { $s['msc_minute'] = array( 'interval' => 60, 'display' => 'Every minute (MSC)' ); return $s; } );
 		add_action( 'init', static function () { if ( 1 !== (int) get_network_option( get_current_network_id(), 'msc_db_version' ) ) { Database::migrate(); } self::register_posts(); }, 8 );
 		add_action( 'init', static function () {

@@ -39,6 +39,7 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/import-review.php
     wp --url="$site_a_url" eval-file /msc-tests/network-games.php
     wp --url="$site_a_url" eval-file /msc-tests/image-import.php
+    wp --url="$site_a_url" eval-file /msc-tests/image-search.php
     wp --url="$site_a_url" eval-file /msc-tests/acf-publication.php
     ;;
   stop) docker compose down ;;
