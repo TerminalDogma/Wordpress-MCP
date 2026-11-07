@@ -74,6 +74,8 @@ Official references: [TVmaze API/licence](https://www.tvmaze.com/api), [TVmaze s
 
 ## Movie search rate-limit recovery (2.1.2)
 
+Version 2.1.3 also fixes blank titles and false “not a supported film” previews when Wikidata stores the title as a multilingual label, such as Avengers: Doomsday (`Q113244839`). English and multilingual labels are requested together with language fallback. Older cached entries without either label refresh automatically; no manual cache deletion is needed.
+
 If Movie searches repeatedly showed **Please wait a few seconds before requesting more source data**, update to 2.1.2 with the usual Mac commands:
 
 ```sh

@@ -27,6 +27,8 @@ final class MSC_Movie_Search_Fixtures {
                 elseif ( $n >= 200 && $n < 212 ) { $e = self::entity( $id, 'Fixture Parent Class ' . $n, 'P279', array( 'Q11424' ) ); }
                 elseif ( 500 === $n || 501 === $n ) { $e = self::entity( $id, 'Cyclic class', 'P279', array( 'Q' . ( $base + ( 500 === $n ? 501 : 500 ) ) ) ); }
                 else { $e = array( 'id' => $id, 'missing' => '' ); }
+                if ( 0 === $block && 0 === $n && ! isset( $e['missing'] ) ) { $e['labels'] = array( 'mul' => array( 'language' => 'mul', 'value' => 'Fixture Movie 1' ) ); }
+                if ( isset( $e['labels'] ) ) { $all_labels = $e['labels']; $e['labels'] = array_intersect_key( $all_labels, array_flip( explode( '|', $q['languages'] ?? 'en' ) ) ); if ( ! empty( $q['languagefallback'] ) && ! isset( $e['labels']['en'] ) && isset( $all_labels['mul'] ) ) { $e['labels']['en'] = $all_labels['mul'] + array( 'for-language' => 'en' ); } }
                 if ( 'claims' === ( $q['props'] ?? '' ) && ! isset( $e['missing'] ) ) { $e = array_intersect_key( $e, array_flip( array( 'id', 'claims' ) ) ); } $entities[ $id ] = $e;
             } $data = array( 'entities' => $entities );
         }

@@ -13,7 +13,10 @@ final class OpenSources {
         return array_values( array_map( static fn( $c ) => $c['mainsnak']['datavalue']['value'] ?? null, $preferred ?: $claims ) );
     }
     private static function ids( array $entity, string $property ): array { return array_values( array_unique( array_filter( array_column( self::claims( $entity, $property ), 'id' ) ) ) ); }
-    private static function label( array $entity ): string { return sanitize_text_field( $entity['labels']['en']['value'] ?? '' ); }
+    private static function label( array $entity ): string {
+        foreach ( array( 'en', 'mul' ) as $language ) { $label = $entity['labels'][ $language ]['value'] ?? null; if ( is_string( $label ) && '' !== trim( $label ) ) { return sanitize_text_field( $label ); } }
+        return '';
+    }
     private static function exact_date( $value ): string {
         if ( ! is_string( $value ) || ! preg_match( '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $value ) ) { return ''; }
         $d = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value ); return $d && $d->format( 'Y-m-d' ) === $value ? $value : '';
@@ -57,6 +60,7 @@ final class OpenSources {
         $entities = OpenClient::entities( array_column( $response['search'] ?? array(), 'id' ) ); $kinds = self::kinds( $entities, $type ); $result = array();
         foreach ( $response['search'] ?? array() as $row ) {
             $entity = $entities[ $row['id'] ] ?? array(); if ( ! isset( $kinds[ $row['id'] ] ) ) { continue; }
+            if ( '' === self::label( $entity ) ) { continue; }
             $result[] = array( 'provider' => 'wikidata', 'id' => $row['id'], 'title' => self::label( $entity ), 'description' => sanitize_text_field( $entity['descriptions']['en']['value'] ?? '' ) );
         }
         return array( 'items' => $result, 'next' => isset( $response['search-continue'] ) ? (int) $response['search-continue'] : null );
@@ -151,7 +155,8 @@ final class OpenSources {
         OpenClient::qid( $id );
         if ( ! in_array( $type, array( 'msc_movie', 'msc_person' ), true ) ) { throw new SourceError( 'Use TVmaze for TV Shows and Episodes.' ); }
         $e = OpenClient::entities( array( $id ) )[ $id ] ?? array();
-        if ( ! self::kind( $e, $type ) || '' === self::label( $e ) ) { throw new SourceError( 'This Wikidata item is not a supported ' . ( 'msc_person' === $type ? 'person' : 'film' ) . '.', 404 ); }
+        if ( ! self::kind( $e, $type ) ) { throw new SourceError( 'This Wikidata item is not a supported ' . ( 'msc_person' === $type ? 'person' : 'film' ) . '.', 404 ); }
+        if ( '' === self::label( $e ) ) { throw new SourceError( 'Wikidata did not return a usable title for this item. Please retry later.', 502 ); }
         $source = self::source( 'wikidata', 'https://www.wikidata.org/wiki/' . $id ); $fields = array( 'title' => self::label( $e ) ); $field_sources = array(); $warnings = array(); $credits = array();
         $properties = 'msc_person' === $type ? array( 'P27' => 'country', 'P106' => 'professions' ) : array( 'P495' => 'country', 'P364' => 'language', 'P136' => 'genres', 'P272' => 'production_companies', 'P750' => 'distributor' );
         $related = array(); foreach ( array_keys( $properties ) as $property ) { $related = array_merge( $related, self::ids( $e, $property ) ); }

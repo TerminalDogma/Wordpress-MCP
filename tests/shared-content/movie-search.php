@@ -10,10 +10,15 @@ wp_set_current_user( 1 ); $old_seed = get_network_option( get_current_network_id
 try {
     ms_reset(); $before = MSC_Movie_Search_Fixtures::$requests; $result = OpenSources::search( 'msc_movie', 'Movie batch ' . $seed );
     ms_check( 12 === count( $result['items'] ) && 12 === $result['next'] && 'Q' . $seed === $result['items'][0]['id'], 'A cold twelve-result search returns every film in provider order without tripping its own limit' );
+    ms_check( 'Fixture Movie 1' === $result['items'][0]['title'], 'The first result keeps its title when Wikidata stores it only as a multilingual label' );
     ms_check( 4 === MSC_Movie_Search_Fixtures::$requests - $before, 'Twelve distinct film classes require four total requests rather than fifteen' );
     $calls = MSC_Movie_Search_Fixtures::$calls; $class_call = end( $calls ); ms_check( 'claims' === $class_call['props'] && 12 === count( explode( '|', $class_call['ids'] ) ), 'Class validation requests only claims and batches all result classes' );
     $before = MSC_Movie_Search_Fixtures::$requests; ms_check( $result === OpenSources::search( 'msc_movie', 'Movie batch ' . $seed ) && $before === MSC_Movie_Search_Fixtures::$requests, 'Repeated searches use shared response/entity caches without spending rate slots' );
     $class = OpenClient::entities( array( 'Q' . ( $seed + 100 ) ) ); ms_check( isset( $class[ 'Q' . ( $seed + 100 ) ]['labels'] ), 'Claims-only cache entries cannot masquerade as full entities during a later preview' );
+    $qid = 'Q' . $seed; $entity = OpenClient::entities( array( $qid ) )[ $qid ]; $entity['labels'] = array(); set_site_transient( 'msc_open_entity_' . $qid, $entity, DAY_IN_SECONDS );
+    $preview = OpenSources::wiki( $qid, 'msc_movie' ); ms_check( 'Fixture Movie 1' === $preview['fields']['title'], 'Preview repairs an older cached response with no English or multilingual label' );
+    $entity = OpenClient::entities( array( $qid ) )[ $qid ]; unset( $entity['labels']['en'] ); set_site_transient( 'msc_open_entity_' . $qid, $entity, DAY_IN_SECONDS );
+    ms_check( 'Fixture Movie 1' === OpenSources::wiki( $qid, 'msc_movie' )['fields']['title'], 'Preview accepts a cached multilingual-only title without misclassifying the film' );
     ms_reset(); $before = MSC_Movie_Search_Fixtures::$requests; $deep = OpenSources::search( 'msc_movie', 'Movie deep ' . $seed ); ms_check( 12 === count( $deep['items'] ) && 5 === MSC_Movie_Search_Fixtures::$requests - $before, 'Deeper subclass checks batch each graph level across all candidates' );
     ms_reset(); $mixed = OpenSources::search( 'msc_movie', 'Movie mixed ' . $seed ); ms_check( 9 === count( $mixed['items'] ), 'Humans, cyclic classes and missing classes remain excluded from Movie results' );
     ms_reset(); $none = OpenSources::search( 'msc_movie', 'Movie missing ' . $seed ); ms_check( ! $none['items'], 'Explicitly missing classes produce an honest empty result rather than a quota error' );

@@ -1,4 +1,8 @@
-# Shared Content 2.1.2 verification
+# Shared Content 2.1.3 verification
+
+## Multilingual Movie titles
+
+The live Wikidata label response for Avengers: Doomsday (`Q113244839`) has no English-only label but returns its title with multilingual fallback. The focused fixture reproduces the blank first result before the fix. Regression checks cover title rendering, preview of multilingual-only cached data and automatic refresh of an older unnamed cache entry. Missing-title errors are separate from unsupported-type errors; film validation remains enforced.
 
 ## Movie search request pacing
 

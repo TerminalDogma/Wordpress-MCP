@@ -70,10 +70,15 @@ final class OpenClient {
         foreach ( $ids as $id ) { self::qid( $id ); }
         $missing = array();
         $prefix = $claims_only ? 'msc_open_entity_claims_' : 'msc_open_entity_';
-        foreach ( $ids as $id ) { if ( get_site_transient( 'msc_open_entity_missing_' . $id ) ) { continue; } $cached = get_site_transient( 'msc_open_entity_' . $id ); if ( ! is_array( $cached ) && $claims_only ) { $cached = get_site_transient( $prefix . $id ); } if ( is_array( $cached ) ) { $result[ $id ] = $cached; } else { $missing[] = $id; } }
+        foreach ( $ids as $id ) {
+            if ( get_site_transient( 'msc_open_entity_missing_' . $id ) ) { continue; }
+            $cached = get_site_transient( 'msc_open_entity_' . $id ); if ( ! is_array( $cached ) && $claims_only ) { $cached = get_site_transient( $prefix . $id ); }
+            $named = false; foreach ( array( 'en', 'mul' ) as $language ) { $label = $cached['labels'][ $language ]['value'] ?? null; if ( is_string( $label ) && '' !== trim( $label ) ) { $named = true; break; } }
+            if ( is_array( $cached ) && ( $claims_only || $named ) ) { $result[ $id ] = $cached; } else { $missing[] = $id; }
+        }
         // Famous people's claim sets can be large. Keep batches below the response-size bound.
         foreach ( array_chunk( $missing, $claims_only ? 50 : 10 ) as $chunk ) {
-            $response = self::get( 'wikidata', '', array( 'action' => 'wbgetentities', 'ids' => implode( '|', $chunk ), 'props' => $claims_only ? 'claims' : 'labels|descriptions|claims|sitelinks', 'languages' => 'en', 'sitefilter' => 'enwiki' ), DAY_IN_SECONDS );
+            $response = self::get( 'wikidata', '', array( 'action' => 'wbgetentities', 'ids' => implode( '|', $chunk ), 'props' => $claims_only ? 'claims' : 'labels|descriptions|claims|sitelinks', 'languages' => 'en|mul', 'languagefallback' => 1, 'sitefilter' => 'enwiki' ), DAY_IN_SECONDS );
             foreach ( (array) ( $response['entities'] ?? array() ) as $key => $entity ) {
                 if ( ! is_array( $entity ) ) { continue; } $id = $entity['id'] ?? $key; if ( ! in_array( $id, $chunk, true ) ) { continue; }
                 if ( isset( $entity['missing'] ) ) { set_site_transient( 'msc_open_entity_missing_' . $id, true, 5 * MINUTE_IN_SECONDS ); continue; }

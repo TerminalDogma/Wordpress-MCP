@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.1.3
+
+Fixes blank search titles and false “not a supported film” previews for multilingual Wikidata labels, including Avengers: Doomsday. Entity requests include multilingual/English fallback; older unnamed cached entities refresh automatically. Missing titles no longer masquerade as failed film classification. Adds focused title, preview and cache-recovery regressions.
+
 ## 2.1.2
 
 Fixes Movie searches exhausting the plugin's own source-request allowance while validating each result separately. Film subclass checks now traverse candidates together in claims-only batches, with separate full-entity caches. Search actions wait briefly for local rate slots; Wikidata previews share a bounded wait budget across their lookups. Network request caps and real provider cooldowns remain enforced. Malformed/future local rate windows recover automatically. Regression fixtures reproduce the previous cold-search failure and verify request counts, subclass/cycle handling, cache separation, pacing, permissions and the WordPress admin flow.
