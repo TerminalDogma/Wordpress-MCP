@@ -1,4 +1,8 @@
-# Shared Content 2.1.3 verification
+# Shared Content 2.1.4 verification
+
+## Credit names and profile publication
+
+Eleven focused WordPress checks passed for draft Person/company names, duplicate company references, multiple roles, hidden private descriptions, automatic linking after publication and unlinking after unpublishing. Checks also cover inherited People credits on a site without Person pages, empty local overrides and unchanged global relationship data. The full GitHub Actions suite runs separately after publication.
 
 ## Multilingual Movie titles
 

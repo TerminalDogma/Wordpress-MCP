@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.1.4
+
+Credited People and companies now display their names while their profile pages are drafts or otherwise unavailable on the current site. Publishing a profile automatically links existing credits without reimporting or resaving the title. Unpublishing restores plain names; private profile content remains hidden. The same rule covers other linked company/service/platform entities and preserves local credit overrides and Sony platform policies.
+
 ## 2.1.3
 
 Fixes blank search titles and false “not a supported film” previews for multilingual Wikidata labels, including Avengers: Doomsday. Entity requests include multilingual/English fallback; older unnamed cached entities refresh automatically. Missing titles no longer masquerade as failed film classification. Adds focused title, preview and cache-recovery regressions.

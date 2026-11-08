@@ -45,16 +45,16 @@ final class EntityCatalog {
         $ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_type=%s AND post_status='publish' AND post_password='' AND post_title=%s LIMIT 3", $type, $name ) );
         $matches = array(); foreach ( $ids as $id ) { $g = Plugin::store()->by_post( (int) $id ); $r = $g ? Presentation::record( $g['id'] ) : null; if ( $r && self::name( $r['data']['title'] ?? '' ) === self::name( $name ) ) { $matches[] = $r; } } return 1 === count( $matches ) ? $matches[0] : null;
     }
-    /** Rows contain only published explicit relationships; legacy strings remain readable. */
+    /** Explicit company/Person names remain visible; only public destinations receive links. */
     public static function rows( array $record ): array {
         $rows = array(); $schema = Schema::get( $record['type'] ); $definitions = self::definitions();
         foreach ( $schema['fields'] as $key => $field ) {
             if ( ! in_array( $field['type'], array( 'relationship', 'relationship_list' ), true ) ) { continue; }
             $items = array(); $seen = array();
             foreach ( (array) ( $record['data'][ $key ] ?? array() ) as $uuid ) {
-                if ( ! is_string( $uuid ) || ! $uuid ) { continue; } $r = Presentation::record( $uuid );
-                if ( ! $r || isset( $field['target'] ) && $r['type'] !== $field['target'] ) { continue; }
-                $items[] = array( 'title' => $r['data']['title'] ?? '', 'url' => Presentation::url( $r ), 'uuid' => $r['uuid'] ); $seen[ self::name( $r['data']['title'] ?? '' ) ] = true;
+                if ( ! is_string( $uuid ) || ! $uuid ) { continue; } $credit = Presentation::credit( $uuid, $field['target'] ?? null );
+                if ( ! $credit ) { continue; }
+                $items[] = array_intersect_key( $credit, array_flip( array( 'title', 'url', 'uuid' ) ) ); $seen[ self::name( $credit['title'] ) ] = true;
             }
             $d = $definitions[ $field['target'] ?? '' ] ?? null; $legacy = $d && $d[3] === $key ? ( $record['data'][ $d[4] ] ?? array() ) : array();
             foreach ( (array) $legacy as $value ) {

@@ -12,7 +12,7 @@ try {
         ec_check( count( EntityCatalog::definitions() ) === 7 && Schema::enabled( 'msc_studio' ) && ! Schema::enabled( 'msc_game' ), 'Film sites have the new company/service types without enabling Games' );
         $html = EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) );
         foreach ( array( $studio, $distributor, $streaming, $person ) as $r ) { ec_check( str_contains( $html, esc_url( $r['url'] ) ), 'Published explicit and name-matched records appear as sidebar links' ); }
-        ec_check( ! str_contains( $html, $draft['data']['title'] ) && 1 === substr_count( $html, esc_url( $studio['url'] ) ), 'Draft links are hidden and matching explicit/legacy credits are deduplicated' );
+        ec_check( str_contains( $html, $draft['data']['title'] ) && ! str_contains( $html, esc_url( $draft['url'] ) ) && 1 === substr_count( $html, esc_url( $studio['url'] ) ), 'Draft names remain visible without links and matching explicit/legacy credits are deduplicated' );
         ec_check( in_array( $movie['uuid'], array_column( EntityCatalog::related( Presentation::record( $studio['uuid'] ) ), 'uuid' ), true ), 'Entity pages find published related titles through effective fields' );
         $r = $store->resolved( $movie['uuid'] ); $r = $store->local( $movie['uuid'], array( 'production_company_records' => array() ), array(), (int) $r['mapping']['local_version'] );
         ec_check( ! str_contains( EntityCatalog::sidebar( $r ), esc_url( $studio['url'] ) ) && $r['data']['production_companies'] === $studio['data']['title'], 'An empty local relationship override preserves the legacy name and removes its link' );

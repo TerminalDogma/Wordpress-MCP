@@ -33,7 +33,8 @@ async def main():
         await page.goto(data['movie']['url'])
         for key in ('studio','distributor','streaming','person'):
             await expect(page.locator('.details-panel a[href="'+data[key]['url']+'"]')).to_have_count(1)
-        assert data['draft']['data']['title'] not in await page.locator('.details-panel').inner_text()
+        assert data['draft']['data']['title'] in await page.locator('.details-panel').inner_text()
+        assert not await page.locator('.details-panel a[href="'+data['draft']['url']+'"]').count()
         await page.locator('.details-panel a[href="'+data['studio']['url']+'"]').click()
         await expect(page.locator('.hero-copy h1')).to_have_text(data['studio']['data']['title'])
         await expect(page.locator('.entity-titles a[href="'+data['movie']['url']+'"]')).to_be_visible()

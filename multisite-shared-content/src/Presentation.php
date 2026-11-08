@@ -25,6 +25,14 @@ final class Presentation {
 		return $r && Schema::enabled( $r['type'] ) && GamePolicy::accepts( $r ) && 'active' === $r['state'] && ! empty( $r['mapping']['post_id'] ) && empty( $r['mapping']['suppressed'] ) && 'publish' === $r['mapping']['status'] && 'publish' === get_post_status( (int) $r['mapping']['post_id'] ) && ! post_password_required( (int) $r['mapping']['post_id'] ) ? GamePolicy::project( $r ) : null;
 	}
 	public static function url( array $r ): string { return (string) get_permalink( (int) $r['mapping']['post_id'] ); }
+	/** Credit names belong to the referring title; profile publication controls the link. */
+	public static function credit( string $uuid, ?string $target = null ): ?array {
+		$r = Plugin::store()->resolved( $uuid );
+		if ( ! $r || 'active' !== $r['state'] || ( $target && $target !== $r['type'] ) || ! GamePolicy::accepts( $r ) || '' === trim( $r['data']['title'] ?? '' ) ) { return null; }
+		$public = self::record( $uuid );
+		if ( ! $public && 'msc_person' !== $r['type'] && ! isset( EntityCatalog::definitions()[ $r['type'] ] ) ) { return null; }
+		return array( 'title' => $r['data']['title'], 'uuid' => $r['uuid'], 'url' => $public ? self::url( $public ) : '', 'public' => $public );
+	}
 	/** Only published, accessible local Episodes contribute seasons or rows. */
 	public static function season_page( string $show, $requested = null, $requested_page = null ): array {
 		global $wpdb; $empty = array( 'seasons' => array(), 'season' => '', 'episodes' => array(), 'total' => 0, 'page' => 1, 'pages' => 1 );
@@ -54,10 +62,15 @@ final class Presentation {
 	public static function credits( array $r ): void {
 		$groups = array( 'actors' => 'Cast', 'directors' => 'Directors', 'screenwriters' => 'Writers', 'producers' => 'Producers', 'creators' => 'Creators' );
 		foreach ( $groups as $key => $label ) {
-			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::record( $uuid ); if ( $person && 'msc_person' === $person['type'] ) { $people[] = $person; } }
+			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
 			echo '<section class="credit-section"><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
-			foreach ( $people as $person ) { echo '<div class="person-credit"><a class="person-card" href="' . esc_url( self::url( $person ) ) . '">' . self::image( $person, '', 'medium' ) . '<span>' . esc_html( $person['data']['title'] ) . '</span></a>' . Attribution::collect( $person, array( 'title' ) ) . Attribution::collect_image( $person ) . '</div>'; }
+			foreach ( $people as $person ) {
+				echo '<div class="person-credit">';
+				if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . '<span>' . esc_html( $person['title'] ) . '</span></a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }
+				else { echo '<span class="person-card person-credit-name">' . esc_html( $person['title'] ) . '</span>'; }
+				echo '</div>';
+			}
 			echo '</div></section>';
 		}
 	}
