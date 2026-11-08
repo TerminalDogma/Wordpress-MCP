@@ -1,4 +1,8 @@
-# Shared Content 2.1.4 verification
+# Shared Content 2.2.0 verification
+
+## Trailers and sidebar layout
+
+All 37 focused trailer/sidebar checks, 24 existing image-search checks and 11 draft-credit checks passed. Chromium workflows passed. The focused WordPress checks exercise trailer schema upgrades, ACF Free fields and writes, normalization and unsafe input rejection, limits, provider result filtering, independent image/video caches, paging, permissions and cooldowns. Publication fixtures cover Movies, TV Shows and Video Games, empty sections, first-player loading, inherited/local values and a five-actor sidebar retaining the full cast. Chromium checks carousel navigation/player unloading, stable height, keyboard controls, mobile overflow, details spacing, no-JavaScript watch links, embedded search/preview/add/retry/duplicate prevention in both editors and global ACF saving. Provider responses and YouTube thumbnails are fixtures; live Serper account access and third-party video playback are not asserted. Full CI runs separately after publication.
 
 ## Credit names and profile publication
 

@@ -30,27 +30,29 @@ final class ImageSearch {
             $items[] = array( 'url' => $image, 'thumbnail' => self::link( $row['thumbnailUrl'] ?? '' ), 'source_url' => self::link( $row['link'] ?? '', false ), 'title' => $text( $row['title'] ?? '' ) ?: 'Image', 'source' => $text( $row['source'] ?? $row['domain'] ?? '' ), 'width' => min( 100000, max( 0, (int) ( $row['imageWidth'] ?? 0 ) ) ), 'height' => min( 100000, max( 0, (int) ( $row['imageHeight'] ?? 0 ) ) ) );
         } return $items;
     }
-    public static function search( string $query, int $page = 1 ): array {
+    public static function search( string $query, int $page = 1, string $kind = 'images' ): array {
+        if ( ! in_array( $kind, array( 'images', 'videos' ), true ) ) { throw new SourceError( 'Unsupported search type.' ); }
         if ( ! MediaImport::allowed() ) { throw new SourceError( 'Image upload and shared-content editing permission are required.', 403 ); }
+        $label = 'videos' === $kind ? 'YouTube' : 'Image';
         $query = trim( sanitize_text_field( $query ) );
         if ( '' === $query || mb_strlen( $query ) > 160 || $page < 1 || $page > 10 ) { throw new SourceError( 'Enter search terms up to 160 characters and choose a page from 1 to 10.' ); }
         if ( ! self::configured() ) { throw new SourceError( 'Configure image search under Network Admin → Shared Content → Image Search.', 503 ); }
-        $fingerprint = hash( 'sha256', self::key() ); $cache = 'msc_image_search_' . hash( 'sha256', $fingerprint . '|' . $query . '|' . $page ); $cached = get_site_transient( $cache );
+        $fingerprint = hash( 'sha256', self::key() ); $cache = ( 'videos' === $kind ? 'msc_trailer_search_' : 'msc_image_search_' ) . hash( 'sha256', $fingerprint . '|' . $query . '|' . $page ); $cached = get_site_transient( $cache );
         if ( is_array( $cached ) ) { return $cached; }
-        if ( get_site_transient( 'msc_image_search_backoff_' . $fingerprint ) ) { throw new SourceError( 'Image search is temporarily rate limited. Wait briefly and retry.', 429 ); }
+        if ( get_site_transient( 'msc_image_search_backoff_' . $fingerprint ) ) { throw new SourceError( $label . ' search is temporarily rate limited. Wait briefly and retry.', 429 ); }
         Database::lock( 'image-search-rate:' . get_current_user_id(), static function () {
             $key = 'msc_image_search_rate_' . get_current_user_id(); $state = (array) get_site_transient( $key ); $minute = (int) floor( time() / 60 ); $count = ( $state['minute'] ?? 0 ) === $minute ? (int) $state['count'] : 0;
             if ( $count >= 30 ) { throw new SourceError( 'Wait a minute before making more image searches.', 429 ); } set_site_transient( $key, array( 'minute' => $minute, 'count' => $count + 1 ), 65 );
         } );
-        $response = wp_safe_remote_post( 'https://google.serper.dev/images', array( 'timeout' => 20, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => MB_IN_BYTES, 'headers' => array( 'X-API-KEY' => self::key(), 'Content-Type' => 'application/json', 'Accept' => 'application/json' ), 'body' => wp_json_encode( array( 'q' => $query, 'page' => $page, 'num' => self::PAGE_SIZE, 'gl' => 'us', 'hl' => 'en' ) ) ) );
-        if ( is_wp_error( $response ) ) { throw new SourceError( 'Image search could not be reached. Please retry.', 502 ); }
+        $response = wp_safe_remote_post( 'https://google.serper.dev/' . $kind, array( 'timeout' => 20, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => MB_IN_BYTES, 'headers' => array( 'X-API-KEY' => self::key(), 'Content-Type' => 'application/json', 'Accept' => 'application/json' ), 'body' => wp_json_encode( array( 'q' => 'videos' === $kind ? $query . ' site:youtube.com/watch' : $query, 'page' => $page, 'num' => self::PAGE_SIZE, 'gl' => 'us', 'hl' => 'en' ) ) ) );
+        if ( is_wp_error( $response ) ) { throw new SourceError( $label . ' search could not be reached. Please retry.', 502 ); }
         $status = wp_remote_retrieve_response_code( $response );
-        if ( in_array( $status, array( 401, 403 ), true ) ) { throw new SourceError( 'Image search was not authorized. Check the Serper key and account credits in Image Search settings.', 503 ); }
-        if ( 429 === $status ) { $delay = max( 1, min( 300, (int) wp_remote_retrieve_header( $response, 'retry-after' ) ?: 5 ) ); set_site_transient( 'msc_image_search_backoff_' . $fingerprint, true, $delay ); throw new SourceError( 'Image search is rate limited. Retry after ' . $delay . ' seconds.', 429 ); }
-        if ( 200 !== $status ) { throw new SourceError( 'Image search is unavailable. Please retry.', 502 ); }
+        if ( in_array( $status, array( 401, 403 ), true ) ) { throw new SourceError( $label . ' search was not authorized. Check the Serper key and account credits in Image Search settings.', 503 ); }
+        if ( 429 === $status ) { $delay = max( 1, min( 300, (int) wp_remote_retrieve_header( $response, 'retry-after' ) ?: 5 ) ); set_site_transient( 'msc_image_search_backoff_' . $fingerprint, true, $delay ); throw new SourceError( $label . ' search is rate limited. Retry after ' . $delay . ' seconds.', 429 ); }
+        if ( 200 !== $status ) { throw new SourceError( $label . ' search is unavailable. Please retry.', 502 ); }
         $data = json_decode( wp_remote_retrieve_body( $response ), true );
-        if ( ! is_array( $data ) || ! isset( $data['images'] ) || ! is_array( $data['images'] ) || ! array_is_list( $data['images'] ) ) { throw new SourceError( 'Image search returned unreadable results. Please retry.', 502 ); }
-        $result = array( 'query' => $query, 'page' => $page, 'items' => self::normalize( $data['images'] ), 'next_page' => count( $data['images'] ) >= self::PAGE_SIZE && $page < 10 ? $page + 1 : null );
+        if ( ! is_array( $data ) || ! isset( $data[ $kind ] ) || ! is_array( $data[ $kind ] ) || ! array_is_list( $data[ $kind ] ) ) { throw new SourceError( $label . ' search returned unreadable results. Please retry.', 502 ); }
+        $result = array( 'query' => $query, 'page' => $page, 'items' => ( 'videos' === $kind ? Trailers::results( $data[ $kind ] ) : self::normalize( $data[ $kind ] ) ), 'next_page' => count( $data[ $kind ] ) >= self::PAGE_SIZE && $page < 10 ? $page + 1 : null );
         set_site_transient( $cache, $result, 20 * MINUTE_IN_SECONDS ); return $result;
     }
     public static function boot(): void {

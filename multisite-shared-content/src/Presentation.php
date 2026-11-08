@@ -64,7 +64,7 @@ final class Presentation {
 		foreach ( $groups as $key => $label ) {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
-			echo '<section class="credit-section"><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
+			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
 			foreach ( $people as $person ) {
 				echo '<div class="person-credit">';
 				if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . '<span>' . esc_html( $person['title'] ) . '</span></a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }

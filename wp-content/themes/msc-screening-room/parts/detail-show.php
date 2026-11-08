@@ -1,3 +1,3 @@
 <?php $r = $args['record']; get_template_part( 'parts/hero', null, array( 'record' => $r, 'label' => 'TV Show', 'facts' => array( 'premiere_date' => 'Premiere date', 'number_of_seasons' => 'Seasons', 'status' => 'Status' ) ) );
 get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array( 'network' => 'Network', 'streaming_service' => 'Streaming service', 'country' => 'Country', 'language' => 'Language', 'number_of_episodes' => 'Episodes', 'finale_date' => 'Finale date' ) ) ); ?>
-<?php get_template_part( 'parts/episodes', null, $args ); \MSC\Presentation::credits( $r ); get_template_part( 'parts/gallery', null, $args );
+<?php \MSC\Trailers::render( $r ); get_template_part( 'parts/episodes', null, $args ); \MSC\Presentation::credits( $r ); get_template_part( 'parts/gallery', null, $args );

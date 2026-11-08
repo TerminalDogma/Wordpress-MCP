@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 6;
+	public const BUILTIN_VERSION = 7;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -75,6 +75,8 @@ final class Schema {
 			'poster' => array( 'type' => 'media', 'label' => 'Cover image' ), 'promotional_images' => array( 'type' => 'media_list' ),
 			'official_website' => array( 'type' => 'url' ), 'external_ids' => array( 'type' => 'json' ),
 		);
+		$trailer_field = array( 'type' => 'text', 'format' => 'trailers', 'multiline' => true, 'label' => 'Trailers', 'instructions' => 'Paste one YouTube or public Vimeo video URL per line, up to 12. The line order controls the carousel.' );
+		$movie['trailers'] = $show['trailers'] = $game['trailers'] = $trailer_field;
 		// Taxonomy values remain portable names, never site-specific term IDs.
 		$categories = array( 'genres' => 'msc_genre', 'network' => 'msc_network', 'streaming_service' => 'msc_platform', 'country' => 'msc_country', 'language' => 'msc_language', 'status' => 'msc_show_status', 'release_status' => 'msc_movie_status', 'content_rating' => 'msc_rating' );
 		foreach ( array( &$show, &$episode, &$movie, &$person ) as &$fields ) {
@@ -107,7 +109,7 @@ final class Schema {
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) ) { continue; }
+					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -170,6 +172,7 @@ final class Schema {
 	}
 	public static function sanitize( array $field, $value ) {
 		$type = $field['type'];
+		if ( 'trailers' === ( $field['format'] ?? '' ) ) { return Trailers::sanitize( $value ); }
 		if ( isset( self::$types[ $type ] ) ) { return ( self::$types[ $type ] )( $value, $field ); }
 		if ( 'relationship_list' === $type ) {
 			if ( ! is_array( $value ) || ! array_is_list( $value ) || count( $value ) > 200 ) { throw new \InvalidArgumentException( 'Expected a list of at most 200 related records.' ); }

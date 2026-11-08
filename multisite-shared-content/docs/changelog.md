@@ -1,5 +1,11 @@
 # Changelog and release boundaries
 
+## 2.2.0
+
+Adds multiline trailer fields to Movies, TV Shows and Video Games, supported by ACF Free and the full shared editor. YouTube selection uses the existing private Serper key for Google video searches restricted to YouTube, with thumbnails, channel/duration, inline preview and one-click selection. URLs also accept public Vimeo videos, normalize/deduplicate and retain order, with a twelve-trailer limit. Public pages show one player in a fixed-height carousel, unload previous players and provide ordinary watch links without JavaScript. Additive schema upgrades preserve existing fields, records and overrides.
+
+Details lists have separation and wrap within the sidebar on desktop/mobile. Actor sidebars show the first five saved credits with a full-cast link; all actors remain stored and visible in the main Cast section. Redundant legacy Cast notes are omitted from the sidebar when structured actors exist. Saved credit order does not imply a provider-verified prominence ranking.
+
 ## 2.1.4
 
 Credited People and companies now display their names while their profile pages are drafts or otherwise unavailable on the current site. Publishing a profile automatically links existing credits without reimporting or resaving the title. Unpublishing restores plain names; private profile content remains hidden. The same rule covers other linked company/service/platform entities and preserves local credit overrides and Sony platform policies.

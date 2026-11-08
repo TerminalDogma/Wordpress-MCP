@@ -72,8 +72,10 @@ final class EntityCatalog {
     }
     public static function sidebar( array $record ): string {
         $html = ''; foreach ( self::rows( $record ) as $key => $row ) {
-            $items = array(); foreach ( $row['items'] as $item ) { $items[] = $item['url'] ? '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['title'] ) . '</a>' : esc_html( $item['title'] ); }
-            $html .= '<div data-relationship="' . esc_attr( $key ) . '"><dt>' . esc_html( $row['label'] ) . '</dt><dd>' . implode( ', ', $items ) . '</dd></div>';
+            $credits = 'actors' === $key ? array_slice( $row['items'], 0, 5 ) : $row['items'];
+            $items = array(); foreach ( $credits as $item ) { $items[] = $item['url'] ? '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['title'] ) . '</a>' : esc_html( $item['title'] ); }
+            $more = 'actors' === $key && count( $row['items'] ) > 5 ? '<a class="sidebar-full-cast" href="#cast">View full cast</a>' : '';
+            $html .= '<div data-relationship="' . esc_attr( $key ) . '"><dt>' . esc_html( $row['label'] ) . '</dt><dd>' . implode( ', ', $items ) . $more . '</dd></div>';
         } return $html ? '<dl class="facts related-records">' . $html . '</dl>' : '';
     }
     /** Reverse links use effective fields and the same publication rules as the sidebar. */

@@ -20,6 +20,14 @@ On a Movie, TV Show, Episode or Video Game, ACF's **Linked …** fields select t
 
 Linked People and companies display their names even while their profile pages are unpublished or unavailable on that site. Publishing the profile automatically turns the name into a link without importing again or resaving the referring title; unpublishing returns it to plain text. Cast and crew sections follow the same rule. Only the credited name is shown from unpublished profiles. The details sidebar also includes published parent Shows. Links follow the current site's effective fields and publication state. Draft, private, password-protected, removed, archived and disabled destinations do not receive public links. Each new entity page has a profile template and related published titles, bounded to 100 candidates as with the existing filmography. Existing labels are not converted into automatically published entity records.
 
+## Trailers and sidebar cast
+
+Movies, TV Shows and Video Games have a **Trailers** field in ACF and the full shared editor. Choose **Search YouTube**, enter a title, preview the thumbnail results, then choose **Add trailer**. Search stays inside the editor and reuses the Serper key configured under **Network Admin → Shared Content → Image Search**. It finds YouTube videos through Google video search, rather than the YouTube Data API. Searches use the existing provider account credits and caches.
+
+You can also paste YouTube or public Vimeo video URLs, one per line, up to twelve. Change line order to reorder the carousel; remove a line to remove a trailer. Save or publish using the existing global/local controls. Global trailer values inherit across sites; local overrides and resets work like other supported fields. Public pages show one player at a time with Previous/Next controls. Selecting another trailer unloads the previous player. Empty fields hide the area; without JavaScript, watch links remain available. Live playback depends on the video owner permitting embedding.
+
+Actor sidebars show the first five saved credits and a **View full cast** link. ACF relationship ordering can place preferred actors first; the current movie source does not guarantee billing or prominence order. This affects display only and does not truncate imports or saved relationships. Adjacent details lists now have clear spacing and long names wrap within the sidebar.
+
 ## Episode sections
 
 A TV Show without accessible published Episodes has no Episode heading, message or empty section. Draft-only Episodes do not display a public guide. Publishing an Episode linked to the Show makes its season guide available. Existing AJAX season navigation remains available when Episodes exist.
