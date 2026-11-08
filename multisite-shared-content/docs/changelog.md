@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.2.2
+
+Adds a small 0.65em gap between adjacent Overview/Biography paragraphs. Line spacing is unchanged.
+
 ## 2.2.1
 
 Trailer carousels use compact 16:9 embeds in one row: three across on desktop, two on tablets and one on phones. Controls page through additional trailers and disappear when all trailers fit. Hidden players unload on navigation and responsive changes.

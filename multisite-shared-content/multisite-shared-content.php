@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Multisite Shared Content
  * Description: Network records, native site posts, and explicit field-level inheritance.
- * Version: 2.2.1
+ * Version: 2.2.2
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * Network: true
@@ -11,7 +11,7 @@
  */
 defined( 'ABSPATH' ) || exit;
 define( 'MSC_FILE', __FILE__ );
-define( 'MSC_VERSION', '2.2.1' );
+define( 'MSC_VERSION', '2.2.2' );
 spl_autoload_register( static function ( $class ) {
 	if ( str_starts_with( $class, 'MSC\\' ) ) {
 		$file = __DIR__ . '/src/' . substr( $class, 4 ) . '.php';
