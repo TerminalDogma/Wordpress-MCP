@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.2.1
+
+Trailer carousels use compact 16:9 embeds in one row: three across on desktop, two on tablets and one on phones. Controls page through additional trailers and disappear when all trailers fit. Hidden players unload on navigation and responsive changes.
+
 ## 2.2.0
 
 Adds multiline trailer fields to Movies, TV Shows and Video Games, supported by ACF Free and the full shared editor. YouTube selection uses the existing private Serper key for Google video searches restricted to YouTube, with thumbnails, channel/duration, inline preview and one-click selection. URLs also accept public Vimeo videos, normalize/deduplicate and retain order, with a twelve-trailer limit. Public pages show one player in a fixed-height carousel, unload previous players and provide ordinary watch links without JavaScript. Additive schema upgrades preserve existing fields, records and overrides.

@@ -1,4 +1,6 @@
-# Shared Content 2.2.0 verification
+# Shared Content 2.2.1 verification
+
+The trailer browser workflow additionally checks three compact embeds sharing one desktop row, two on tablets and one on phones, controls hidden when all trailers fit, partial final pages, stable row height and unloading players as they become hidden.
 
 ## Trailers and sidebar layout
 
