@@ -10,3 +10,7 @@ work/
 backups/
 
 dist/
+
+# Development tools (composer install / npm install)
+/vendor
+/node_modules

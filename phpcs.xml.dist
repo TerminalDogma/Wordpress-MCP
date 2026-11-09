@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<ruleset name="Multisite Shared Content">
+	<description>WordPress coding standard for the plugin, the theme's PHP logic, tests and tools.</description>
+
+	<file>multisite-shared-content</file>
+	<file>wp-content/themes/msc-screening-room/functions.php</file>
+	<file>wp-content/themes/msc-screening-room/inc</file>
+	<file>tests</file>
+	<file>tools</file>
+	<file>docker/verify.php</file>
+
+	<!-- HTML templates are excluded: automatic fixes would change the whitespace they output. -->
+	<exclude-pattern>multisite-shared-content/examples/template-*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="4"/>
+	<arg value="s"/>
+
+	<config name="testVersion" value="8.2-"/>
+	<config name="minimum_wp_version" value="6.9"/>
+
+	<rule ref="WordPress-Core">
+		<!-- Classes follow PSR-4 file names (src/Store.php holds MSC\Store), which the autoloader needs. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<!-- Renaming parameters such as $fn, $parent or $class would break PHP 8 named arguments. -->
+		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames"/>
+		<!-- Table names come from Database::table(); every value still goes through $wpdb->prepare(). -->
+		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
+		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+		<!-- Placeholders are built dynamically in a few queries; the sniff cannot count them. -->
+		<exclude name="WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber"/>
+		<!-- DOM properties such as $node->textContent are PHP's own names. -->
+		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+		<!-- Style choices this codebase does not follow; changing them is not automatic. -->
+		<exclude name="WordPress.PHP.YodaConditions"/>
+		<exclude name="Universal.Operators.DisallowShortTernary"/>
+		<exclude name="Squiz.PHP.DisallowMultipleAssignments"/>
+		<exclude name="Generic.CodeAnalysis.AssignmentInCondition"/>
+		<!-- getimagesize() warns on malformed uploads; the result is checked right after. -->
+		<exclude name="WordPress.PHP.NoSilencedErrors"/>
+	</rule>
+
+	<!-- Tests compare loosely on purpose in a few places and unpack fixtures with extract(). -->
+	<rule ref="Universal.Operators.StrictComparisons">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.StrictInArray">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.DontExtract">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<!-- Closing braces on their own line. -->
+	<rule ref="Squiz.WhiteSpace.ScopeClosingBrace"/>
+	<!-- No blank lines just inside a block's braces. -->
+	<rule ref="Squiz.WhiteSpace.ControlStructureSpacing.SpacingBeforeClose"/>
+	<rule ref="Squiz.WhiteSpace.ControlStructureSpacing.SpacingAfterOpen"/>
+	<rule ref="PSR2.Methods.FunctionClosingBrace"/>
+	<rule ref="PHPCompatibilityWP"/>
+</ruleset>

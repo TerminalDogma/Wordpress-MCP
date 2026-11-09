@@ -1,0 +1,14 @@
+{
+	"name": "wordpress-mcp-tools",
+	"private": true,
+	"description": "JavaScript lint for the Multisite Shared Content plugin and the Screening Room theme.",
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"lint:js": "eslint ."
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.0",
+		"eslint": "^9.39.0",
+		"globals": "^16.5.0"
+	}
+}

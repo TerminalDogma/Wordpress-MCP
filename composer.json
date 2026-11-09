@@ -1,0 +1,31 @@
+{
+	"name": "terminaldogma/wordpress-mcp",
+	"description": "Development tools for the Multisite Shared Content plugin and the Screening Room theme.",
+	"type": "project",
+	"license": "GPL-2.0-or-later",
+	"require-dev": {
+		"nikic/php-parser": "^5.9",
+		"php-stubs/acf-pro-stubs": "^6.8",
+		"php-stubs/wp-cli-stubs": "^2.12",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"phpstan/phpstan": "^2.3",
+		"phpunit/phpunit": "^11.5",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"wp-coding-standards/wpcs": "^3.4"
+	},
+	"scripts": {
+		"lint": "phpcs",
+		"format": "phpcbf",
+		"analyse": "phpstan analyse --memory-limit=2G",
+		"test:unit": "phpunit"
+	},
+	"config": {
+		"platform": {
+			"php": "8.2.0"
+		},
+		"sort-packages": true,
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}
