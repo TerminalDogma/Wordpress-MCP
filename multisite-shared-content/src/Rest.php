@@ -95,7 +95,7 @@ final class Rest {
 		} catch ( \InvalidArgumentException $e ) {
 			return new \WP_Error( 'msc_invalid', $e->getMessage(), array( 'status' => 400 ) );
 		} catch ( \Throwable $e ) {
-			return new \WP_Error( 'msc_failed', $e->getMessage(), array( 'status' => str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : 403 ) );
+			return new \WP_Error( 'msc_failed', $e->getMessage(), array( 'status' => $e instanceof HttpError ? $e->status : 403 ) );
 		}
 	}
 	public static function can_read( $q ): bool {

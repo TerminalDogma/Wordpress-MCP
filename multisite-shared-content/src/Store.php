@@ -58,7 +58,7 @@ final class Store {
 				$r['data'] = array_replace( $r['data'], $clean );
 				$result    = Database::check( $wpdb->query( $wpdb->prepare( 'UPDATE ' . Database::table( 'records' ) . ' SET data=%s, state=%s, version=version+1, updated_at=%s WHERE id=%d AND version=%d', wp_json_encode( $r['data'] ), $state ?? $r['state'], current_time( 'mysql', true ), $r['id'], $version ) ) );
 				if ( 1 !== $result ) {
-					throw new \RuntimeException( 'Conflict: global record changed. Reload before saving.' );
+					throw new ConflictError( 'Conflict: global record changed. Reload before saving.' );
 				}
 				$r = $this->get( (int) $r['id'] );
 				$this->revision( $r );
@@ -171,7 +171,7 @@ final class Store {
 				global $wpdb;
 				$changed = Database::check( $wpdb->query( $wpdb->prepare( 'UPDATE ' . Database::table( 'maps' ) . ' SET local_version=local_version+1' . ( $status ? ',status=%s,suppressed=%d' : '' ) . ' WHERE record_id=%d AND site_id=%d AND local_version=%d', ...array_merge( $status ? array( $status, (int) ( 'removed' === $status ) ) : array(), array( $r['id'], $site, $version ) ) ) ) );
 				if ( 1 !== $changed ) {
-					throw new \RuntimeException( 'Conflict: local record changed or is not materialized. Reload.' );
+					throw new ConflictError( 'Conflict: local record changed or is not materialized. Reload.' );
 				}
 				foreach ( $values as $key => $value ) {
 					Database::check(

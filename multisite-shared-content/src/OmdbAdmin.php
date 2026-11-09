@@ -244,7 +244,7 @@ final class OmdbAdmin {
 				esc_html( $e->getMessage() ),
 				'OMDb import was not saved',
 				array(
-					'response'  => $e instanceof OmdbError ? $e->status : ( str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : ( $e instanceof \InvalidArgumentException ? 400 : 403 ) ),
+					'response'  => $e instanceof HttpError ? $e->status : ( $e instanceof \InvalidArgumentException ? 400 : 403 ),
 					'back_link' => true,
 				)
 			);

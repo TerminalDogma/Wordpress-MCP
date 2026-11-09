@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!result.success) {
                     if (result.data && result.data.retry && retries++ < 5 && running) {
                         status.textContent = result.data.message + ' Retrying automatically…';
-                        await new Promise(resolve => setTimeout(resolve, 15000));
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (Number(result.data.wait) || 15)));
                         continue;
                     }
                     throw new Error(result.data && result.data.message || 'Import paused. Reload to renew your session, then resume.');

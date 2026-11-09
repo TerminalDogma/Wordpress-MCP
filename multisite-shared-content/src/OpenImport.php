@@ -568,9 +568,11 @@ final class OpenImport {
 										'uuid'   => $saved['record']['uuid'],
 									);
 					}
+				} catch ( BusyError $e ) {
+					throw $e; // Another request holds a lock: retry this episode, do not skip it.
 				} catch ( SourceError $e ) {
 					if ( in_array( $e->status, array( 429, 502 ), true ) ) {
-								throw $e;
+						throw $e;
 					}
 					$job['results'][] = array(
 						'title'  => $item['title'],

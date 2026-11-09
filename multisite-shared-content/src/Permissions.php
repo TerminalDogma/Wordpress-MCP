@@ -4,7 +4,7 @@ final class Permissions {
 	public const CAPS = array( 'msc_manage_schemas', 'msc_create_global', 'msc_edit_global', 'msc_override_local', 'msc_publish_local', 'msc_trash_global' );
 	public static function require( string $cap, ?string $type = null ): void {
 		if ( ! current_user_can( $cap ) || ( $type && ! Schema::enabled( $type ) ) ) {
-			throw new \RuntimeException( 'Permission denied or type is not enabled on this site.' );
+			throw new PermissionError( 'Permission denied or type is not enabled on this site.' );
 		}
 	}
 	public static function install_roles(): void {

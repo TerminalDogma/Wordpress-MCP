@@ -28,6 +28,7 @@ case "${1:-setup}" in
     # Restart synchronization afterwards; CI keeps it stopped for the browser steps.
     if [ "${MSC_KEEP_WORKER_STOPPED:-}" != 1 ]; then trap 'docker compose start shared-worker > /dev/null 2>&1 || true' EXIT; fi
     wp eval-file /msc-tests/legacy-participation.php
+    wp eval-file /msc-tests/foundations.php
     wp eval-file /msc-tests/integration.php "${MSC_TEST_RECORDS:-205}"
     site_a_url="$(wp site list --field=url | grep '/site-a/$')"
     wp --url="$site_a_url" eval-file /msc-tests/http.php

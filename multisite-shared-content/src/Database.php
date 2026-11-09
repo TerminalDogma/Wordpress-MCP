@@ -34,11 +34,19 @@ final class Database {
 			--self::$transaction_depth;
 		}
 	}
-	public static function lock( string $name, callable $callback ) {
+	/**
+	 * Run a callback while holding a named database lock.
+	 *
+	 * @param string   $name     Lock name, scoped to this network.
+	 * @param callable $callback Work to run while the lock is held.
+	 * @param int      $wait     Seconds to wait for the lock; 0 fails at once.
+	 * @throws BusyError When another request holds the lock.
+	 */
+	public static function lock( string $name, callable $callback, int $wait = 5 ) {
 		global $wpdb;
 		$key = 'msc:' . md5( self::table( $name ) );
-		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $key ) ) ) {
-			throw new \RuntimeException( 'Resource busy; please retry.' );
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $key, max( 0, $wait ) ) ) ) {
+			throw new BusyError();
 		}
 		try {
 			return $callback();

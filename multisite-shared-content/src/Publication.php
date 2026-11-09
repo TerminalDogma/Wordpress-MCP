@@ -30,7 +30,7 @@ final class Publication {
 				$current = get_current_blog_id();
 				$m       = $store->mapping( $id, $current );
 				if ( ! $m || (int) $m['local_version'] !== $local_version ) {
-					throw new \RuntimeException( 'Conflict: local publication changed. Reload before publishing.' );
+					throw new ConflictError( 'Conflict: local publication changed. Reload before publishing.' );
 				}
 				$sites   = 'site' === $scope ? array( get_site( $current ) ) : get_sites(
 					array(

@@ -292,7 +292,7 @@ final class OpenAdmin {
 			esc_html( $e->getMessage() ),
 			'Import needs review',
 			array(
-				'response'  => $e instanceof SourceError ? $e->status : ( str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : 400 ),
+				'response'  => $e instanceof HttpError ? $e->status : 400,
 				'back_link' => true,
 			)
 		);
@@ -355,9 +355,10 @@ final class OpenAdmin {
 			wp_send_json_error(
 				array(
 					'message' => $e->getMessage(),
-					'retry'   => $e instanceof SourceError && 429 === $e->status,
+					'retry'   => $e instanceof BusyError || ( $e instanceof SourceError && in_array( $e->status, array( 429, 502 ), true ) ),
+					'wait'    => $e instanceof BusyError ? 5 : 15,
 				),
-				$e instanceof SourceError ? $e->status : 400
+				$e instanceof HttpError ? $e->status : 400
 			);
 		}
 	}

@@ -1,7 +1,5 @@
 <?php
 namespace MSC;
-final class SourceError extends \RuntimeException {
-	public function __construct( string $message, public readonly int $status = 400 ) {
-		parent::__construct( $message );
-	}
+/** An error from an external data source, or from a request to import from one. */
+class SourceError extends HttpError {
 }

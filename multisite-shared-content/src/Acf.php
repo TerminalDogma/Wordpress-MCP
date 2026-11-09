@@ -321,7 +321,7 @@ final class Acf {
 				esc_html( $e->getMessage() ),
 				'Shared fields were not saved',
 				array(
-					'response'  => str_starts_with( $e->getMessage(), 'Conflict:' ) ? 409 : ( $e instanceof \InvalidArgumentException ? 400 : 403 ),
+					'response'  => $e instanceof HttpError ? $e->status : ( $e instanceof \InvalidArgumentException ? 400 : 403 ),
 					'back_link' => true,
 				)
 			);

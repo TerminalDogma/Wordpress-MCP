@@ -60,7 +60,7 @@ final class SiteAUpdate {
 				$r              = $values ? Plugin::store()->update( $record['uuid'], $values, (int) $record['version'] ) : $record;
 				$current_source = Plugin::store()->mapping( (int) $record['id'], $source );
 				if ( (int) ( $current_source['local_version'] ?? 0 ) !== (int) ( $effective['mapping']['local_version'] ?? 0 ) ) {
-					throw new \RuntimeException( 'Conflict: Site A changed during catch-up. Run setup again.' );
+					throw new ConflictError( 'Conflict: Site A changed during catch-up. Run setup again.' );
 				}
 				foreach ( $sites as $site ) {
 					$id = (int) $site->blog_id;
