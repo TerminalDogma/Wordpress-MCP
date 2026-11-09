@@ -1,4 +1,8 @@
-# Shared Content 2.2.1 verification
+# Shared Content 2.3.0 verification
+
+## Editorial reviews and aggregate scores
+
+All 42 focused WordPress checks and the review Chromium workflow passed. The checks cover half-point bounds, medal tiers, schema upgrades, UUID/ACF associations, site isolation, editorial precedence, protected/draft reviews, unpublishing, review toggles, explicit empty overrides, legacy OMDb values and provider preview/cache/credential/quota behavior. Chromium covers the four site identities, review layouts and verdicts, score ordering/medals on item images and archive cards, mobile overflow, native ACF fields, both shared score forms and global saving. API replies are deterministic fixtures; live commercial provider access is not claimed without configured accounts. Full CI runs after publication.
 
 The trailer browser workflow additionally checks three compact embeds sharing one desktop row, two on tablets and one on phones, controls hidden when all trailers fit, partial final pages, stable row height and unloading players as they become hidden.
 

@@ -36,7 +36,7 @@ final class Acf {
 				if ( 'time' === $definition['type'] ) { $field['display_format'] = 'H:i:s'; $field['return_format'] = 'H:i:s'; }
 				if ( in_array( $definition['type'], array( 'relationship', 'relationship_list' ), true ) ) { $field['post_type'] = array( $definition['target'] ); $field['return_format'] = 'id'; $field['multiple'] = 'relationship_list' === $definition['type'] ? 1 : 0; $field['allow_null'] = 1; }
 				if ( in_array( $definition['type'], array( 'media', 'media_list' ), true ) ) { $field['msc_multiple'] = 'media_list' === $definition['type']; }
-				foreach ( array( 'min', 'max' ) as $bound ) { if ( isset( $definition[ $bound ] ) ) { $field[ $bound ] = $definition[ $bound ]; } }
+				foreach ( array( 'min', 'max', 'step' ) as $bound ) { if ( isset( $definition[ $bound ] ) ) { $field[ $bound ] = $definition[ $bound ]; } }
 				if ( 'integer' === $definition['type'] ) { $field['step'] = 1; }
 				self::$fields[ $key ] = $field; $fields[] = $field;
 			}

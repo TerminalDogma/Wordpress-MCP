@@ -4,9 +4,11 @@ A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Cu
 
 ## Four branded sites with shared catalogs
 
-The **Multisite Shared Content 2.2.2** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
+The **Multisite Shared Content 2.3.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
+
+Version 2.3 adds site-specific editorial Reviews with 1–10 half-point scores, verdicts and positives/negatives. Item images and score sections prioritize the site’s own published review, with Gold/Silver/Copper recommendations and Movie/TV/game aggregate imports. See [the review editing and score-source guide](docs/reviews.md).
 
 Version 2.2 adds trailer fields for Movies, TV Shows and Video Games, embedded YouTube search using the existing Serper key, and a compact trailer carousel showing three videos across on desktop, two on tablets and one on phones. Sidebars show five actors in saved credit order with a link to the full cast.
 

@@ -27,6 +27,8 @@ final class Plugin {
 		MediaImport::boot();
 		ImageSearch::boot();
 		Trailers::boot();
+		Reviews::boot();
+		ScoreImport::boot();
 		CatalogArchive::boot();
 		add_filter( 'cron_schedules', static function ( $s ) { $s['msc_minute'] = array( 'interval' => 60, 'display' => 'Every minute (MSC)' ); return $s; } );
 		add_action( 'init', static function () { if ( 1 !== (int) get_network_option( get_current_network_id(), 'msc_db_version' ) ) { Database::migrate(); } self::register_posts(); }, 8 );

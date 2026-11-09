@@ -1,5 +1,11 @@
 # Changelog and release boundaries
 
+## 2.3.0
+
+Adds site-specific native Reviews with ACF Free item links, half-point 1–10 scores, verdicts, positives/negatives, platform context and dedicated review/archive designs. Reviews can be disabled per site without deleting posts. Published unprotected editorial reviews take precedence on item images, catalog cards and score sections. Recommendations are Gold at 9.5/10, Silver at 9 and Copper at 8.5. Native review associations use shared item UUIDs, while editorial scores remain independent per site.
+
+Movie/TV/Episode scores support Rotten Tomatoes and Metacritic, including previously saved OMDb metadata. Game scores support Metacritic via RAWG and OpenCritic’s top-critic average via its official RapidAPI service. Authenticated previews populate selected form fields before the existing global/local save. Keys stay private; caches, quotas, identity previews, provider links and footer data-source credits are retained. Missing/unrated values are omitted. Game source keys/subscriptions are configured separately.
+
 ## 2.2.2
 
 Adds a small 0.65em gap between adjacent Overview/Biography paragraphs. Line spacing is unchanged.

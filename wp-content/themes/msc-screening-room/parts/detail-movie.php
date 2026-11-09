@@ -1,3 +1,5 @@
 <?php $r = $args['record']; get_template_part( 'parts/hero', null, array( 'record' => $r, 'label' => 'Movie', 'facts' => array( 'release_date' => 'Theatrical release date', 'runtime' => 'Runtime', 'content_rating' => 'Content rating' ) ) );
 get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array( 'release_status' => 'Status', 'country' => 'Country', 'language' => 'Language', 'distributor' => 'Distributor', 'production_companies' => 'Production companies', 'streaming_service' => 'Streaming service', 'digital_release_date' => 'Digital release', 'streaming_release_date' => 'Streaming release', 'physical_release_date' => 'Physical release' ) ) );
 \MSC\Trailers::render( $r ); \MSC\Presentation::credits( $r ); get_template_part( 'parts/gallery', null, $args );
+
+\MSC\ReviewScores::render( $r );

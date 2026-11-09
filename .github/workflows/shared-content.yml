@@ -64,10 +64,12 @@ jobs:
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/archive-browser.py
       - name: Browser trailer carousels and YouTube selection
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/trailers-browser.py
+      - name: Browser editorial reviews, score medals and aggregate imports
+        run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/reviews-browser.py
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.2.2
+          name: multisite-shared-content-2.3.0
           path: dist/
       - name: Stop services
         if: always()

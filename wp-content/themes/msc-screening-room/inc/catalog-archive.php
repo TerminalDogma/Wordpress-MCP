@@ -18,7 +18,7 @@ function msc_archive_meta( array $r ): array {
 function msc_archive_card( array $r ): void {
     $meta = msc_archive_meta( $r ); $url = \MSC\Presentation::url( $r );
     echo '<article class="catalog-card archive-card type-' . esc_attr( $r['type'] ) . '"><a class="archive-card-link" href="' . esc_url( $url ) . '">';
-    if ( 'msc_episode' !== $r['type'] ) { echo '<div class="archive-card-media">' . \MSC\Presentation::image( $r, 'card-art', 'medium_large' ); if ( $meta['date'] && in_array( $r['type'], array( 'msc_movie', 'msc_game' ), true ) ) { echo '<span class="archive-year">' . esc_html( substr( $meta['date'], 0, 4 ) ) . '</span>'; } echo '</div>'; }
+    if ( 'msc_episode' !== $r['type'] ) { echo '<div class="archive-card-media">' . \MSC\Presentation::image( $r, 'card-art', 'medium_large' ) . \MSC\ReviewScores::badge( $r ); if ( $meta['date'] && in_array( $r['type'], array( 'msc_movie', 'msc_game' ), true ) ) { echo '<span class="archive-year">' . esc_html( substr( $meta['date'], 0, 4 ) ) . '</span>'; } echo '</div>'; }
     echo '<div class="card-copy"><span class="archive-card-kicker">' . esc_html( $meta['kicker'] ) . '</span><h2 class="archive-card-title">' . esc_html( $r['data']['title'] ?? '(Untitled)' ) . '</h2>';
     if ( $meta['facts'] ) { echo '<ul class="archive-card-facts">'; foreach ( $meta['facts'] as $fact ) { echo '<li>' . esc_html( $fact ) . '</li>'; } echo '</ul>'; }
     if ( $meta['tags'] ) { echo '<ul class="archive-card-tags" aria-label="' . esc_attr( implode( ', ', $meta['tags'] ) ) . '">'; foreach ( array_slice( $meta['tags'], 0, 2 ) as $tag ) { echo '<li>' . esc_html( $tag ) . '</li>'; } if ( count( $meta['tags'] ) > 2 ) { echo '<li>+' . ( count( $meta['tags'] ) - 2 ) . '</li>'; } echo '</ul>'; }

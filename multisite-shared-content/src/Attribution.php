@@ -4,7 +4,7 @@ namespace MSC;
 /** Credit only the values and assets actually displayed on this site. */
 final class Attribution {
     private static array $footer = array();
-    private static function collect_html( string $label, string $html ): string { if ( $html ) { self::$footer[ OpenImport::hash( array( $label, $html ) ) ] = array( 'label' => $label, 'html' => $html ); } return ''; }
+    public static function collect_html( string $label, string $html ): string { if ( $html ) { self::$footer[ OpenImport::hash( array( $label, $html ) ) ] = array( 'label' => $label, 'html' => $html ); } return ''; }
     public static function collect( array $record, ?array $fields = null ): string { return self::collect_html( (string) ( $record['data']['title'] ?? 'Content' ), self::render( $record, $fields ) ); }
     public static function collect_image( array $record ): string { return self::collect_html( ( $record['data']['title'] ?? 'Content' ) . ' — image', self::image_html( $record ) ); }
     public static function collect_media( array $ref, string $title ): string { return self::collect_html( $title . ' — gallery image', self::media_html( $ref ) ); }

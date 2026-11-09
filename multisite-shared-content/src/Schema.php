@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 7;
+	public const BUILTIN_VERSION = 8;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -83,7 +83,7 @@ final class Schema {
 			foreach ( $categories as $key => $taxonomy ) { if ( isset( $fields[ $key ] ) ) { $fields[ $key ]['taxonomy'] = $taxonomy; } }
 		}
 		unset( $fields );
-		foreach ( array( 'msc_show' => &$show, 'msc_episode' => &$episode, 'msc_movie' => &$movie, 'msc_game' => &$game ) as $type => &$fields ) { $fields += EntityCatalog::fields( $type ); } unset( $fields );
+		foreach ( array( 'msc_show' => &$show, 'msc_episode' => &$episode, 'msc_movie' => &$movie, 'msc_game' => &$game ) as $type => &$fields ) { $fields += EntityCatalog::fields( $type ) + ReviewScores::fields( $type ); } unset( $fields );
 		return array(
 			'msc_show' => array( 'label' => 'TV Shows', 'slug' => 'shows', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $show ),
 			'msc_episode' => array( 'label' => 'Episodes', 'slug' => 'episodes', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $episode ),
@@ -109,7 +109,7 @@ final class Schema {
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) ) { continue; }
+					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 8 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -172,6 +172,11 @@ final class Schema {
 	}
 	public static function sanitize( array $field, $value ) {
 		$type = $field['type'];
+		if ( in_array( $field['format'] ?? '', array( 'score_url', 'score_source_url' ), true ) ) {
+			if ( '' === $value || null === $value ) { return ''; }
+			$url = 'score_url' === $field['format'] ? ReviewScores::provider_url( $field['provider'], $value ) : ( is_string( $value ) && preg_match( '~^https://(?:www\.)?rawg\.io/games/[a-z0-9-]+/?$~D', $value ) ? $value : '' );
+			if ( ! $url ) { throw new \InvalidArgumentException( 'Enter an HTTPS title page URL on the selected score provider’s website.' ); } return $url;
+		}
 		if ( 'trailers' === ( $field['format'] ?? '' ) ) { return Trailers::sanitize( $value ); }
 		if ( isset( self::$types[ $type ] ) ) { return ( self::$types[ $type ] )( $value, $field ); }
 		if ( 'relationship_list' === $type ) {
