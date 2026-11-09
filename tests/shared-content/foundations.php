@@ -8,7 +8,7 @@
  * @package MultisiteSharedContent
  */
 
-use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Plugin, Queue, Rest, Schema, Store, Transients};
+use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Plugin, Queue, Rest, Schema, Seo, Store, Transients};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
 	throw new RuntimeException( 'Disposable local network required.' );
@@ -250,5 +250,30 @@ $restore = $store->update( $restore['uuid'], array( 'original_title' => '' ), $f
 $restore = $store->update( $restore['uuid'], array( 'excerpt' => 'Added later' ), (int) $restore['version'] );
 $restore = $store->restore( $restore['uuid'], $first, (int) $restore['version'] );
 foundation_check( 'Original tagline' === ( $restore['data']['original_title'] ?? null ) && '' === (string) ( $restore['data']['excerpt'] ?? '' ), 'Restoring a revision brings back its values and removes later additions' );
+
+// SEO: an empty SEO title or description leaves the SEO plugin's own value alone.
+$seo = $store->create( 'msc_movie', array( 'title' => 'SEO check ' . wp_generate_uuid4() ) );
+Plugin::materializer()->sync( (int) $seo['id'], $site );
+$seo_post = (int) $store->mapping( (int) $seo['id'] )['post_id'];
+wp_update_post(
+	array(
+		'ID'          => $seo_post,
+		'post_status' => 'publish',
+	)
+);
+$seo     = $store->update( $seo['uuid'], array( 'seo_title' => '' ), (int) $store->get( $seo['id'] )['version'] );
+$version = (int) $store->mapping( (int) $seo['id'] )['local_version'];
+$store->local( $seo['uuid'], array(), array(), $version, 'publish' );
+$GLOBALS['wp_the_query']->query(
+	array(
+		'p'         => $seo_post,
+		'post_type' => 'msc_movie',
+	)
+);
+$GLOBALS['wp_query'] = $GLOBALS['wp_the_query']; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+foundation_check( 'Plugin title' === Seo::seo_value( 'Plugin title', 'seo_title' ), 'An empty SEO title keeps the SEO plugin title' );
+$seo = $store->update( $seo['uuid'], array( 'seo_title' => 'Shared SEO title' ), (int) $store->get( $seo['id'] )['version'] );
+foundation_check( 'Shared SEO title' === Seo::seo_value( 'Plugin title', 'seo_title' ), 'A filled SEO title replaces it' );
+wp_reset_query();
 
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );

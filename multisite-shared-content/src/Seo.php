@@ -70,7 +70,12 @@ final class Seo {
 			return $value;
 		}
 		$r = Plugin::store()->by_post( get_queried_object_id() );
-		return $r ? ( Plugin::store()->resolved( $r['id'] )['data'][ $field ] ?? $value ) : $value;
+		if ( ! $r ) {
+			return $value;
+		}
+		// Empty fields are saved as '', which must not blank an SEO plugin's own title.
+		$own = Plugin::store()->resolved( $r['id'] )['data'][ $field ] ?? null;
+		return is_string( $own ) && '' !== trim( $own ) ? $own : $value;
 	}
 	public static function boot(): void {
 		add_filter( 'wp_robots', array( self::class, 'robots' ), PHP_INT_MAX );
