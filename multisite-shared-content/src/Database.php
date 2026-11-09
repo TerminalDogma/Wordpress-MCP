@@ -9,17 +9,30 @@ final class Database {
 	}
 	public static function check( $result ) {
 		global $wpdb;
-		if ( false === $result ) { throw new \RuntimeException( 'MSC database operation failed: ' . $wpdb->last_error ); }
+		if ( false === $result ) {
+			throw new \RuntimeException( 'MSC database operation failed: ' . $wpdb->last_error );
+		}
 		return $result;
 	}
 	public static function transaction( callable $callback ) {
 		global $wpdb;
-		$depth = self::$transaction_depth; $savepoint = 'msc_transaction_' . $depth;
+		$depth     = self::$transaction_depth;
+		$savepoint = 'msc_transaction_' . $depth;
 		self::check( $wpdb->query( $depth ? 'SAVEPOINT ' . $savepoint : 'START TRANSACTION' ) );
 		++self::$transaction_depth;
-		try { $result = $callback(); self::check( $wpdb->query( $depth ? 'RELEASE SAVEPOINT ' . $savepoint : 'COMMIT' ) ); return $result; }
-		catch ( \Throwable $e ) { $wpdb->query( $depth ? 'ROLLBACK TO SAVEPOINT ' . $savepoint : 'ROLLBACK' ); if ( $depth ) { $wpdb->query( 'RELEASE SAVEPOINT ' . $savepoint ); } throw $e; }
-		finally { --self::$transaction_depth; }
+		try {
+			$result = $callback();
+			self::check( $wpdb->query( $depth ? 'RELEASE SAVEPOINT ' . $savepoint : 'COMMIT' ) );
+			return $result;
+		} catch ( \Throwable $e ) {
+			$wpdb->query( $depth ? 'ROLLBACK TO SAVEPOINT ' . $savepoint : 'ROLLBACK' );
+			if ( $depth ) {
+				$wpdb->query( 'RELEASE SAVEPOINT ' . $savepoint );
+			}
+			throw $e;
+		} finally {
+			--self::$transaction_depth;
+		}
 	}
 	public static function lock( string $name, callable $callback ) {
 		global $wpdb;
@@ -27,14 +40,22 @@ final class Database {
 		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $key ) ) ) {
 			throw new \RuntimeException( 'Resource busy; please retry.' );
 		}
-		try { return $callback(); } finally { $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) ); }
+		try {
+			return $callback();
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $key ) );
+		}
 	}
 	public static function migrate(): void {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		$c = $wpdb->get_charset_collate();
-		$r = self::table( 'records' ); $o = self::table( 'overrides' ); $m = self::table( 'maps' );
-		$v = self::table( 'revisions' ); $j = self::table( 'jobs' ); $i = self::table( 'lookup' );
+		$c   = $wpdb->get_charset_collate();
+		$r   = self::table( 'records' );
+		$o   = self::table( 'overrides' );
+		$m   = self::table( 'maps' );
+		$v   = self::table( 'revisions' );
+		$j   = self::table( 'jobs' );
+		$i   = self::table( 'lookup' );
 		$sql = array(
 			"CREATE TABLE $r (
  id bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -107,7 +128,9 @@ final class Database {
  KEY number_query (site_id,field,number_value,record_id)
 ) ENGINE=InnoDB $c;",
 		);
-		foreach ( $sql as $statement ) { dbDelta( $statement ); }
+		foreach ( $sql as $statement ) {
+			dbDelta( $statement );
+		}
 		foreach ( array( $r, $o, $m, $v, $j, $i ) as $table ) {
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) !== $table ) {
 				throw new \RuntimeException( 'Could not initialize MSC tables.' );

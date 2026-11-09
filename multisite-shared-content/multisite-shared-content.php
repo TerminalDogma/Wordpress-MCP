@@ -12,12 +12,16 @@
 defined( 'ABSPATH' ) || exit;
 define( 'MSC_FILE', __FILE__ );
 define( 'MSC_VERSION', '2.3.1' );
-spl_autoload_register( static function ( $class ) {
-	if ( str_starts_with( $class, 'MSC\\' ) ) {
-		$file = __DIR__ . '/src/' . substr( $class, 4 ) . '.php';
-		if ( is_file( $file ) ) { require_once $file; }
+spl_autoload_register(
+	static function ( $class ) {
+		if ( str_starts_with( $class, 'MSC\\' ) ) {
+			$file = __DIR__ . '/src/' . substr( $class, 4 ) . '.php';
+			if ( is_file( $file ) ) {
+				require_once $file;
+			}
+		}
 	}
-} );
+);
 require_once __DIR__ . '/src/functions.php';
 register_activation_hook( __FILE__, array( 'MSC\\Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'MSC\\Plugin', 'deactivate' ) );
