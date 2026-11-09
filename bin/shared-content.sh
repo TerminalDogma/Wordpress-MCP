@@ -25,6 +25,8 @@ case "${1:-setup}" in
   test)
     [ "${MSC_DISPOSABLE_TESTS:-}" = 1 ] || { echo 'Tests create fixtures. Use MSC_DISPOSABLE_TESTS=1 only in a disposable test network.' >&2; exit 2; }
     docker compose stop shared-worker
+    # Restart synchronization afterwards; CI keeps it stopped for the browser steps.
+    if [ "${MSC_KEEP_WORKER_STOPPED:-}" != 1 ]; then trap 'docker compose start shared-worker > /dev/null 2>&1 || true' EXIT; fi
     wp eval-file /msc-tests/legacy-participation.php
     wp eval-file /msc-tests/integration.php "${MSC_TEST_RECORDS:-205}"
     site_a_url="$(wp site list --field=url | grep '/site-a/$')"
