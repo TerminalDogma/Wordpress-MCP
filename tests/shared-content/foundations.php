@@ -8,7 +8,7 @@
  * @package MultisiteSharedContent
  */
 
-use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, PermissionError, Rest};
+use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Rest, Transients};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
 	throw new RuntimeException( 'Disposable local network required.' );
@@ -67,5 +67,31 @@ $response = Rest::attempt(
 	}
 );
 foundation_check( 400 === $response->get_error_data()['status'], 'Invalid input maps to HTTP 400' );
+
+// Fresh transient reads work with and without a persistent object cache.
+$was_external = wp_using_ext_object_cache( true );
+try {
+	set_site_transient( 'msc_foundation_fresh', 'kept', 60 );
+	foundation_check( 'kept' === Transients::fresh( 'msc_foundation_fresh' ), 'With an object cache, a fresh read returns the stored transient' );
+	foundation_check( 'kept' === OpenClient::fresh( 'msc_foundation_fresh' ), 'Import previews survive fresh reads under an object cache' );
+	foundation_check( 'kept' === OmdbClient::fresh_transient( 'msc_foundation_fresh' ), 'OMDb previews survive fresh reads under an object cache' );
+	delete_site_transient( 'msc_foundation_fresh' );
+} finally {
+	wp_using_ext_object_cache( (bool) $was_external ); // Passing null would leave the flag on.
+}
+set_site_transient( 'msc_foundation_fresh', 'old', 60 );
+foundation_check( 'old' === get_site_transient( 'msc_foundation_fresh' ), 'A transient is cached in memory after it is read' );
+$second = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+$second->update(
+	$GLOBALS['wpdb']->sitemeta,
+	array( 'meta_value' => maybe_serialize( 'new' ) ),
+	array(
+		'meta_key' => '_site_transient_msc_foundation_fresh',
+		'site_id'  => get_current_network_id(),
+	)
+);
+$second->close();
+foundation_check( 'new' === Transients::fresh( 'msc_foundation_fresh' ), 'Without an object cache, a fresh read sees another request\'s write' );
+delete_site_transient( 'msc_foundation_fresh' );
 
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );

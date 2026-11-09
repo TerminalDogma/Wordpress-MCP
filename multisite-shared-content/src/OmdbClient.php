@@ -44,11 +44,7 @@ final class OmdbClient {
 		return $p && 'https' === ( $p['scheme'] ?? '' ) && in_array( strtolower( $p['host'] ?? '' ), array( 'm.media-amazon.com', 'ia.media-imdb.com', 'images-na.ssl-images-amazon.com', 'images.media-imdb.com' ), true ) && empty( $p['user'] ) && empty( $p['pass'] ) && empty( $p['port'] ) && empty( $p['query'] ) && empty( $p['fragment'] ) ? esc_url_raw( $url ) : '';
 	}
 	public static function fresh_transient( string $name ) {
-		wp_cache_delete( $name, 'site-transient' );
-		foreach ( array( '_site_transient_' . $name, '_site_transient_timeout_' . $name ) as $option ) {
-			wp_cache_delete( get_current_network_id() . ':' . $option, 'site-options' );
-		}
-		return get_site_transient( $name );
+		return Transients::fresh( $name );
 	}
 	private static function budget(): void {
 		$name = 'msc_omdb_rate_' . get_current_user_id();

@@ -23,11 +23,7 @@ final class OpenClient {
 		}
 	}
 	public static function fresh( string $name ) {
-		wp_cache_delete( $name, 'site-transient' );
-		foreach ( array( '_site_transient_' . $name, '_site_transient_timeout_' . $name ) as $option ) {
-			wp_cache_delete( get_current_network_id() . ':' . $option, 'site-options' );
-		}
-		return get_site_transient( $name );
+		return Transients::fresh( $name );
 	}
 	public static function get( string $provider, string $path = '', array $params = array(), int $ttl = 3600 ): array {
 		if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) && ! ( 'wikipedia' === $provider && current_user_can( 'msc_override_local' ) ) ) {
