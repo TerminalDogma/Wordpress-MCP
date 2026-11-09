@@ -79,8 +79,15 @@ final class Materializer {
 									$post[ $field['property'] ] = $values[ $key ] ?? '';
 								}
 							}
-							if ( $m['post_id'] && get_post( (int) $m['post_id'] ) ) {
+							$current = $m['post_id'] ? get_post( (int) $m['post_id'] ) : null;
+							if ( $current ) {
 								$post['ID'] = (int) $m['post_id'];
+								// wp_insert_post() dates an update "now" unless told otherwise. Keep a
+								// fixed date (published or scheduled posts); floating draft dates move.
+								if ( '0000-00-00 00:00:00' !== $current->post_date_gmt ) {
+									$post['post_date']     = $current->post_date;
+									$post['post_date_gmt'] = $current->post_date_gmt;
+								}
 							}
 							// Recover a post written before a crashed mapping update; reserved meta never editable through REST.
 							if ( empty( $post['ID'] ) ) {
@@ -174,7 +181,7 @@ final class Materializer {
 							'record_id' => $r['id'],
 							'site_id'   => get_current_blog_id(),
 							'post_id'   => $post_id,
-							'status'    => in_array( $post->post_status, array( 'publish', 'private' ), true ) ? $post->post_status : 'draft',
+							'status'    => in_array( $post->post_status, array( 'pending', 'future', 'publish', 'private' ), true ) ? $post->post_status : 'draft',
 						)
 					)
 				);

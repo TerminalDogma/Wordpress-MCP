@@ -2,6 +2,10 @@
 namespace MSC;
 
 final class Store {
+	/** Local publication states a site can choose for a shared record. */
+	public const LOCAL_STATUSES = array( 'draft', 'pending', 'future', 'publish', 'private', 'unpublished', 'removed' );
+	/** Indexed text values are cut to the lookup column's 191 characters. */
+	private const INDEX_TEXT_LENGTH = 191;
 	public function get( $id ): ?array {
 		global $wpdb;
 		// Fresh authoritative reads avoid persistent object-cache races after CAS updates.
@@ -39,7 +43,16 @@ final class Store {
 			}
 		);
 	}
-	public function update( $id, array $data, int $version, ?string $state = null ): array {
+	/**
+	 * Save global data with a version check.
+	 *
+	 * @param int|string  $id      Record ID or UUID.
+	 * @param array       $data    Field values. Merged into the record unless $replace.
+	 * @param int         $version The version the caller read.
+	 * @param string|null $state   New lifecycle state, network administrators only.
+	 * @param bool        $replace Replace all data instead of merging (revision restore).
+	 */
+	public function update( $id, array $data, int $version, ?string $state = null, bool $replace = false ): array {
 		$r = $this->get( $id );
 		if ( ! $r ) {
 			throw new \InvalidArgumentException( 'Record not found.' );
@@ -53,9 +66,9 @@ final class Store {
 		}
 		$clean = Schema::values( $r['type'], $data );
 		return Database::transaction(
-			function () use ( $r, $clean, $version, $state ) {
+			function () use ( $r, $clean, $version, $state, $replace ) {
 				global $wpdb;
-				$r['data'] = array_replace( $r['data'], $clean );
+				$r['data'] = $replace ? $clean : array_replace( $r['data'], $clean );
 				$result    = Database::check( $wpdb->query( $wpdb->prepare( 'UPDATE ' . Database::table( 'records' ) . ' SET data=%s, state=%s, version=version+1, updated_at=%s WHERE id=%d AND version=%d', wp_json_encode( $r['data'] ), $state ?? $r['state'], current_time( 'mysql', true ), $r['id'], $version ) ) );
 				if ( 1 !== $result ) {
 					throw new ConflictError( 'Conflict: global record changed. Reload before saving.' );
@@ -109,7 +122,8 @@ final class Store {
 			throw new \InvalidArgumentException( 'Revision not found.' );
 		}
 		$snapshot = json_decode( $row, true, 64, JSON_THROW_ON_ERROR );
-		return $this->update( $id, $snapshot['data'], $expected );
+		// Fields missing from the revision are removed, so the restore is exact.
+		return $this->update( $id, $snapshot['data'], $expected, null, true );
 	}
 	public function mapping( int $id, ?int $site = null ): ?array {
 		global $wpdb;
@@ -160,7 +174,7 @@ final class Store {
 		}
 		if ( $status ) {
 			Permissions::require( 'msc_publish_local', $r['type'] );
-			if ( ! in_array( $status, array( 'draft', 'publish', 'private', 'unpublished', 'removed' ), true ) ) {
+			if ( ! in_array( $status, self::LOCAL_STATUSES, true ) ) {
 				throw new \InvalidArgumentException( 'Invalid local status.' );
 			}
 		}
@@ -226,7 +240,7 @@ final class Store {
 						'record_id'    => $r['id'],
 						'site_id'      => $site,
 						'field'        => $key,
-						'text_value'   => (string) $data[ $key ],
+						'text_value'   => mb_substr( (string) $data[ $key ], 0, self::INDEX_TEXT_LENGTH ),
 						'number_value' => is_numeric( $data[ $key ] ) ? $data[ $key ] : null,
 					)
 				)
@@ -262,6 +276,9 @@ final class Store {
 			$number = in_array( $schema['fields'][ $field ]['type'], array( 'number', 'integer' ), true );
 			if ( $number && ! is_numeric( $value ) ) {
 				throw new \InvalidArgumentException( 'Numeric query value required.' );
+			}
+			if ( ! $number ) {
+				$value = mb_substr( (string) $value, 0, self::INDEX_TEXT_LENGTH );
 			}
 			$sql .= ' AND EXISTS (SELECT 1 FROM ' . Database::table( 'lookup' ) . ' x WHERE x.record_id=r.id AND x.site_id=%d AND x.field=%s AND x.' . ( $number ? 'number_value' : 'text_value' ) . $op . ( $number ? '%f' : '%s' ) . ')';
 			array_push( $args, $site, $field, $value );

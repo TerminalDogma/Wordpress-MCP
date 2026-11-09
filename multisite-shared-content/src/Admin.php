@@ -322,7 +322,10 @@ final class Admin {
 		echo '</tbody></table>';
 		if ( ! $global && current_user_can( 'msc_publish_local' ) ) {
 			echo '<label>Publish on this website <select name="status">';
-			foreach ( array( 'draft', 'publish', 'private', 'unpublished', 'removed' ) as $status ) {
+			foreach ( Store::LOCAL_STATUSES as $status ) {
+				if ( 'future' === $status && 'future' !== $r['mapping']['status'] ) {
+					continue; // Scheduling needs a date, set in the post editor.
+				}
 				echo '<option ' . selected( $r['mapping']['status'], $status, false ) . '>' . esc_html( $status ) . '</option>';
 			}
 			echo '</select></label><p class="description">Removed deletes only the local post. Choosing another status recreates it with its overrides preserved.</p>';

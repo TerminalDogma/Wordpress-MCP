@@ -8,7 +8,7 @@
  * @package MultisiteSharedContent
  */
 
-use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Queue, Rest, Schema, Transients};
+use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Plugin, Queue, Rest, Schema, Store, Transients};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
 	throw new RuntimeException( 'Disposable local network required.' );
@@ -187,5 +187,68 @@ $published = new WP_REST_Request( 'POST', "/wp/v2/msc_show/$post_id/autosaves" )
 $published->set_param( 'title', 'Autosave of a published post' );
 $response = rest_do_request( $published );
 foundation_check( 200 === $response->get_status() && isset( $response->get_data()['msc_state']['local_version'] ), 'An autosave revision of a published post also returns msc_state' );
+
+// Store fixes: post dates, scheduled and pending posts, long indexed text, exact restores.
+$store = Plugin::store();
+$movie = $store->create( 'msc_movie', array( 'title' => 'Dated movie ' . wp_generate_uuid4() ) );
+$site  = get_current_blog_id();
+$sync  = static fn() => Plugin::materializer()->sync( (int) $movie['id'], $site );
+$sync();
+$local = (int) $store->mapping( (int) $movie['id'] )['post_id'];
+$wpdb->update(
+	$wpdb->posts,
+	array(
+		'post_date'     => '2020-01-02 10:00:00',
+		'post_date_gmt' => '2020-01-02 15:00:00',
+	),
+	array( 'ID' => $local )
+);
+clean_post_cache( $local );
+$movie = $store->update( $movie['uuid'], array( 'excerpt' => 'Changed globally' ), (int) $movie['version'] );
+$sync();
+foundation_check( '2020-01-02 10:00:00' === get_post( $local )->post_date, 'A sync keeps the local post date instead of resetting it to now' );
+$future = gmdate( 'Y-m-d H:i:s', time() + WEEK_IN_SECONDS );
+$wpdb->update(
+	$wpdb->posts,
+	array(
+		'post_date'     => get_date_from_gmt( $future ),
+		'post_date_gmt' => $future,
+	),
+	array( 'ID' => $local )
+);
+clean_post_cache( $local );
+$version = (int) $store->mapping( (int) $movie['id'] )['local_version'];
+$store->local( $movie['uuid'], array(), array(), $version, 'future' );
+foundation_check( 'future' === get_post_status( $local ) && $future === get_post( $local )->post_date_gmt, 'A scheduled status is accepted and keeps its date' );
+$version = (int) $store->mapping( (int) $movie['id'] )['local_version'];
+$store->local( $movie['uuid'], array(), array(), $version, 'pending' );
+foundation_check( 'pending' === get_post_status( $local ), 'A pending-review status is accepted' );
+
+$schemas = get_network_option( get_current_network_id(), 'msc_schemas' );
+try {
+	$indexed = $schemas;
+	$indexed['msc_movie']['fields']['title']['indexed'] = true;
+	update_network_option( get_current_network_id(), 'msc_schemas', $indexed );
+	$long  = str_repeat( 'Long title ', 25 );
+	$saved = $store->create( 'msc_movie', array( 'title' => $long ) );
+	$text  = $wpdb->get_var( $wpdb->prepare( 'SELECT text_value FROM ' . Database::table( 'lookup' ) . " WHERE record_id=%d AND site_id=0 AND field='title'", $saved['id'] ) );
+	foundation_check( 191 === mb_strlen( (string) $text ), 'A 275-character indexed title saves, indexed as its first 191 characters' );
+	foundation_check( in_array( (int) $saved['id'], $store->query( 'msc_movie', array( 'title' => $long ) ), true ), 'Querying by the full long value still finds the record' );
+} finally {
+	update_network_option( get_current_network_id(), 'msc_schemas', $schemas );
+}
+
+$restore = $store->create(
+	'msc_movie',
+	array(
+		'title'          => 'Restore check',
+		'original_title' => 'Original tagline',
+	)
+);
+$first   = (int) $restore['version'];
+$restore = $store->update( $restore['uuid'], array( 'original_title' => '' ), $first );
+$restore = $store->update( $restore['uuid'], array( 'excerpt' => 'Added later' ), (int) $restore['version'] );
+$restore = $store->restore( $restore['uuid'], $first, (int) $restore['version'] );
+foundation_check( 'Original tagline' === ( $restore['data']['original_title'] ?? null ) && '' === (string) ( $restore['data']['excerpt'] ?? '' ), 'Restoring a revision brings back its values and removes later additions' );
 
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );
