@@ -8,7 +8,7 @@
  * @package MultisiteSharedContent
  */
 
-use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Rest, Transients};
+use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Rest, Schema, Transients};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
 	throw new RuntimeException( 'Disposable local network required.' );
@@ -93,5 +93,21 @@ $second->update(
 $second->close();
 foundation_check( 'new' === Transients::fresh( 'msc_foundation_fresh' ), 'Without an object cache, a fresh read sees another request\'s write' );
 delete_site_transient( 'msc_foundation_fresh' );
+
+// Schemas are memoized per request but follow every change to the option.
+$network = get_current_network_id();
+$saved   = get_network_option( $network, 'msc_schemas' );
+try {
+	foundation_check( Schema::all() === $saved, 'Schema::all() returns the saved schemas' );
+	$changed                       = $saved;
+	$changed['msc_movie']['label'] = 'Foundation Movies';
+	update_network_option( $network, 'msc_schemas', $changed );
+	foundation_check( 'Foundation Movies' === Schema::all()['msc_movie']['label'], 'A saved schema change is visible immediately' );
+	delete_network_option( $network, 'msc_schemas' );
+	foundation_check( Schema::all() === Schema::defaults(), 'With no saved schemas the built-in defaults apply' );
+} finally {
+	update_network_option( $network, 'msc_schemas', $saved );
+}
+foundation_check( Schema::all() === $saved, 'Restored schemas are visible again' );
 
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );

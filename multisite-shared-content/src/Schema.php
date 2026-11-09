@@ -4,8 +4,27 @@ namespace MSC;
 final class Schema {
 	public const BUILTIN_VERSION = 9;
 	private static array $types  = array();
+	/** @var array<int, array> Saved schemas per network, for this request. */
+	private static array $cache = array();
+	/** @var array|null Built-in schemas, built once per request. */
+	private static ?array $defaults = null;
+
 	public static function all(): array {
-		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
+		$network = get_current_network_id();
+		if ( ! isset( self::$cache[ $network ] ) ) {
+			$saved                   = get_network_option( $network, 'msc_schemas', null );
+			self::$cache[ $network ] = is_array( $saved ) ? $saved : self::defaults();
+		}
+		return self::$cache[ $network ];
+	}
+	/** Forget memoized schemas; called whenever the msc_schemas option changes. */
+	public static function flush(): void {
+		self::$cache = array();
+	}
+	public static function boot(): void {
+		foreach ( array( 'add_site_option_msc_schemas', 'update_site_option_msc_schemas', 'delete_site_option_msc_schemas' ) as $hook ) {
+			add_action( $hook, array( self::class, 'flush' ) );
+		}
 	}
 	public static function get( string $type ): array {
 		$schemas = self::all();
@@ -14,7 +33,15 @@ final class Schema {
 		}
 		return $schemas[ $type ];
 	}
+	/**
+	 * The built-in schemas, before any network customization.
+	 *
+	 * Filter msc_schema_defaults to add or change built-in types and fields.
+	 */
 	public static function defaults(): array {
+		return self::$defaults ??= (array) apply_filters( 'msc_schema_defaults', self::build_defaults() );
+	}
+	private static function build_defaults(): array {
 		$common                    = array(
 			'title'               => array(
 				'type'     => 'text',
@@ -309,6 +336,7 @@ final class Schema {
 				foreach ( array( 'msc_schemas', 'msc_builtin_schema_version' ) as $option ) {
 					wp_cache_delete( $network . ':' . $option, 'site-options' );
 				}
+				self::flush();
 				if ( (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) >= self::BUILTIN_VERSION ) {
 					return;
 				}

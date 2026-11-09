@@ -39,6 +39,7 @@ final class Plugin {
 		if ( ! is_multisite() ) {
 			return;
 		}
+		Schema::boot();
 		Schema::upgrade_defaults();
 		GameFields::boot();
 		MediaImport::boot();
