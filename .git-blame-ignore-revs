@@ -1,0 +1,8 @@
+# Formatting-only commits. `git blame` skips them when configured with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub's blame view reads this file automatically.
+
+# Format the plugin and theme PHP with WordPress Coding Standards
+305be05777911971a0b574257f1b278478eb3f63
+# Format test and tool PHP with WordPress Coding Standards
+01c7ff6ad1bdd43e5fc82c1a0c3ecf6fe1cd240e
