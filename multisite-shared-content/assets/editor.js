@@ -10,7 +10,8 @@
     wp.apiFetch.use(function (options, next) {
         var path = options.path || options.url || '';
         var shared = config.types.some(function (type) { return path.indexOf('/wp/v2/' + type + '/') !== -1; });
-        if (shared && options.method && options.method.toUpperCase() !== 'GET' && options.data && config.version !== null) {
+        var autosave = /\/autosaves(\?|$)/.test(path);
+        if (shared && !autosave && options.method && options.method.toUpperCase() !== 'GET' && options.data && config.version !== null) {
             options = Object.assign({}, options, {data: Object.assign({}, options.data, {msc_expected_version: config.version})});
         }
         return next(options).then(function (result) {

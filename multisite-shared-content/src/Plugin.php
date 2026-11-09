@@ -145,13 +145,19 @@ final class Plugin {
 		add_action(
 			'rest_api_init',
 			static function () {
+				// Autosave responses use the "{type}-revision" object; they need the
+				// current version too, or the editor's next save is rejected as stale.
 				foreach ( Schema::all() as $type => $schema ) {
 					register_rest_field(
-						$type,
+						array( $type, $type . '-revision' ),
 						'msc_state',
 						array(
 							'get_callback' => static function ( $post ) {
-								$r = self::store()->by_post( (int) $post['id'] );
+								$id = (int) $post['id'];
+								if ( 'revision' === get_post_type( $id ) ) {
+									$id = (int) wp_get_post_parent_id( $id );
+								}
+								$r = self::store()->by_post( $id );
 								return $r ? array(
 									'uuid'          => $r['uuid'],
 									'local_version' => (int) self::store()->mapping( (int) $r['id'] )['local_version'],
@@ -315,7 +321,10 @@ final class Plugin {
 			return current_user_can( 'msc_create_global' ) ? $prepared : new \WP_Error( 'msc_forbidden', 'Create Global permission required.', array( 'status' => 403 ) );
 		}
 		$m = self::store()->mapping( (int) $r['id'] );
-		if ( (int) $request['msc_expected_version'] !== (int) $m['local_version'] ) {
+		// Autosaves never carry the editor's version token. A draft autosave by its
+		// author updates the post, and native_guard() claims the version for it.
+		$autosave = $request instanceof \WP_REST_Request && str_ends_with( $request->get_route(), '/autosaves' );
+		if ( ! $autosave && (int) $request['msc_expected_version'] !== (int) $m['local_version'] ) {
 			return new \WP_Error( 'msc_conflict', 'Local record changed. Reload before saving.', array( 'status' => 409 ) );
 		}
 		$old = get_post( $id );
@@ -327,7 +336,7 @@ final class Plugin {
 		if ( isset( $request['featured_media'] ) && (int) $request['featured_media'] !== (int) get_post_thumbnail_id( $id ) ) {
 			return new \WP_Error( 'msc_media', 'Use Shared Content → Manage fields to change media with an explicit site/attachment reference.', array( 'status' => 400 ) );
 		}
-		if ( ! self::claim_native( $id, (int) $m['local_version'] ) ) {
+		if ( ! $autosave && ! self::claim_native( $id, (int) $m['local_version'] ) ) {
 			return new \WP_Error( 'msc_conflict', 'Local record changed. Reload before saving.', array( 'status' => 409 ) );
 		}
 		return $prepared;

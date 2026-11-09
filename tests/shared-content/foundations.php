@@ -151,4 +151,41 @@ $second->get_var( $second->prepare( 'SELECT RELEASE_LOCK(%s)', $worker ) );
 $second->close();
 foundation_check( null === $error && microtime( true ) - $started < 2, 'The cron tick does not wait for or fail on a busy worker lock' );
 
+// Gutenberg autosaves return the current version, so the next save is not rejected.
+$post_id = wp_insert_post(
+	array(
+		'post_type'   => 'msc_show',
+		'post_title'  => 'Autosave check ' . wp_generate_uuid4(),
+		'post_status' => 'draft',
+		'post_author' => get_current_user_id(),
+	)
+);
+$record  = msc_from_post( $post_id );
+foundation_check( (bool) $record, 'A native draft creates a shared record' );
+$version  = (int) MSC\Plugin::store()->mapping( (int) $record['id'] )['local_version'];
+$autosave = new WP_REST_Request( 'POST', "/wp/v2/msc_show/$post_id/autosaves" );
+$autosave->set_param( 'title', 'Autosaved title' );
+$autosave->set_param( 'msc_expected_version', $version );
+$response = rest_do_request( $autosave );
+$state    = $response->get_data()['msc_state'] ?? null;
+foundation_check( 200 === $response->get_status() && is_array( $state ), 'A draft autosave succeeds and returns msc_state' );
+$save = new WP_REST_Request( 'POST', "/wp/v2/msc_show/$post_id" );
+$save->set_param( 'title', 'Saved after autosave' );
+$save->set_param( 'msc_expected_version', $state['local_version'] );
+foundation_check( 200 === rest_do_request( $save )->get_status(), 'The next save with the returned version succeeds' );
+$stale = new WP_REST_Request( 'POST', "/wp/v2/msc_show/$post_id" );
+$stale->set_param( 'title', 'Stale save' );
+$stale->set_param( 'msc_expected_version', $version );
+foundation_check( 409 === rest_do_request( $stale )->get_status(), 'A genuinely stale save is still rejected' );
+wp_update_post(
+	array(
+		'ID'          => $post_id,
+		'post_status' => 'publish',
+	)
+);
+$published = new WP_REST_Request( 'POST', "/wp/v2/msc_show/$post_id/autosaves" );
+$published->set_param( 'title', 'Autosave of a published post' );
+$response = rest_do_request( $published );
+foundation_check( 200 === $response->get_status() && isset( $response->get_data()['msc_state']['local_version'] ), 'An autosave revision of a published post also returns msc_state' );
+
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );
