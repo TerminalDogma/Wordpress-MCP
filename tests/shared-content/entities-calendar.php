@@ -1,48 +1,194 @@
 <?php
-use MSC\{Acf,EntityCatalog,GamePolicy,NetworkSites,Plugin,Presentation,ReleaseCalendar,Schema};
-if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) { throw new RuntimeException( 'Disposable local network required.' ); }
+use MSC\{Acf, EntityCatalog, GamePolicy, NetworkSites, Plugin, Presentation, ReleaseCalendar, Schema};
+if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
+	throw new RuntimeException( 'Disposable local network required.' );
+}
 $GLOBALS['ec_checks'] = 0;
-function ec_check( $ok, string $message ): void { if ( ! $ok ) { throw new RuntimeException( 'FAIL: ' . $message ); } ++$GLOBALS['ec_checks']; WP_CLI::log( 'PASS: ' . $message ); }
-function ec_reject( callable $fn, string $message ): void { try { $fn(); } catch ( Throwable $e ) { ec_check( true, $message ); return; } throw new RuntimeException( 'FAIL: expected rejection: ' . $message ); }
-$saved = array(); foreach ( get_sites( array( 'number' => 0 ) ) as $site ) { $id = (int) $site->blog_id; $saved[ $id ] = array( 'types' => get_blog_option( $id, 'msc_types', array() ), 'policy' => GamePolicy::mode( $id ), 'children' => get_blog_option( $id, 'msc_episodes_as_children', false ) ); }
-define( 'MSC_ENTITY_FIXTURE_INCLUDE', true ); require __DIR__ . '/entity-fixtures.php';
+function ec_check( $ok, string $message ): void {
+	if ( ! $ok ) {
+		throw new RuntimeException( 'FAIL: ' . $message );
+	}
+	++$GLOBALS['ec_checks'];
+	WP_CLI::log( 'PASS: ' . $message );
+}
+function ec_reject( callable $fn, string $message ): void {
+	try {
+		$fn();
+	} catch ( Throwable $e ) {
+		ec_check( true, $message );
+		return;
+	}
+	throw new RuntimeException( 'FAIL: expected rejection: ' . $message );
+}
+$saved = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	$id           = (int) $site->blog_id;
+	$saved[ $id ] = array(
+		'types'    => get_blog_option( $id, 'msc_types', array() ),
+		'policy'   => GamePolicy::mode( $id ),
+		'children' => get_blog_option( $id, 'msc_episodes_as_children', false ),
+	);
+}
+define( 'MSC_ENTITY_FIXTURE_INCLUDE', true );
+require __DIR__ . '/entity-fixtures.php';
 try {
-    ec_at( $sites['a'], static function () use ( $fixture, $sites ) {
-        extract( $fixture ); $store = Plugin::store();
-        ec_check( count( EntityCatalog::definitions() ) === 7 && Schema::enabled( 'msc_studio' ) && ! Schema::enabled( 'msc_game' ), 'Film sites have the new company/service types without enabling Games' );
-        $html = EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) );
-        foreach ( array( $studio, $distributor, $streaming, $person ) as $r ) { ec_check( str_contains( $html, esc_url( $r['url'] ) ), 'Published explicit and name-matched records appear as sidebar links' ); }
-        ec_check( str_contains( $html, $draft['data']['title'] ) && ! str_contains( $html, esc_url( $draft['url'] ) ) && 1 === substr_count( $html, esc_url( $studio['url'] ) ), 'Draft names remain visible without links and matching explicit/legacy credits are deduplicated' );
-        ec_check( in_array( $movie['uuid'], array_column( EntityCatalog::related( Presentation::record( $studio['uuid'] ) ), 'uuid' ), true ), 'Entity pages find published related titles through effective fields' );
-        $r = $store->resolved( $movie['uuid'] ); $r = $store->local( $movie['uuid'], array( 'production_company_records' => array() ), array(), (int) $r['mapping']['local_version'] );
-        ec_check( ! str_contains( EntityCatalog::sidebar( $r ), esc_url( $studio['url'] ) ) && $r['data']['production_companies'] === $studio['data']['title'], 'An empty local relationship override preserves the legacy name and removes its link' );
-        $store->local( $movie['uuid'], array(), array( 'production_company_records' ), (int) $r['mapping']['local_version'] );
-        ec_publish( $studio['uuid'], $sites['a'], 'private' ); ec_check( ! str_contains( EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) ), esc_url( $studio['url'] ) ), 'Private related records stay out of the public sidebar' ); ec_publish( $studio['uuid'], $sites['a'] );
-        $r = $store->resolved( $studio['uuid'] ); $writing = MSC\Materializer::$writing; MSC\Materializer::$writing = true; wp_update_post( array( 'ID' => $r['mapping']['post_id'], 'post_password' => 'secret' ) ); MSC\Materializer::$writing = $writing;
-        ec_check( ! str_contains( EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) ), esc_url( $studio['url'] ) ), 'Password-protected related records do not leak public links' ); MSC\Materializer::$writing = true; wp_update_post( array( 'ID' => $r['mapping']['post_id'], 'post_password' => '' ) ); MSC\Materializer::$writing = $writing;
-        ob_start(); get_template_part( 'parts/episodes', null, array( 'record' => Presentation::record( $empty_show['uuid'] ) ) ); $empty = ob_get_clean();
-        ec_check( '' === trim( $empty ), 'A Show with only draft Episodes renders no Episode section' );
-        ob_start(); get_template_part( 'parts/episodes', null, array( 'record' => Presentation::record( $show['uuid'] ) ) ); $published = ob_get_clean(); ec_check( str_contains( $published, 'id="episodes"' ), 'A Show with a published Episode retains the season guide' );
-        $ep = $store->resolved( $episode['uuid'] ); $store->local( $ep['id'], array( 'release_date' => '2098-01-31' ), array(), (int) $ep['mapping']['local_version'] );
-        $calendar_episode = static function () use ( $episode ) { $events = ReleaseCalendar::data( '2098-01', 'msc_episode' )['events']; return array_values( array_filter( $events, static fn( $event ) => $episode['uuid'] === $event['uuid'] ) )[0]; };
-        ec_check( $show['data']['title'] === $calendar_episode()['show_title'], 'Episode calendar data includes the published parent Show name' );
-        foreach ( array( array( 'month' => '2098-01', 'type' => 'msc_episode', 'limit' => '0' ), array( 'month' => '2098-01', 'view' => 'week', 'date' => '2098-01-31', 'type' => 'msc_episode', 'limit' => '0' ) ) as $args ) { $html = ReleaseCalendar::markup( $args ); ec_check( str_contains( $html, 'class="calendar-event-show">' . esc_html( $show['data']['title'] ) ) && str_contains( $html, esc_html( $episode['data']['title'] ) ), 'Month/week Episode cards show both the parent series and Episode title' ); }
-        $parent = $store->resolved( $show['uuid'] ); $local_title = 'Local ' . $show['data']['title']; $store->local( $parent['id'], array( 'title' => $local_title ), array(), (int) $parent['mapping']['local_version'] ); ec_check( $local_title === $calendar_episode()['show_title'], 'Episode calendar cards respect local parent title overrides' );
-        ec_publish( $show['uuid'], $sites['a'], 'private' ); ec_check( '' === $calendar_episode()['show_title'], 'Private parent Show names are not exposed by public Episode calendar data' ); ec_publish( $show['uuid'], $sites['a'] ); $parent = $store->resolved( $show['uuid'] ); $store->local( $parent['id'], array(), array( 'title' ), (int) $parent['mapping']['local_version'] );
-        Acf::register(); $r = $store->resolved( $movie['uuid'] ); $field = acf_get_field( Acf::key( 'msc_movie', 'production_company_records' ) ); $value = Acf::load( null, $r['mapping']['post_id'], $field ); ec_check( in_array( (int) $store->mapping( (int) $studio['id'] )['post_id'], $value, true ) && 'post_object' === $field['type'], 'ACF exposes entity relationships as local searchable Post Object fields' );
-        ec_reject( static fn() => Schema::values( 'msc_movie', array( 'production_company_records' => array( $person['uuid'] ) ) ), 'Relationships reject the wrong entity type' );
-        $schemas = Schema::all(); $version = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' ); $baseline = $store->get( $movie['uuid'] ); $legacy = $schemas;
-        foreach ( EntityCatalog::definitions() as $type => $d ) { unset( $legacy[ $type ] ); } foreach ( $legacy as $type => &$schema ) { foreach ( EntityCatalog::fields( $type ) as $key => $f ) { unset( $schema['fields'][ $key ] ); } } unset( $schema ); $legacy['msc_movie']['label'] = 'Custom Film Label';
-        try { update_network_option( get_current_network_id(), 'msc_schemas', $legacy ); update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 5 ); Schema::upgrade_defaults(); ec_check( isset( Schema::all()['msc_console'], Schema::get( 'msc_movie' )['fields']['production_company_records'] ) && 'Custom Film Label' === Schema::get( 'msc_movie' )['label'] && $baseline === $store->get( $movie['uuid'] ), 'The additive schema upgrade preserves existing data, IDs and custom labels' ); } finally { update_network_option( get_current_network_id(), 'msc_schemas', $schemas ); update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $version ); }
-        $range = ReleaseCalendar::range( '2098-02', 'week', '2098-02-01' ); ec_check( '2098-01-27' === $range['start'] && '2098-02-03' === $range['end'], 'Week ranges honor Monday starts and span month boundaries' );
-        $events = ReleaseCalendar::data( '2098-02', '', '', '', 'week', '2098-02-01' )['events']; $ids = array_column( $events, 'uuid' ); ec_check( count( array_intersect( $ids, array_column( array_slice( $dates, 0, 8 ), 'uuid' ) ) ) === 8 && ! in_array( $dates[8]['uuid'], $ids, true ), 'Weekly data includes adjacent-month dates and excludes the next week' );
-        $html = ReleaseCalendar::markup( array( 'month' => '2098-01' ) ); $count = count( array_filter( ReleaseCalendar::data( '2098-01' )['events'], static fn( $e ) => '2098-01-31' === $e['date'] ) ); ec_check( str_contains( $html, 'calendar-overflow' ) && str_contains( $html, 'Show ' . ( $count - 3 ) . ' more' ), 'Busy days show three entries and a native expandable overflow' );
-        $html = ReleaseCalendar::markup( array( 'month' => '2098-01', 'limit' => '0' ) ); ec_check( ! str_contains( $html, '<details class="calendar-overflow"' ), 'All releases disables the daily cutoff' );
-        foreach ( array( array( 'view' => 'bad' ), array( 'limit' => '-1' ), array( 'date' => '2098-02-30' ), array( 'date' => array() ) ) as $bad ) { ec_reject( static fn() => ReleaseCalendar::markup( array_merge( array( 'month' => '2098-01' ), $bad ) ), 'Malformed calendar view/date/display filters are rejected' ); }
-        $week = ReleaseCalendar::range( '2024-03', 'week', '2024-03-10' ); ec_check( '2024-03-04' === $week['start'] && '2024-03-11' === $week['end'], 'Week boundaries remain seven calendar days across DST' );
-        wp_set_current_user( 0 ); try { $q = new WP_REST_Request( 'GET', '/msc/v1/calendar' ); $q->set_param( 'month', '2098-02' ); $q->set_param( 'view', 'week' ); $q->set_param( 'date', '2098-02-01' ); $response = rest_do_request( $q ); ec_check( 200 === $response->get_status() && 'week' === $response->get_data()['data']['view'], 'Anonymous REST serves the same published weekly data and controls' ); } finally { wp_set_current_user( 1 ); }
-    } );
-    ec_at( $sites['d'], static function () use ( $game, $console, $pc ) { $r = Presentation::record( $game['uuid'] ); ec_check( $r && array( $console['uuid'] ) === $r['data']['console_records'] && ! Presentation::record( $pc['uuid'] ), 'Sony membership and public relationships honor linked console records' ); ec_check( 1 === count( array_filter( ReleaseCalendar::data( '2098-01' )['events'], static fn( $e ) => $e['uuid'] === $console['uuid'] ) ), 'Published Sony platform launches appear on the calendar' ); ec_check( in_array( $game['uuid'], array_column( ReleaseCalendar::data( '2098-01', 'msc_game', 'PlayStation 5' )['events'], 'uuid' ), true ), 'Games using only linked consoles remain available through calendar platform filters' ); ec_check( ! ReleaseCalendar::data( '2098-01', 'msc_game', $pc['data']['title'] )['events'], 'Calendar filters cannot expose linked non-Sony platforms on Site D' ); } );
-    $types = get_blog_option( $sites['a'], 'msc_types' ); Schema::participate( $sites['a'], array_values( array_diff( $types, array( 'msc_studio' ) ) ) ); EntityCatalog::enroll(); ec_check( ! Schema::enabled( 'msc_studio', $sites['a'] ), 'Repeated setup does not re-enable a deliberately disabled entity type' );
-} finally { wp_set_current_user( 1 ); NetworkSites::apply( $saved ); }
+	ec_at(
+		$sites['a'],
+		static function () use ( $fixture, $sites ) {
+			extract( $fixture );
+			$store = Plugin::store();
+			ec_check( count( EntityCatalog::definitions() ) === 7 && Schema::enabled( 'msc_studio' ) && ! Schema::enabled( 'msc_game' ), 'Film sites have the new company/service types without enabling Games' );
+			$html = EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) );
+			foreach ( array( $studio, $distributor, $streaming, $person ) as $r ) {
+				ec_check( str_contains( $html, esc_url( $r['url'] ) ), 'Published explicit and name-matched records appear as sidebar links' );
+			}
+			ec_check( str_contains( $html, $draft['data']['title'] ) && ! str_contains( $html, esc_url( $draft['url'] ) ) && 1 === substr_count( $html, esc_url( $studio['url'] ) ), 'Draft names remain visible without links and matching explicit/legacy credits are deduplicated' );
+			ec_check( in_array( $movie['uuid'], array_column( EntityCatalog::related( Presentation::record( $studio['uuid'] ) ), 'uuid' ), true ), 'Entity pages find published related titles through effective fields' );
+			$r = $store->resolved( $movie['uuid'] );
+			$r = $store->local( $movie['uuid'], array( 'production_company_records' => array() ), array(), (int) $r['mapping']['local_version'] );
+			ec_check( ! str_contains( EntityCatalog::sidebar( $r ), esc_url( $studio['url'] ) ) && $r['data']['production_companies'] === $studio['data']['title'], 'An empty local relationship override preserves the legacy name and removes its link' );
+			$store->local( $movie['uuid'], array(), array( 'production_company_records' ), (int) $r['mapping']['local_version'] );
+			ec_publish( $studio['uuid'], $sites['a'], 'private' );
+			ec_check( ! str_contains( EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) ), esc_url( $studio['url'] ) ), 'Private related records stay out of the public sidebar' );
+			ec_publish( $studio['uuid'], $sites['a'] );
+			$r                         = $store->resolved( $studio['uuid'] );
+			$writing                   = MSC\Materializer::$writing;
+			MSC\Materializer::$writing = true;
+			wp_update_post(
+				array(
+					'ID'            => $r['mapping']['post_id'],
+					'post_password' => 'secret',
+				)
+			);
+			MSC\Materializer::$writing = $writing;
+			ec_check( ! str_contains( EntityCatalog::sidebar( Presentation::record( $movie['uuid'] ) ), esc_url( $studio['url'] ) ), 'Password-protected related records do not leak public links' );
+			MSC\Materializer::$writing = true;
+			wp_update_post(
+				array(
+					'ID'            => $r['mapping']['post_id'],
+					'post_password' => '',
+				)
+			);
+			MSC\Materializer::$writing = $writing;
+			ob_start();
+			get_template_part( 'parts/episodes', null, array( 'record' => Presentation::record( $empty_show['uuid'] ) ) );
+			$empty = ob_get_clean();
+			ec_check( '' === trim( $empty ), 'A Show with only draft Episodes renders no Episode section' );
+			ob_start();
+			get_template_part( 'parts/episodes', null, array( 'record' => Presentation::record( $show['uuid'] ) ) );
+			$published = ob_get_clean();
+			ec_check( str_contains( $published, 'id="episodes"' ), 'A Show with a published Episode retains the season guide' );
+			$ep = $store->resolved( $episode['uuid'] );
+			$store->local( $ep['id'], array( 'release_date' => '2098-01-31' ), array(), (int) $ep['mapping']['local_version'] );
+			$calendar_episode = static function () use ( $episode ) {
+				$events = ReleaseCalendar::data( '2098-01', 'msc_episode' )['events'];
+				return array_values( array_filter( $events, static fn( $event ) => $episode['uuid'] === $event['uuid'] ) )[0];
+			};
+			ec_check( $show['data']['title'] === $calendar_episode()['show_title'], 'Episode calendar data includes the published parent Show name' );
+			foreach ( array(
+				array(
+					'month' => '2098-01',
+					'type'  => 'msc_episode',
+					'limit' => '0',
+				),
+				array(
+					'month' => '2098-01',
+					'view'  => 'week',
+					'date'  => '2098-01-31',
+					'type'  => 'msc_episode',
+					'limit' => '0',
+				),
+			) as $args ) {
+				$html = ReleaseCalendar::markup( $args );
+				ec_check( str_contains( $html, 'class="calendar-event-show">' . esc_html( $show['data']['title'] ) ) && str_contains( $html, esc_html( $episode['data']['title'] ) ), 'Month/week Episode cards show both the parent series and Episode title' );
+			}
+			$parent      = $store->resolved( $show['uuid'] );
+			$local_title = 'Local ' . $show['data']['title'];
+			$store->local( $parent['id'], array( 'title' => $local_title ), array(), (int) $parent['mapping']['local_version'] );
+			ec_check( $local_title === $calendar_episode()['show_title'], 'Episode calendar cards respect local parent title overrides' );
+			ec_publish( $show['uuid'], $sites['a'], 'private' );
+			ec_check( '' === $calendar_episode()['show_title'], 'Private parent Show names are not exposed by public Episode calendar data' );
+			ec_publish( $show['uuid'], $sites['a'] );
+			$parent = $store->resolved( $show['uuid'] );
+			$store->local( $parent['id'], array(), array( 'title' ), (int) $parent['mapping']['local_version'] );
+			Acf::register();
+			$r     = $store->resolved( $movie['uuid'] );
+			$field = acf_get_field( Acf::key( 'msc_movie', 'production_company_records' ) );
+			$value = Acf::load( null, $r['mapping']['post_id'], $field );
+			ec_check( in_array( (int) $store->mapping( (int) $studio['id'] )['post_id'], $value, true ) && 'post_object' === $field['type'], 'ACF exposes entity relationships as local searchable Post Object fields' );
+			ec_reject( static fn() => Schema::values( 'msc_movie', array( 'production_company_records' => array( $person['uuid'] ) ) ), 'Relationships reject the wrong entity type' );
+			$schemas  = Schema::all();
+			$version  = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' );
+			$baseline = $store->get( $movie['uuid'] );
+			$legacy   = $schemas;
+			foreach ( EntityCatalog::definitions() as $type => $d ) {
+				unset( $legacy[ $type ] );
+			}
+			foreach ( $legacy as $type => &$schema ) {
+				foreach ( EntityCatalog::fields( $type ) as $key => $f ) {
+					unset( $schema['fields'][ $key ] );
+				}
+			}
+			unset( $schema );
+			$legacy['msc_movie']['label'] = 'Custom Film Label';
+			try {
+				update_network_option( get_current_network_id(), 'msc_schemas', $legacy );
+				update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 5 );
+				Schema::upgrade_defaults();
+				ec_check( isset( Schema::all()['msc_console'], Schema::get( 'msc_movie' )['fields']['production_company_records'] ) && 'Custom Film Label' === Schema::get( 'msc_movie' )['label'] && $baseline === $store->get( $movie['uuid'] ), 'The additive schema upgrade preserves existing data, IDs and custom labels' );
+			} finally {
+				update_network_option( get_current_network_id(), 'msc_schemas', $schemas );
+				update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $version );
+			}
+			$range = ReleaseCalendar::range( '2098-02', 'week', '2098-02-01' );
+			ec_check( '2098-01-27' === $range['start'] && '2098-02-03' === $range['end'], 'Week ranges honor Monday starts and span month boundaries' );
+			$events = ReleaseCalendar::data( '2098-02', '', '', '', 'week', '2098-02-01' )['events'];
+			$ids    = array_column( $events, 'uuid' );
+			ec_check( count( array_intersect( $ids, array_column( array_slice( $dates, 0, 8 ), 'uuid' ) ) ) === 8 && ! in_array( $dates[8]['uuid'], $ids, true ), 'Weekly data includes adjacent-month dates and excludes the next week' );
+			$html  = ReleaseCalendar::markup( array( 'month' => '2098-01' ) );
+			$count = count( array_filter( ReleaseCalendar::data( '2098-01' )['events'], static fn( $e ) => '2098-01-31' === $e['date'] ) );
+			ec_check( str_contains( $html, 'calendar-overflow' ) && str_contains( $html, 'Show ' . ( $count - 3 ) . ' more' ), 'Busy days show three entries and a native expandable overflow' );
+			$html = ReleaseCalendar::markup(
+				array(
+					'month' => '2098-01',
+					'limit' => '0',
+				)
+			);
+			ec_check( ! str_contains( $html, '<details class="calendar-overflow"' ), 'All releases disables the daily cutoff' );
+			foreach ( array( array( 'view' => 'bad' ), array( 'limit' => '-1' ), array( 'date' => '2098-02-30' ), array( 'date' => array() ) ) as $bad ) {
+				ec_reject( static fn() => ReleaseCalendar::markup( array_merge( array( 'month' => '2098-01' ), $bad ) ), 'Malformed calendar view/date/display filters are rejected' );
+			}
+			$week = ReleaseCalendar::range( '2024-03', 'week', '2024-03-10' );
+			ec_check( '2024-03-04' === $week['start'] && '2024-03-11' === $week['end'], 'Week boundaries remain seven calendar days across DST' );
+			wp_set_current_user( 0 );
+			try {
+				$q = new WP_REST_Request( 'GET', '/msc/v1/calendar' );
+				$q->set_param( 'month', '2098-02' );
+				$q->set_param( 'view', 'week' );
+				$q->set_param( 'date', '2098-02-01' );
+				$response = rest_do_request( $q );
+				ec_check( 200 === $response->get_status() && 'week' === $response->get_data()['data']['view'], 'Anonymous REST serves the same published weekly data and controls' );
+			} finally {
+				wp_set_current_user( 1 );
+			}
+		}
+	);
+	ec_at(
+		$sites['d'],
+		static function () use ( $game, $console, $pc ) {
+			$r = Presentation::record( $game['uuid'] );
+			ec_check( $r && array( $console['uuid'] ) === $r['data']['console_records'] && ! Presentation::record( $pc['uuid'] ), 'Sony membership and public relationships honor linked console records' );
+			ec_check( 1 === count( array_filter( ReleaseCalendar::data( '2098-01' )['events'], static fn( $e ) => $e['uuid'] === $console['uuid'] ) ), 'Published Sony platform launches appear on the calendar' );
+			ec_check( in_array( $game['uuid'], array_column( ReleaseCalendar::data( '2098-01', 'msc_game', 'PlayStation 5' )['events'], 'uuid' ), true ), 'Games using only linked consoles remain available through calendar platform filters' );
+			ec_check( ! ReleaseCalendar::data( '2098-01', 'msc_game', $pc['data']['title'] )['events'], 'Calendar filters cannot expose linked non-Sony platforms on Site D' );
+		}
+	);
+	$types = get_blog_option( $sites['a'], 'msc_types' );
+	Schema::participate( $sites['a'], array_values( array_diff( $types, array( 'msc_studio' ) ) ) );
+	EntityCatalog::enroll();
+	ec_check( ! Schema::enabled( 'msc_studio', $sites['a'] ), 'Repeated setup does not re-enable a deliberately disabled entity type' );
+} finally {
+	wp_set_current_user( 1 );
+	NetworkSites::apply( $saved );
+}
 WP_CLI::success( $GLOBALS['ec_checks'] . ' entity, publication, migration, empty Episode and weekly calendar checks passed.' );

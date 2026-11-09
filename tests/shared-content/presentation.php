@@ -1,41 +1,286 @@
 <?php
 /** People, portable categories, safe additive upgrade and cross-site ACF images. */
-use MSC\{Schema,Plugin,Queue,Acf,Taxonomies,Presentation,Media};
-wp_set_current_user(1); $GLOBALS['msc_view_checks'] = 0;
-function view_check($ok,$message):void{++$GLOBALS['msc_view_checks'];if(!$ok){throw new RuntimeException('FAIL: '.$message);}WP_CLI::log('PASS: '.$message);}
-function view_at($site,$fn){switch_to_blog($site);try{return $fn();}finally{restore_current_blog();}}
-function view_drain():void{for($i=0;$i<100&&Queue::status()['pending'];++$i){$r=Queue::run(1000);if($r['errors']||!$r['processed']){throw new RuntimeException('Presentation queue failure.');}}}
-function view_reject($fn,$label):void{$caught=false;try{$fn();}catch(Throwable $e){$caught=true;}view_check($caught,$label);}
-function view_form($id,$scope,$fields,$overrides=[]):array{$r=Plugin::store()->resolved($id);return ['post_id'=>$r['mapping']['post_id'],'nonce'=>wp_create_nonce('msc_acf_'.$r['mapping']['post_id']),'scope'=>$scope,'version'=>$r['version'],'local_version'=>$r['mapping']['local_version'],'acf'=>$fields,'override'=>$overrides];}
-$sites=[];foreach(get_sites(['number'=>0]) as $site){if(in_array($site->path,['/site-a/','/site-b/','/site-c/'],true)){$sites[]=(int)$site->blog_id;}}[$a,$b,$c]=$sites;
-$person=view_at($a,static fn()=>Plugin::store()->create('msc_person',['title'=>'Person Integration Actor','professions'=>['Actor'],'country'=>'Canada']));
-$director=view_at($a,static fn()=>Plugin::store()->create('msc_person',['title'=>'Person Integration Director','professions'=>['Director']]));
-$movie=view_at($a,static fn()=>Plugin::store()->create('msc_movie',['title'=>'People Integration Movie','actors'=>[$person['uuid']],'directors'=>[$director['uuid']],'genres'=>['Drama','Science Fiction'],'country'=>'Canada','director'=>'Preserve original credit','writers'=>'Preserve writing text','cast'=>'Preserve cast notes']));
-$id=(int)$movie['id'];view_drain();
-foreach($sites as $site){view_at($site,static function()use($id,$person,$director){foreach([$id,$person['id'],$director['id']] as $target){$r=Plugin::store()->resolved($target);Plugin::store()->local($target,[],[],(int)$r['mapping']['local_version'],'publish');}});}
-foreach($sites as $site){view_at($site,static function()use($id,$person){$post=msc_local_post_id($id);view_check(get_field('msc_actors',$post)===[msc_local_post_id($person['uuid'])],'ACF maps global Person UUIDs to the current site post IDs');$genres=wp_get_object_terms($post,'msc_genre',['fields'=>'names']);sort($genres);view_check(['Drama','Science Fiction']===$genres,'Global genres materialize as native site taxonomy terms');view_check(in_array($id,array_column(msc_filmography($person['uuid']),'id')),'Person filmography links published credits on this site');});}
-view_reject(static fn()=>view_at($a,static fn()=>Plugin::store()->update($id,['actors'=>[$movie['uuid']]],(int)Plugin::store()->get($id)['version'])),'People links reject Movie targets');
-view_reject(static fn()=>Schema::sanitize(['type'=>'relationship_list','target'=>'msc_person'],['']),'People links reject blank identifiers inside a list');
-view_at($b,static function()use($id){$r=Plugin::store()->resolved($id);Plugin::store()->local($id,['actors'=>[],'genres'=>['Comedy']],[],(int)$r['mapping']['local_version']);});
-view_at($a,static fn()=>Acf::save(view_form($id,'global',[Acf::key('msc_movie','actors')=>[msc_local_post_id($director['uuid'])],Acf::key('msc_movie','genres')=>['Mystery']])));view_drain();
-view_at($b,static function()use($id,$person){view_check([]===msc_get_field($id,'actors')&&msc_is_overridden($id,'actors'),'Empty local Person list survives a global update');view_check(['Comedy']===wp_get_object_terms(msc_local_post_id($id),'msc_genre',['fields'=>'names']),'Local genre override controls native terms');view_check(!in_array($id,array_column(msc_filmography($person['uuid']),'id')),'Filmography removes overridden local credits');Acf::save(view_form($id,'local',[Acf::key('msc_movie','actors')=>'',Acf::key('msc_movie','genres')=>'']));});
-view_at($b,static function()use($id,$director){view_check([$director['uuid']]===msc_get_field($id,'actors')&&!msc_is_overridden($id,'actors'),'Reset Person links inherits the newest global credits');view_check(['Mystery']===wp_get_object_terms(msc_local_post_id($id),'msc_genre',['fields'=>'names']),'Reset genres rematerializes the current global terms');});
-view_check('Preserve original credit'===msc_get_global($id,'director')&&'Preserve writing text'===msc_get_global($id,'writers')&&'Preserve cast notes'===msc_get_global($id,'cast'),'Structured credits preserve all legacy free-text credits');
-view_at($c,static function()use($director){$r=Plugin::store()->resolved($director['uuid']);Plugin::store()->local($r['uuid'],[],[],(int)$r['mapping']['local_version'],'draft');view_check(null===Presentation::record($r['uuid']),'Public template helpers hide draft Person records');});
+use MSC\{Schema, Plugin, Queue, Acf, Taxonomies, Presentation, Media};
+wp_set_current_user( 1 );
+$GLOBALS['msc_view_checks'] = 0;
+function view_check( $ok, $message ): void {
+	++$GLOBALS['msc_view_checks'];
+	if ( ! $ok ) {
+		throw new RuntimeException( 'FAIL: ' . $message );
+	}WP_CLI::log( 'PASS: ' . $message );
+}
+function view_at( $site, $fn ) {
+	switch_to_blog( $site );
+	try {
+		return $fn();
+	} finally {
+		restore_current_blog();
+	}
+}
+function view_drain(): void {
+	for ( $i = 0;$i < 100 && Queue::status()['pending'];++$i ) {
+		$r = Queue::run( 1000 );
+		if ( $r['errors'] || ! $r['processed'] ) {
+			throw new RuntimeException( 'Presentation queue failure.' );
+		}
+	}
+}
+function view_reject( $fn, $label ): void {
+	$caught = false;
+	try {
+		$fn();
+	} catch ( Throwable $e ) {
+		$caught = true;
+	}view_check( $caught, $label );
+}
+function view_form( $id, $scope, $fields, $overrides = array() ): array {
+	$r = Plugin::store()->resolved( $id );
+	return array(
+		'post_id'       => $r['mapping']['post_id'],
+		'nonce'         => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ),
+		'scope'         => $scope,
+		'version'       => $r['version'],
+		'local_version' => $r['mapping']['local_version'],
+		'acf'           => $fields,
+		'override'      => $overrides,
+	);
+}
+$sites = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	if ( in_array( $site->path, array( '/site-a/', '/site-b/', '/site-c/' ), true ) ) {
+		$sites[] = (int) $site->blog_id;
+	}
+}[$a, $b, $c] = $sites;
+$person       = view_at(
+	$a,
+	static fn()=>Plugin::store()->create(
+		'msc_person',
+		array(
+			'title'       => 'Person Integration Actor',
+			'professions' => array( 'Actor' ),
+			'country'     => 'Canada',
+		)
+	)
+);
+$director     = view_at(
+	$a,
+	static fn()=>Plugin::store()->create(
+		'msc_person',
+		array(
+			'title'       => 'Person Integration Director',
+			'professions' => array( 'Director' ),
+		)
+	)
+);
+$movie        = view_at(
+	$a,
+	static fn()=>Plugin::store()->create(
+		'msc_movie',
+		array(
+			'title'     => 'People Integration Movie',
+			'actors'    => array( $person['uuid'] ),
+			'directors' => array( $director['uuid'] ),
+			'genres'    => array( 'Drama', 'Science Fiction' ),
+			'country'   => 'Canada',
+			'director'  => 'Preserve original credit',
+			'writers'   => 'Preserve writing text',
+			'cast'      => 'Preserve cast notes',
+		)
+	)
+);
+$id           = (int) $movie['id'];
+view_drain();
+foreach ( $sites as $site ) {
+	view_at(
+		$site,
+		static function () use ( $id, $person, $director ) {
+			foreach ( array( $id, $person['id'], $director['id'] ) as $target ) {
+				$r = Plugin::store()->resolved( $target );
+				Plugin::store()->local( $target, array(), array(), (int) $r['mapping']['local_version'], 'publish' );
+			}
+		}
+	);
+}
+foreach ( $sites as $site ) {
+	view_at(
+		$site,
+		static function () use ( $id, $person ) {
+			$post = msc_local_post_id( $id );
+			view_check( get_field( 'msc_actors', $post ) === array( msc_local_post_id( $person['uuid'] ) ), 'ACF maps global Person UUIDs to the current site post IDs' );
+			$genres = wp_get_object_terms( $post, 'msc_genre', array( 'fields' => 'names' ) );
+			sort( $genres );
+			view_check( array( 'Drama', 'Science Fiction' ) === $genres, 'Global genres materialize as native site taxonomy terms' );
+			view_check( in_array( $id, array_column( msc_filmography( $person['uuid'] ), 'id' ) ), 'Person filmography links published credits on this site' );
+		}
+	);
+}
+view_reject( static fn()=>view_at( $a, static fn()=>Plugin::store()->update( $id, array( 'actors' => array( $movie['uuid'] ) ), (int) Plugin::store()->get( $id )['version'] ) ), 'People links reject Movie targets' );
+view_reject(
+	static fn()=>Schema::sanitize(
+		array(
+			'type'   => 'relationship_list',
+			'target' => 'msc_person',
+		),
+		array( '' )
+	),
+	'People links reject blank identifiers inside a list'
+);
+view_at(
+	$b,
+	static function () use ( $id ) {
+		$r = Plugin::store()->resolved( $id );
+		Plugin::store()->local(
+			$id,
+			array(
+				'actors' => array(),
+				'genres' => array( 'Comedy' ),
+			),
+			array(),
+			(int) $r['mapping']['local_version']
+		);
+	}
+);
+view_at(
+	$a,
+	static fn()=>Acf::save(
+		view_form(
+			$id,
+			'global',
+			array(
+				Acf::key( 'msc_movie', 'actors' ) => array( msc_local_post_id( $director['uuid'] ) ),
+				Acf::key( 'msc_movie', 'genres' ) => array( 'Mystery' ),
+			)
+		)
+	)
+);
+view_drain();
+view_at(
+	$b,
+	static function () use ( $id, $person ) {
+		view_check( array() === msc_get_field( $id, 'actors' ) && msc_is_overridden( $id, 'actors' ), 'Empty local Person list survives a global update' );
+		view_check( array( 'Comedy' ) === wp_get_object_terms( msc_local_post_id( $id ), 'msc_genre', array( 'fields' => 'names' ) ), 'Local genre override controls native terms' );
+		view_check( ! in_array( $id, array_column( msc_filmography( $person['uuid'] ), 'id' ) ), 'Filmography removes overridden local credits' );
+		Acf::save(
+			view_form(
+				$id,
+				'local',
+				array(
+					Acf::key( 'msc_movie', 'actors' ) => '',
+					Acf::key( 'msc_movie', 'genres' ) => '',
+				)
+			)
+		);
+	}
+);
+view_at(
+	$b,
+	static function () use ( $id, $director ) {
+		view_check( array( $director['uuid'] ) === msc_get_field( $id, 'actors' ) && ! msc_is_overridden( $id, 'actors' ), 'Reset Person links inherits the newest global credits' );
+		view_check( array( 'Mystery' ) === wp_get_object_terms( msc_local_post_id( $id ), 'msc_genre', array( 'fields' => 'names' ) ), 'Reset genres rematerializes the current global terms' );
+	}
+);
+view_check( 'Preserve original credit' === msc_get_global( $id, 'director' ) && 'Preserve writing text' === msc_get_global( $id, 'writers' ) && 'Preserve cast notes' === msc_get_global( $id, 'cast' ), 'Structured credits preserve all legacy free-text credits' );
+view_at(
+	$c,
+	static function () use ( $director ) {
+		$r = Plugin::store()->resolved( $director['uuid'] );
+		Plugin::store()->local( $r['uuid'], array(), array(), (int) $r['mapping']['local_version'], 'draft' );
+		view_check( null === Presentation::record( $r['uuid'] ), 'Public template helpers hide draft Person records' );
+	}
+);
 // Network categories are editable once and reusable on every site.
-Taxonomies::add_choice('msc_genre','Integration Custom Genre');
-view_at($b,static fn()=>view_check(in_array('Integration Custom Genre',Taxonomies::choices(['taxonomy'=>'msc_genre']),true),'Custom network categories are available on another site'));
-$existing=get_user_by('login','msc-presentation-subscriber');$subscriber=$existing?$existing->ID:wp_insert_user(['user_login'=>'msc-presentation-subscriber','user_pass'=>wp_generate_password(),'role'=>'subscriber']);wp_set_current_user((int)$subscriber);view_reject(static fn()=>Taxonomies::add_choice('msc_genre','Unauthorized'),'Category vocabulary edits require schema permission');wp_set_current_user(1);
+Taxonomies::add_choice( 'msc_genre', 'Integration Custom Genre' );
+view_at( $b, static fn()=>view_check( in_array( 'Integration Custom Genre', Taxonomies::choices( array( 'taxonomy' => 'msc_genre' ) ), true ), 'Custom network categories are available on another site' ) );
+$existing   = get_user_by( 'login', 'msc-presentation-subscriber' );
+$subscriber = $existing ? $existing->ID : wp_insert_user(
+	array(
+		'user_login' => 'msc-presentation-subscriber',
+		'user_pass'  => wp_generate_password(),
+		'role'       => 'subscriber',
+	)
+);
+wp_set_current_user( (int) $subscriber );
+view_reject( static fn()=>Taxonomies::add_choice( 'msc_genre', 'Unauthorized' ), 'Category vocabulary edits require schema permission' );
+wp_set_current_user( 1 );
 // An in-place 1.2 upgrade changes schemas only, keeping saved records and maps.
-$saved=Schema::all();$version=get_network_option(get_current_network_id(),'msc_builtin_schema_version');$participation=get_blog_option($c,'msc_types');$old=$saved;unset($old['msc_person']);foreach($old as &$schema){foreach(['actors','directors','screenwriters','producers','creators'] as $key){unset($schema['fields'][$key]);}foreach($schema['fields'] as &$field){unset($field['taxonomy']);}unset($field);}unset($schema);
-$old['msc_movie']['fields']['genres']['options']=['Custom original choice'];$old['msc_movie']['fields']['genres']['override']=false;$old['msc_movie']['label']='My Films';
-$before=Plugin::store()->get($id);$maps=[];$overrides=[];foreach($sites as $site){$maps[$site]=Plugin::store()->mapping($id,$site);$overrides[$site]=Plugin::store()->overrides($id,$site);}
-try{update_network_option(get_current_network_id(),'msc_schemas',$old);update_network_option(get_current_network_id(),'msc_builtin_schema_version',2);update_blog_option($c,'msc_types',array_values(array_diff($participation,['msc_person'])));Schema::upgrade_defaults();$new=Schema::all();view_check(isset($new['msc_person'],$new['msc_movie']['fields']['actors'])&&Schema::BUILTIN_VERSION===(int)get_network_option(get_current_network_id(),'msc_builtin_schema_version'),'1.2 upgrades add Person and structured credits exactly once');view_check('My Films'===$new['msc_movie']['label']&&['Custom original choice']===$new['msc_movie']['fields']['genres']['options']&&false===$new['msc_movie']['fields']['genres']['override'],'Upgrade preserves custom labels, options and locks');view_check($before===Plugin::store()->get($id),'Upgrade preserves global IDs, values and revisions');foreach($sites as $site){view_check($maps[$site]===Plugin::store()->mapping($id,$site)&&$overrides[$site]===Plugin::store()->overrides($id,$site),'Upgrade preserves native post IDs and local overrides');}view_check(!Schema::enabled('msc_person',$c),'Upgrade does not implicitly enroll a site in Person');}finally{update_network_option(get_current_network_id(),'msc_schemas',$saved);update_network_option(get_current_network_id(),'msc_builtin_schema_version',$version);update_blog_option($c,'msc_types',$participation);}
+$saved         = Schema::all();
+$version       = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' );
+$participation = get_blog_option( $c, 'msc_types' );
+$old           = $saved;
+unset( $old['msc_person'] );
+foreach ( $old as &$schema ) {
+	foreach ( array( 'actors', 'directors', 'screenwriters', 'producers', 'creators' ) as $key ) {
+		unset( $schema['fields'][ $key ] );
+	}foreach ( $schema['fields'] as &$field ) {
+		unset( $field['taxonomy'] );
+	}unset( $field );
+}unset( $schema );
+$old['msc_movie']['fields']['genres']['options']  = array( 'Custom original choice' );
+$old['msc_movie']['fields']['genres']['override'] = false;
+$old['msc_movie']['label']                        = 'My Films';
+$before    = Plugin::store()->get( $id );
+$maps      = array();
+$overrides = array();
+foreach ( $sites as $site ) {
+	$maps[ $site ]      = Plugin::store()->mapping( $id, $site );
+	$overrides[ $site ] = Plugin::store()->overrides( $id, $site );
+}
+try {
+	update_network_option( get_current_network_id(), 'msc_schemas', $old );
+	update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 2 );
+	update_blog_option( $c, 'msc_types', array_values( array_diff( $participation, array( 'msc_person' ) ) ) );
+	Schema::upgrade_defaults();
+	$new = Schema::all();
+	view_check( isset( $new['msc_person'], $new['msc_movie']['fields']['actors'] ) && Schema::BUILTIN_VERSION === (int) get_network_option( get_current_network_id(), 'msc_builtin_schema_version' ), '1.2 upgrades add Person and structured credits exactly once' );
+	view_check( 'My Films' === $new['msc_movie']['label'] && array( 'Custom original choice' ) === $new['msc_movie']['fields']['genres']['options'] && false === $new['msc_movie']['fields']['genres']['override'], 'Upgrade preserves custom labels, options and locks' );
+	view_check( $before === Plugin::store()->get( $id ), 'Upgrade preserves global IDs, values and revisions' );
+	foreach ( $sites as $site ) {
+		view_check( $maps[ $site ] === Plugin::store()->mapping( $id, $site ) && $overrides[ $site ] === Plugin::store()->overrides( $id, $site ), 'Upgrade preserves native post IDs and local overrides' );
+	}view_check( ! Schema::enabled( 'msc_person', $c ), 'Upgrade does not implicitly enroll a site in Person' );
+} finally {
+	update_network_option( get_current_network_id(), 'msc_schemas', $saved );
+	update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $version );
+	update_blog_option( $c, 'msc_types', $participation );
+}
 // Unpublishing on a site with no enrolled types must still project/clear terms.
-$previous_types=get_blog_option($c,'msc_types');
-try{update_blog_option($c,'msc_types',[]);foreach(array_keys(Taxonomies::definitions()) as $taxonomy){if(taxonomy_exists($taxonomy)){unregister_taxonomy($taxonomy);}}Plugin::materializer()->sync($id,$c);view_at($c,static fn()=>view_check('draft'===get_post_status(msc_local_post_id($id)),'Disabling every type still synchronizes native taxonomy projections safely'));}finally{update_blog_option($c,'msc_types',$previous_types);Plugin::materializer()->sync($id,$c);}
+$previous_types = get_blog_option( $c, 'msc_types' );
+try {
+	update_blog_option( $c, 'msc_types', array() );
+	foreach ( array_keys( Taxonomies::definitions() ) as $taxonomy ) {
+		if ( taxonomy_exists( $taxonomy ) ) {
+			unregister_taxonomy( $taxonomy );
+		}
+	}Plugin::materializer()->sync( $id, $c );
+	view_at( $c, static fn()=>view_check( 'draft' === get_post_status( msc_local_post_id( $id ) ), 'Disabling every type still synchronizes native taxonomy projections safely' ) );
+} finally {
+	update_blog_option( $c, 'msc_types', $previous_types );
+	Plugin::materializer()->sync( $id, $c );
+}
 Acf::register();
-$ref=view_at($a,static function(){require_once dirname(MSC_FILE).'/examples/demo-art.php';return msc_demo_art('movie');});
-view_at($b,static function()use($id,$ref,$a){Acf::save(view_form($id,'global',[Acf::key('msc_movie','poster')=>wp_json_encode($ref)]));$post=msc_local_post_id($id);view_check($ref===get_field('msc_poster',$post),'ACF media preserves the owner site and attachment IDs');$preview=Media::previews($ref);view_check(str_contains($preview,'<img')&&str_contains($preview,'Library: site '.$a),'Cross-site media renders an image preview with ownership');ob_start();Media::control('test','test',$ref);$html=ob_get_clean();view_check(str_contains($html,'type="hidden"')&&!str_contains($html,'<textarea')&&str_contains($html,'<img'),'Image fields show previews instead of raw JSON');Acf::save(view_form($id,'local',[Acf::key('msc_movie','poster')=>'[]'],['poster'=>1]));view_check([]===msc_get_field($id,'poster')&&msc_is_overridden($id,'poster'),'An empty ACF image override clears only the current site');Acf::save(view_form($id,'local',[Acf::key('msc_movie','poster')=>'[]']));view_check($ref===msc_get_field($id,'poster')&&!msc_is_overridden($id,'poster'),'Reset ACF image inherits the shared owner-aware image');});
-view_check(count(array_unique(array_map(static fn($site)=>get_blog_option($site,'msc_site_identity'),$sites)))===3,'All three demo sites have distinct identities');
-WP_CLI::success($GLOBALS['msc_view_checks'].' presentation, Person, taxonomy, upgrade and image checks passed.');
+$ref = view_at(
+	$a,
+	static function () {
+		require_once dirname( MSC_FILE ) . '/examples/demo-art.php';
+		return msc_demo_art( 'movie' );
+	}
+);
+view_at(
+	$b,
+	static function () use ( $id, $ref, $a ) {
+		Acf::save( view_form( $id, 'global', array( Acf::key( 'msc_movie', 'poster' ) => wp_json_encode( $ref ) ) ) );
+		$post = msc_local_post_id( $id );
+		view_check( $ref === get_field( 'msc_poster', $post ), 'ACF media preserves the owner site and attachment IDs' );
+		$preview = Media::previews( $ref );
+		view_check( str_contains( $preview, '<img' ) && str_contains( $preview, 'Library: site ' . $a ), 'Cross-site media renders an image preview with ownership' );
+		ob_start();
+		Media::control( 'test', 'test', $ref );
+		$html = ob_get_clean();
+		view_check( str_contains( $html, 'type="hidden"' ) && ! str_contains( $html, '<textarea' ) && str_contains( $html, '<img' ), 'Image fields show previews instead of raw JSON' );
+		Acf::save( view_form( $id, 'local', array( Acf::key( 'msc_movie', 'poster' ) => '[]' ), array( 'poster' => 1 ) ) );
+		view_check( array() === msc_get_field( $id, 'poster' ) && msc_is_overridden( $id, 'poster' ), 'An empty ACF image override clears only the current site' );
+		Acf::save( view_form( $id, 'local', array( Acf::key( 'msc_movie', 'poster' ) => '[]' ) ) );
+		view_check( $ref === msc_get_field( $id, 'poster' ) && ! msc_is_overridden( $id, 'poster' ), 'Reset ACF image inherits the shared owner-aware image' );
+	}
+);
+view_check( count( array_unique( array_map( static fn( $site )=>get_blog_option( $site, 'msc_site_identity' ), $sites ) ) ) === 3, 'All three demo sites have distinct identities' );
+WP_CLI::success( $GLOBALS['msc_view_checks'] . ' presentation, Person, taxonomy, upgrade and image checks passed.' );

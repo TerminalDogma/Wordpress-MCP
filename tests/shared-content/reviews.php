@@ -1,54 +1,359 @@
 <?php
-use MSC\{Acf,Plugin,Presentation,Reviews,ReviewScores,Schema,ScoreImport};
-if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) { throw new RuntimeException( 'Disposable local network required.' ); }
-wp_set_current_user( 1 ); $GLOBALS['review_checks'] = 0;
-function review_check( $ok, string $message ): void { if ( ! $ok ) { throw new RuntimeException( 'FAIL: ' . $message ); } ++$GLOBALS['review_checks']; WP_CLI::log( 'PASS: ' . $message ); }
-function review_at( int $site, callable $fn ) { switch_to_blog( $site ); try { return $fn(); } finally { restore_current_blog(); } }
-function review_post( array $r, float $score, string $status = 'publish', array $extra = array() ): int {
-    $id = wp_insert_post( $extra + array( 'post_type' => 'msc_review', 'post_status' => $status, 'post_title' => $r['data']['title'] . ' Review', 'post_content' => '<p>Detailed review of the story, presentation and overall experience.</p><p>A second paragraph explains the final assessment.</p>', 'meta_input' => array( '_msc_review_item' => $r['uuid'], '_msc_review_score' => $score, '_msc_review_verdict' => 'An accomplished release with a strong central performance.', '_msc_review_pros' => "Strong performances\nDetailed presentation", '_msc_review_cons' => 'Uneven pacing', '_msc_review_platform' => 'msc_game' === $r['type'] ? 'PlayStation 5' : '' ) ), true );
-    if ( is_wp_error( $id ) ) { throw new RuntimeException( $id->get_error_message() ); } return (int) $id;
+use MSC\{Acf, Plugin, Presentation, Reviews, ReviewScores, Schema, ScoreImport};
+if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
+	throw new RuntimeException( 'Disposable local network required.' );
 }
-foreach ( array( 1, 8.5, 9, 9.5, 10 ) as $n ) { review_check( (float) $n === Reviews::score( $n ), 'Valid half-point editorial score: ' . $n ); }
-foreach ( array( '', 0, -1, 10.5, 9.7, 'NaN', array() ) as $n ) { review_check( null === Reviews::score( $n ), 'Invalid editorial score rejected' ); }
+wp_set_current_user( 1 );
+$GLOBALS['review_checks'] = 0;
+function review_check( $ok, string $message ): void {
+	if ( ! $ok ) {
+		throw new RuntimeException( 'FAIL: ' . $message );
+	}
+	++$GLOBALS['review_checks'];
+	WP_CLI::log( 'PASS: ' . $message );
+}
+function review_at( int $site, callable $fn ) {
+	switch_to_blog( $site );
+	try {
+		return $fn();
+	} finally {
+		restore_current_blog();
+	}
+}
+function review_post( array $r, float $score, string $status = 'publish', array $extra = array() ): int {
+	$id = wp_insert_post(
+		$extra + array(
+			'post_type'    => 'msc_review',
+			'post_status'  => $status,
+			'post_title'   => $r['data']['title'] . ' Review',
+			'post_content' => '<p>Detailed review of the story, presentation and overall experience.</p><p>A second paragraph explains the final assessment.</p>',
+			'meta_input'   => array(
+				'_msc_review_item'     => $r['uuid'],
+				'_msc_review_score'    => $score,
+				'_msc_review_verdict'  => 'An accomplished release with a strong central performance.',
+				'_msc_review_pros'     => "Strong performances\nDetailed presentation",
+				'_msc_review_cons'     => 'Uneven pacing',
+				'_msc_review_platform' => 'msc_game' === $r['type'] ? 'PlayStation 5' : '',
+			),
+		),
+		true
+	);
+	if ( is_wp_error( $id ) ) {
+		throw new RuntimeException( $id->get_error_message() );
+	}
+	return (int) $id;
+}
+foreach ( array( 1, 8.5, 9, 9.5, 10 ) as $n ) {
+	review_check( (float) $n === Reviews::score( $n ), 'Valid half-point editorial score: ' . $n );
+}
+foreach ( array( '', 0, -1, 10.5, 9.7, 'NaN', array() ) as $n ) {
+	review_check( null === Reviews::score( $n ), 'Invalid editorial score rejected' );
+}
 review_check( 'gold' === Reviews::award( 9.5 ) && 'gold' === Reviews::award( 10 ) && 'silver' === Reviews::award( 9 ) && 'copper' === Reviews::award( 8.5 ) && '' === Reviews::award( 8 ), 'Recommendation thresholds match the requested gold, silver and copper scores' );
-review_check( array( 'rotten_tomatoes_score' => 94.0, 'metacritic_score' => 83.0 ) === ReviewScores::omdb( array( 'Ratings' => array( array( 'Source' => 'Rotten Tomatoes', 'Value' => '94%' ), array( 'Source' => 'Metacritic', 'Value' => '83/100' ), array( 'Source' => 'Internet Movie Database', 'Value' => '9.1/10' ), array( 'Source' => array(), 'Value' => array() ) ) ) ), 'OMDb aggregates retain critic provider identity and scales and ignore malformed/IMDb rows' );
-review_check( array() === ReviewScores::omdb( array( 'Ratings' => array( array( 'Source' => 'Rotten Tomatoes', 'Value' => 'N/A' ) ), 'Metascore' => 'N/A' ) ), 'Unrated provider values stay absent' );
+review_check(
+	array(
+		'rotten_tomatoes_score' => 94.0,
+		'metacritic_score'      => 83.0,
+	) === ReviewScores::omdb(
+		array(
+			'Ratings' => array(
+				array(
+					'Source' => 'Rotten Tomatoes',
+					'Value'  => '94%',
+				),
+				array(
+					'Source' => 'Metacritic',
+					'Value'  => '83/100',
+				),
+				array(
+					'Source' => 'Internet Movie Database',
+					'Value'  => '9.1/10',
+				),
+				array(
+					'Source' => array(),
+					'Value'  => array(),
+				),
+			),
+		)
+	),
+	'OMDb aggregates retain critic provider identity and scales and ignore malformed/IMDb rows'
+);
+review_check(
+	array() === ReviewScores::omdb(
+		array(
+			'Ratings'   => array(
+				array(
+					'Source' => 'Rotten Tomatoes',
+					'Value'  => 'N/A',
+				),
+			),
+			'Metascore' => 'N/A',
+		)
+	),
+	'Unrated provider values stay absent'
+);
 review_check( '' === ReviewScores::provider_url( 'metacritic', 'https://metacritic.com.evil.test/game/x' ), 'Provider links reject lookalike hosts' );
-$schemas = Schema::all(); $version = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' ); $legacy = $schemas;
-try { foreach ( $legacy as $type => &$schema ) { foreach ( array_keys( ReviewScores::fields( $type ) ) as $key ) { unset( $schema['fields'][ $key ] ); } } unset( $schema ); $legacy['msc_movie']['label'] = 'Custom Films'; update_network_option( get_current_network_id(), 'msc_schemas', $legacy ); update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 7 ); Schema::upgrade_defaults(); review_check( isset( Schema::get( 'msc_movie' )['fields']['rotten_tomatoes_score'], Schema::get( 'msc_game' )['fields']['opencritic_score'] ) && 'Custom Films' === Schema::get( 'msc_movie' )['label'], 'The additive score schema upgrade preserves custom labels' ); }
-finally { update_network_option( get_current_network_id(), 'msc_schemas', $schemas ); update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $version ); }
-$sites = array(); foreach ( get_sites( array( 'number' => 0 ) ) as $site ) { $sites[ $site->path ] = (int) $site->blog_id; } $a = $sites['/site-a/']; $b = $sites['/site-b/']; $c = $sites['/site-c/']; $d = $sites['/site-d/']; $fixtures = array();
-$movie = review_at( $a, static function () use ( $a, $b, &$fixtures ) {
-    $s = Plugin::store(); $r = $s->create( 'msc_movie', array( 'title' => 'Scored Movie ' . substr( wp_generate_uuid4(), 0, 6 ), 'content' => '<p>Movie overview for score display.</p>', 'rotten_tomatoes_score' => 98, 'rotten_tomatoes_url' => 'https://www.rottentomatoes.com/m/fixture', 'metacritic_score' => 92, 'metacritic_url' => 'https://www.metacritic.com/movie/fixture/' ) );
-    foreach ( array( $a, $b ) as $site ) { Plugin::materializer()->sync( (int) $r['id'], $site ); review_at( $site, static function () use ( $s, $r ) { $m = $s->mapping( (int) $r['id'] ); $s->local( $r['id'], array(), array(), (int) $m['local_version'], 'publish' ); } ); }
-    $id = review_post( $r, 9.5 ); $public = Presentation::record( $r['uuid'] ); $rows = ReviewScores::rows( $public );
-    review_check( 'editorial' === $rows[0]['provider'] && 9.5 === $rows[0]['score'] && 10 === $rows[0]['max'] && 'gold' === $rows[0]['award'], 'The published site review takes precedence over higher aggregate scores' );
-    review_check( array( 'editorial', 'rotten_tomatoes', 'metacritic' ) === array_column( $rows, 'provider' ), 'Movie scores list the local site first, followed by Rotten Tomatoes and Metacritic' );
-    review_check( $r['uuid'] === get_post_meta( $id, '_msc_review_item', true ) && (int) $public['mapping']['post_id'] === (int) get_field( 'field_msc_review_item', $id ), 'Native ACF review links store portable UUIDs and load local post IDs' );
-    review_post( $r, 10, 'draft' ); review_post( $r, 10, 'private' ); review_post( $r, 10, 'publish', array( 'post_password' => 'private' ) ); review_check( 9.5 === Reviews::own( $public )['score'], 'Draft, private and protected reviews never become public item scores' );
-    wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ) ); $fallback = ReviewScores::rows( $public ); review_check( 'rotten_tomatoes' === $fallback[0]['provider'] && '' === ReviewScores::badge( $public ), 'Unpublishing removes the image badge while retaining aggregates on the item page' );
-    wp_update_post( array( 'ID' => $id, 'post_status' => 'publish' ) ); review_check( 9.5 === Reviews::own( $public )['score'], 'Publishing restores the editorial badge immediately' );
-    $enabled = get_option( 'msc_reviews_enabled', true ); update_option( 'msc_reviews_enabled', 0 ); review_check( 'rotten_tomatoes' === ReviewScores::rows( $public )[0]['provider'], 'Turning reviews off preserves posts and falls back to outside scores' ); update_option( 'msc_reviews_enabled', $enabled );
-    $m = $s->mapping( (int) $r['id'] ); $s->local( $r['id'], array( 'rotten_tomatoes_score' => '' ), array(), (int) $m['local_version'] ); review_check( array( 'editorial', 'metacritic' ) === array_column( ReviewScores::rows( $s->resolved( $r['id'] ) ), 'provider' ), 'An explicit empty score override hides that provider' ); $m = $s->mapping( (int) $r['id'] ); $s->local( $r['id'], array(), array( 'rotten_tomatoes_score' ), (int) $m['local_version'] );
-    $fixtures['movie'] = array( 'uuid' => $r['uuid'], 'url' => Presentation::url( $public ), 'review' => get_permalink( $id ), 'review_id' => $id, 'edit' => admin_url( 'post.php?post=' . $id . '&action=edit' ), 'acf' => admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ), 'full' => admin_url( 'admin.php?page=msc&mode=global&record=' . $r['uuid'] ), 'archive' => get_post_type_archive_link( 'msc_review' ) ); return $r;
-} );
-review_at( $b, static function () use ( $movie, &$fixtures ) { $r = Presentation::record( $movie['uuid'] ); review_check( null === Reviews::own( $r ), 'A review from Site A is not presented as Site B’s own review' ); $id = review_post( $movie, 8.5 ); $row = Reviews::own( $r ); review_check( 8.5 === $row['score'] && 'copper' === $row['award'], 'Site B can publish its own copper-scored verdict for the same shared Movie' ); $fixtures['site_b'] = array( 'url' => Presentation::url( $r ), 'review' => get_permalink( $id ) ); } );
-$game = review_at( $c, static function () use ( $c, $d, &$fixtures ) {
-    $s = Plugin::store(); $r = $s->create( 'msc_game', array( 'title' => 'Scored Game ' . substr( wp_generate_uuid4(), 0, 6 ), 'content' => '<p>Game overview.</p>', 'platforms' => array( 'PlayStation 5', 'PC' ), 'platform_ids' => array( 167, 6 ), 'metacritic_score' => 87, 'metacritic_url' => 'https://www.metacritic.com/game/fixture/', 'opencritic_score' => 90.5, 'opencritic_url' => 'https://opencritic.com/game/1234', 'score_wikipedia_title' => 'Fixture Game' ) );
-    foreach ( array( $c, $d ) as $site ) { Plugin::materializer()->sync( (int) $r['id'], $site ); review_at( $site, static function () use ( $s, $r ) { $m = $s->mapping( (int) $r['id'] ); $s->local( $r['id'], array(), array(), (int) $m['local_version'], 'publish' ); } ); }
-    $id = review_post( $r, 9 ); $public = Presentation::record( $r['uuid'] ); $rows = ReviewScores::rows( $public ); review_check( array( 'editorial', 'metacritic', 'opencritic' ) === array_column( $rows, 'provider' ) && 'silver' === $rows[0]['award'], 'Games show the site’s silver review before Metacritic and OpenCritic' );
-    review_check( $r['data'] === $s->get( $r['uuid'] )['data'], 'Publishing an editorial review does not rewrite the shared game data' );
-    $unreviewed = $s->create( 'msc_game', array( 'title' => 'Aggregate Only ' . wp_generate_uuid4(), 'platforms' => array( 'PlayStation 5' ), 'platform_ids' => array( 167 ), 'metacritic_score' => 88, 'opencritic_score' => 91 ) ); Plugin::materializer()->sync( (int) $unreviewed['id'], $c ); $um = $s->mapping( (int) $unreviewed['id'] ); $s->local( $unreviewed['id'], array(), array(), (int) $um['local_version'], 'publish' ); $fixtures['aggregate_only'] = array( 'url' => Presentation::url( Presentation::record( $unreviewed['uuid'] ) ) );
-    $fixtures['game'] = array( 'uuid' => $r['uuid'], 'url' => Presentation::url( $public ), 'review' => get_permalink( $id ), 'acf' => admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ), 'archive' => get_post_type_archive_link( 'msc_review' ) ); return $r;
-} );
-review_at( $d, static function () use ( $game, &$fixtures ) { $r = Presentation::record( $game['uuid'] ); $id = review_post( $game, 10 ); review_check( 'gold' === Reviews::own( $r )['award'], 'Site D has its own gold 10/10 review for an eligible Sony game' ); $fixtures['site_d'] = array( 'url' => Presentation::url( $r ), 'review' => get_permalink( $id ) ); } );
-review_at( $a, static function () use ( $a, &$fixtures ) { $s = Plugin::store(); $show = $s->create( 'msc_show', array( 'title' => 'Scored TV Show', 'metacritic_score' => 85, 'rotten_tomatoes_score' => 96 ) ); Plugin::materializer()->sync( (int) $show['id'], $a ); $m = $s->mapping( (int) $show['id'] ); $s->local( $show['id'], array(), array(), (int) $m['local_version'], 'publish' ); $id = review_post( $show, 10 ); $r = Presentation::record( $show['uuid'] ); review_check( 'gold' === Reviews::own( $r )['award'], 'TV Shows support linked reviews and aggregate scores' ); $fixtures['show'] = array( 'url' => Presentation::url( $r ), 'review' => get_permalink( $id ) ); } );
-$omdb_env = getenv( 'OMDB_API_KEY' ); putenv( 'OMDB_API_KEY=fixture-review-omdb-key' );
-$mock = static function ( $pre, $args, $url ) {
-    if ( ! str_starts_with( $url, 'https://www.omdbapi.com/' ) ) { return $pre; } parse_str( wp_parse_url( $url, PHP_URL_QUERY ), $query );
-    return array( 'response' => array( 'code' => 200 ), 'headers' => array(), 'body' => wp_json_encode( array( 'Response' => 'True', 'Title' => 'Matched Movie Fixture', 'Type' => 'movie', 'imdbID' => $query['i'], 'Metascore' => '86', 'Ratings' => array( array( 'Source' => 'Rotten Tomatoes', 'Value' => '93%' ) ) ) ) );
-}; add_filter( 'pre_http_request', $mock, 10, 3 );
+$schemas = Schema::all();
+$version = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' );
+$legacy  = $schemas;
 try {
-    review_at( $a, static function () use ( $movie ) { $imdb = 'tt' . wp_rand( 100000000, 999999999 ); $preview = ScoreImport::preview( $movie['uuid'], array( 'imdb' => $imdb ) ); review_check( 93.0 === $preview['values']['rotten_tomatoes_score'] && 86.0 === $preview['values']['metacritic_score'] && $imdb === $preview['values']['score_imdb_id'], 'Movie/TV score refresh keeps the existing OMDb critic sources' ); $r = Presentation::record( $movie['uuid'] ); unset( $r['data']['rotten_tomatoes_score'], $r['data']['metacritic_score'] ); $r['data']['additional_metadata']['omdb'] = array( 'Ratings' => array( array( 'Source' => 'Rotten Tomatoes', 'Value' => '93%' ) ), 'Metascore' => '86' ); review_check( 93.0 === ReviewScores::rows( $r )[1]['score'], 'Previously imported OMDb scores display without reimporting' ); $r['data']['rotten_tomatoes_score'] = ''; review_check( array( 'editorial', 'metacritic' ) === array_column( ReviewScores::rows( $r ), 'provider' ), 'An explicit empty field suppresses legacy OMDb fallback too' ); } );
-} finally { false === $omdb_env ? putenv( 'OMDB_API_KEY' ) : putenv( 'OMDB_API_KEY=' . $omdb_env ); remove_filter( 'pre_http_request', $mock, 10 ); }
-WP_CLI::success( $GLOBALS['review_checks'] . ' editorial review, aggregate and source checks passed.' ); WP_CLI::log( 'MSC_REVIEW_FIXTURE:' . wp_json_encode( $fixtures ) );
+	foreach ( $legacy as $type => &$schema ) {
+		foreach ( array_keys( ReviewScores::fields( $type ) ) as $key ) {
+			unset( $schema['fields'][ $key ] );
+		}
+	}
+	unset( $schema );
+	$legacy['msc_movie']['label'] = 'Custom Films';
+	update_network_option( get_current_network_id(), 'msc_schemas', $legacy );
+	update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 7 );
+	Schema::upgrade_defaults();
+	review_check( isset( Schema::get( 'msc_movie' )['fields']['rotten_tomatoes_score'], Schema::get( 'msc_game' )['fields']['opencritic_score'] ) && 'Custom Films' === Schema::get( 'msc_movie' )['label'], 'The additive score schema upgrade preserves custom labels' );
+} finally {
+	update_network_option( get_current_network_id(), 'msc_schemas', $schemas );
+	update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $version );
+}
+$sites = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	$sites[ $site->path ] = (int) $site->blog_id;
+}
+$a        = $sites['/site-a/'];
+$b        = $sites['/site-b/'];
+$c        = $sites['/site-c/'];
+$d        = $sites['/site-d/'];
+$fixtures = array();
+$movie    = review_at(
+	$a,
+	static function () use ( $a, $b, &$fixtures ) {
+		$s = Plugin::store();
+		$r = $s->create(
+			'msc_movie',
+			array(
+				'title'                 => 'Scored Movie ' . substr( wp_generate_uuid4(), 0, 6 ),
+				'content'               => '<p>Movie overview for score display.</p>',
+				'rotten_tomatoes_score' => 98,
+				'rotten_tomatoes_url'   => 'https://www.rottentomatoes.com/m/fixture',
+				'metacritic_score'      => 92,
+				'metacritic_url'        => 'https://www.metacritic.com/movie/fixture/',
+			)
+		);
+		foreach ( array( $a, $b ) as $site ) {
+			Plugin::materializer()->sync( (int) $r['id'], $site );
+			review_at(
+				$site,
+				static function () use ( $s, $r ) {
+					$m = $s->mapping( (int) $r['id'] );
+					$s->local( $r['id'], array(), array(), (int) $m['local_version'], 'publish' );
+				}
+			);
+		}
+		$id     = review_post( $r, 9.5 );
+		$public = Presentation::record( $r['uuid'] );
+		$rows   = ReviewScores::rows( $public );
+		review_check( 'editorial' === $rows[0]['provider'] && 9.5 === $rows[0]['score'] && 10 === $rows[0]['max'] && 'gold' === $rows[0]['award'], 'The published site review takes precedence over higher aggregate scores' );
+		review_check( array( 'editorial', 'rotten_tomatoes', 'metacritic' ) === array_column( $rows, 'provider' ), 'Movie scores list the local site first, followed by Rotten Tomatoes and Metacritic' );
+		review_check( $r['uuid'] === get_post_meta( $id, '_msc_review_item', true ) && (int) $public['mapping']['post_id'] === (int) get_field( 'field_msc_review_item', $id ), 'Native ACF review links store portable UUIDs and load local post IDs' );
+		review_post( $r, 10, 'draft' );
+		review_post( $r, 10, 'private' );
+		review_post( $r, 10, 'publish', array( 'post_password' => 'private' ) );
+		review_check( 9.5 === Reviews::own( $public )['score'], 'Draft, private and protected reviews never become public item scores' );
+		wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => 'draft',
+			)
+		);
+		$fallback = ReviewScores::rows( $public );
+		review_check( 'rotten_tomatoes' === $fallback[0]['provider'] && '' === ReviewScores::badge( $public ), 'Unpublishing removes the image badge while retaining aggregates on the item page' );
+		wp_update_post(
+			array(
+				'ID'          => $id,
+				'post_status' => 'publish',
+			)
+		);
+		review_check( 9.5 === Reviews::own( $public )['score'], 'Publishing restores the editorial badge immediately' );
+		$enabled = get_option( 'msc_reviews_enabled', true );
+		update_option( 'msc_reviews_enabled', 0 );
+		review_check( 'rotten_tomatoes' === ReviewScores::rows( $public )[0]['provider'], 'Turning reviews off preserves posts and falls back to outside scores' );
+		update_option( 'msc_reviews_enabled', $enabled );
+		$m = $s->mapping( (int) $r['id'] );
+		$s->local( $r['id'], array( 'rotten_tomatoes_score' => '' ), array(), (int) $m['local_version'] );
+		review_check( array( 'editorial', 'metacritic' ) === array_column( ReviewScores::rows( $s->resolved( $r['id'] ) ), 'provider' ), 'An explicit empty score override hides that provider' );
+		$m = $s->mapping( (int) $r['id'] );
+		$s->local( $r['id'], array(), array( 'rotten_tomatoes_score' ), (int) $m['local_version'] );
+		$fixtures['movie'] = array(
+			'uuid'      => $r['uuid'],
+			'url'       => Presentation::url( $public ),
+			'review'    => get_permalink( $id ),
+			'review_id' => $id,
+			'edit'      => admin_url( 'post.php?post=' . $id . '&action=edit' ),
+			'acf'       => admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ),
+			'full'      => admin_url( 'admin.php?page=msc&mode=global&record=' . $r['uuid'] ),
+			'archive'   => get_post_type_archive_link( 'msc_review' ),
+		);
+		return $r;
+	}
+);
+review_at(
+	$b,
+	static function () use ( $movie, &$fixtures ) {
+		$r = Presentation::record( $movie['uuid'] );
+		review_check( null === Reviews::own( $r ), 'A review from Site A is not presented as Site B’s own review' );
+		$id  = review_post( $movie, 8.5 );
+		$row = Reviews::own( $r );
+		review_check( 8.5 === $row['score'] && 'copper' === $row['award'], 'Site B can publish its own copper-scored verdict for the same shared Movie' );
+		$fixtures['site_b'] = array(
+			'url'    => Presentation::url( $r ),
+			'review' => get_permalink( $id ),
+		);
+	}
+);
+$game = review_at(
+	$c,
+	static function () use ( $c, $d, &$fixtures ) {
+		$s = Plugin::store();
+		$r = $s->create(
+			'msc_game',
+			array(
+				'title'                 => 'Scored Game ' . substr( wp_generate_uuid4(), 0, 6 ),
+				'content'               => '<p>Game overview.</p>',
+				'platforms'             => array( 'PlayStation 5', 'PC' ),
+				'platform_ids'          => array( 167, 6 ),
+				'metacritic_score'      => 87,
+				'metacritic_url'        => 'https://www.metacritic.com/game/fixture/',
+				'opencritic_score'      => 90.5,
+				'opencritic_url'        => 'https://opencritic.com/game/1234',
+				'score_wikipedia_title' => 'Fixture Game',
+			)
+		);
+		foreach ( array( $c, $d ) as $site ) {
+			Plugin::materializer()->sync( (int) $r['id'], $site );
+			review_at(
+				$site,
+				static function () use ( $s, $r ) {
+					$m = $s->mapping( (int) $r['id'] );
+					$s->local( $r['id'], array(), array(), (int) $m['local_version'], 'publish' );
+				}
+			);
+		}
+		$id     = review_post( $r, 9 );
+		$public = Presentation::record( $r['uuid'] );
+		$rows   = ReviewScores::rows( $public );
+		review_check( array( 'editorial', 'metacritic', 'opencritic' ) === array_column( $rows, 'provider' ) && 'silver' === $rows[0]['award'], 'Games show the site’s silver review before Metacritic and OpenCritic' );
+		review_check( $r['data'] === $s->get( $r['uuid'] )['data'], 'Publishing an editorial review does not rewrite the shared game data' );
+		$unreviewed = $s->create(
+			'msc_game',
+			array(
+				'title'            => 'Aggregate Only ' . wp_generate_uuid4(),
+				'platforms'        => array( 'PlayStation 5' ),
+				'platform_ids'     => array( 167 ),
+				'metacritic_score' => 88,
+				'opencritic_score' => 91,
+			)
+		);
+		Plugin::materializer()->sync( (int) $unreviewed['id'], $c );
+		$um = $s->mapping( (int) $unreviewed['id'] );
+		$s->local( $unreviewed['id'], array(), array(), (int) $um['local_version'], 'publish' );
+		$fixtures['aggregate_only'] = array( 'url' => Presentation::url( Presentation::record( $unreviewed['uuid'] ) ) );
+		$fixtures['game']           = array(
+			'uuid'    => $r['uuid'],
+			'url'     => Presentation::url( $public ),
+			'review'  => get_permalink( $id ),
+			'acf'     => admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] ),
+			'archive' => get_post_type_archive_link( 'msc_review' ),
+		);
+		return $r;
+	}
+);
+review_at(
+	$d,
+	static function () use ( $game, &$fixtures ) {
+		$r  = Presentation::record( $game['uuid'] );
+		$id = review_post( $game, 10 );
+		review_check( 'gold' === Reviews::own( $r )['award'], 'Site D has its own gold 10/10 review for an eligible Sony game' );
+		$fixtures['site_d'] = array(
+			'url'    => Presentation::url( $r ),
+			'review' => get_permalink( $id ),
+		);
+	}
+);
+review_at(
+	$a,
+	static function () use ( $a, &$fixtures ) {
+		$s    = Plugin::store();
+		$show = $s->create(
+			'msc_show',
+			array(
+				'title'                 => 'Scored TV Show',
+				'metacritic_score'      => 85,
+				'rotten_tomatoes_score' => 96,
+			)
+		);
+		Plugin::materializer()->sync( (int) $show['id'], $a );
+		$m = $s->mapping( (int) $show['id'] );
+		$s->local( $show['id'], array(), array(), (int) $m['local_version'], 'publish' );
+		$id = review_post( $show, 10 );
+		$r  = Presentation::record( $show['uuid'] );
+		review_check( 'gold' === Reviews::own( $r )['award'], 'TV Shows support linked reviews and aggregate scores' );
+		$fixtures['show'] = array(
+			'url'    => Presentation::url( $r ),
+			'review' => get_permalink( $id ),
+		);
+	}
+);
+$omdb_env = getenv( 'OMDB_API_KEY' );
+putenv( 'OMDB_API_KEY=fixture-review-omdb-key' );
+$mock = static function ( $pre, $args, $url ) {
+	if ( ! str_starts_with( $url, 'https://www.omdbapi.com/' ) ) {
+		return $pre;
+	}
+	parse_str( wp_parse_url( $url, PHP_URL_QUERY ), $query );
+	return array(
+		'response' => array( 'code' => 200 ),
+		'headers'  => array(),
+		'body'     => wp_json_encode(
+			array(
+				'Response'  => 'True',
+				'Title'     => 'Matched Movie Fixture',
+				'Type'      => 'movie',
+				'imdbID'    => $query['i'],
+				'Metascore' => '86',
+				'Ratings'   => array(
+					array(
+						'Source' => 'Rotten Tomatoes',
+						'Value'  => '93%',
+					),
+				),
+			)
+		),
+	);
+};
+add_filter( 'pre_http_request', $mock, 10, 3 );
+try {
+	review_at(
+		$a,
+		static function () use ( $movie ) {
+			$imdb    = 'tt' . wp_rand( 100000000, 999999999 );
+			$preview = ScoreImport::preview( $movie['uuid'], array( 'imdb' => $imdb ) );
+			review_check( 93.0 === $preview['values']['rotten_tomatoes_score'] && 86.0 === $preview['values']['metacritic_score'] && $imdb === $preview['values']['score_imdb_id'], 'Movie/TV score refresh keeps the existing OMDb critic sources' );
+			$r = Presentation::record( $movie['uuid'] );
+			unset( $r['data']['rotten_tomatoes_score'], $r['data']['metacritic_score'] );
+			$r['data']['additional_metadata']['omdb'] = array(
+				'Ratings'   => array(
+					array(
+						'Source' => 'Rotten Tomatoes',
+						'Value'  => '93%',
+					),
+				),
+				'Metascore' => '86',
+			);
+			review_check( 93.0 === ReviewScores::rows( $r )[1]['score'], 'Previously imported OMDb scores display without reimporting' );
+			$r['data']['rotten_tomatoes_score'] = '';
+			review_check( array( 'editorial', 'metacritic' ) === array_column( ReviewScores::rows( $r ), 'provider' ), 'An explicit empty field suppresses legacy OMDb fallback too' );
+		}
+	);
+} finally {
+	false === $omdb_env ? putenv( 'OMDB_API_KEY' ) : putenv( 'OMDB_API_KEY=' . $omdb_env );
+	remove_filter( 'pre_http_request', $mock, 10 );
+}
+WP_CLI::success( $GLOBALS['review_checks'] . ' editorial review, aggregate and source checks passed.' );
+WP_CLI::log( 'MSC_REVIEW_FIXTURE:' . wp_json_encode( $fixtures ) );

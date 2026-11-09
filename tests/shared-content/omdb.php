@@ -1,52 +1,366 @@
 <?php
 /** Deterministic provider-contract tests against real WordPress, ACF and MSC storage. */
-use MSC\{OmdbClient,OmdbImport,OmdbError,OmdbAdmin,Plugin,Queue,Database};
-if(!defined('WP_CLI')||!is_multisite()||wp_get_environment_type()!=='local'){throw new RuntimeException('Requires a disposable local multisite.');}
-define('MSC_OMDB_TEST_FIXTURES',true);require '/msc-tests/omdb-fixtures.php';
-$GLOBALS['msc_omdb_checks']=0;
-function omdb_check($value,$message):void{++$GLOBALS['msc_omdb_checks'];if(!$value){throw new RuntimeException('FAIL: '.$message);}WP_CLI::log('PASS: '.$message);}
-function omdb_reject($fn,$message,$status=null):void{$error=null;try{$fn();}catch(Throwable $e){$error=$e;}omdb_check($error&&($status===null||$error instanceof OmdbError&&$error->status===$status),$message);}
-function omdb_at($site,$fn){switch_to_blog($site);try{return $fn();}finally{restore_current_blog();}}
-function omdb_drain():void{for($i=0;$i<100&&Queue::status()['pending'];++$i){$r=Queue::run(1000);if($r['errors']||!$r['processed']){throw new RuntimeException('OMDb queue failure.');}}}
-function omdb_request(array $s,?array $fields=null,bool $poster=false):array{$people=[];foreach($s['credits'] as $key=>$credit){$people[$key]=$credit['suggested']?:array_key_first($s['person_matches'][$key]['possible']);}return ['nonce'=>wp_create_nonce('msc_omdb_import'),'token'=>$s['token'],'fields'=>$fields??array_keys($s['fields']),'people'=>$people,'poster'=>$poster?'1':'','parent_show'=>$s['fields']['parent_show']??''];}
-function omdb_count(string $type):int{global $wpdb;return (int)$wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM '.Database::table('records').' WHERE type=%s',$type));}
-wp_set_current_user(1);$sites=[];foreach(get_sites(['number'=>0]) as $site){if(in_array($site->path,['/site-a/','/site-b/','/site-c/'],true)){$sites[]=(int)$site->blog_id;}}[$a,$b,$c]=$sites;
-$old_env=getenv('OMDB_API_KEY');$old_key=get_network_option(get_current_network_id(),'msc_omdb_api_key',false);putenv('OMDB_API_KEY');$key='msc-fixture-'.wp_generate_uuid4();
-try{
- $schema_before=\MSC\Schema::all();$schema_version=get_network_option(get_current_network_id(),'msc_builtin_schema_version');$legacy=$schema_before;unset($legacy['msc_episode']['fields']['external_ids'],$legacy['msc_person'],$legacy['msc_movie']['fields']['official_website']);
- try{update_network_option(get_current_network_id(),'msc_schemas',$legacy);update_network_option(get_current_network_id(),'msc_builtin_schema_version',3);\MSC\Schema::upgrade_defaults();$upgraded=\MSC\Schema::all();omdb_check(isset($upgraded['msc_episode']['fields']['external_ids'])&&'json'===$upgraded['msc_episode']['fields']['external_ids']['type'],'The 1.3 upgrade adds Episode external IDs');omdb_check(!isset($upgraded['msc_person'])&&!isset($upgraded['msc_movie']['fields']['official_website']),'The upgrade preserves intentionally omitted types and unrelated fields');}finally{update_network_option(get_current_network_id(),'msc_schemas',$schema_before);update_network_option(get_current_network_id(),'msc_builtin_schema_version',$schema_version);}
- OmdbClient::set_key($key);omdb_check(OmdbClient::key()===$key,'Network administrators can configure the API key');OmdbClient::set_key('');omdb_check(OmdbClient::key()===$key,'Blank settings submissions preserve the key');
- putenv('OMDB_API_KEY=server-fixture-key');omdb_check(OmdbClient::key()==='server-fixture-key','Server configuration takes priority over the stored key');omdb_reject(static fn()=>OmdbClient::set_key('replacement'),'Server-managed keys cannot be overwritten in settings');putenv('OMDB_API_KEY');
- $before=MSC_Omdb_Fixtures::$requests;$search=OmdbClient::search('Matrix','movie','1999');$again=OmdbClient::search('Matrix','movie','1999');omdb_check(count($search['Search'])===1&&$search['Search'][0]['imdbID']==='tt0133093','Title search respects type and release year');omdb_check($search===$again&&MSC_Omdb_Fixtures::$requests===$before+1,'Repeated searches use the provider-response cache');
- $paged=OmdbClient::search('paged','movie','',2);omdb_check(count($paged['Search'])===2&&$paged['totalResults']===12,'Search pagination preserves the total and second-page results');omdb_check([]===OmdbClient::search('no such title')['Search'],'No-match search is a normal empty result');
- omdb_reject(static fn()=>OmdbClient::search('Matrix','person'),'Unsupported API result types are rejected',400);omdb_reject(static fn()=>OmdbClient::search('Matrix','','20xx'),'Invalid year is rejected',400);omdb_reject(static fn()=>OmdbClient::search('Matrix','','',101),'Out-of-range pagination is rejected',400);
- omdb_reject(static fn()=>OmdbClient::search('quota'),'Provider request limits have an actionable error',429);omdb_reject(static fn()=>OmdbClient::search('badkey'),'Invalid provider keys have an actionable error',503);omdb_reject(static fn()=>OmdbClient::search('malformed'),'Malformed provider JSON is rejected',502);
- try{OmdbClient::search('offline');}catch(OmdbError $e){omdb_check(!str_contains($e->getMessage(),$key)&&!str_contains($e->getMessage(),'apikey'),'Network errors do not expose API credentials');}
- foreach(['http://m.media-amazon.com/a.jpg','https://127.0.0.1/a.jpg','https://m.media-amazon.com.evil.example/a.jpg','https://m.media-amazon.com/a.jpg?apikey=secret'] as $url){omdb_check(''===OmdbClient::poster_url($url),'Untrusted or credential-bearing poster URLs are rejected');}
- $partial=omdb_at($a,static fn()=>OmdbImport::preview('tt9000020'));omdb_check(!isset($partial['fields']['release_date'])&&!isset($partial['fields']['runtime'])&&''===$partial['data']['Poster'],'Missing provider dates, runtime and posters are not invented');
- MSC_Omdb_Fixtures::$details['tt9000099']=['Response'=>'True','Title'=>'Wrong identity','Type'=>'movie','imdbID'=>'tt9000098'];omdb_reject(static fn()=>OmdbClient::details('tt9000099'),'Detail responses must match the requested IMDb ID',502);
- $zero=OmdbClient::search('0','movie','2024');omdb_check(count($zero['Search'])===1&&$zero['Search'][0]['Title']==='0','Numeric zero is a valid title search');$zero=omdb_at($a,static fn()=>OmdbImport::preview('tt9000030'));$zero=omdb_at($a,static fn()=>OmdbImport::import(omdb_request($zero,['title','content','runtime'])));omdb_check($zero['record']['data']['title']==='0'&&(float)$zero['record']['data']['runtime']===0.0,'Imports preserve zero-valued titles and runtime');
- $s=omdb_at($a,static fn()=>OmdbImport::preview('tt0133093'));omdb_check($s['fields']['release_date']==='1999-03-31'&&(float)$s['fields']['runtime']===136.0&&$s['fields']['physical_release_date']==='1999-09-21','Movie release dates, runtime and disc date map into native fields');omdb_check($s['fields']['genres']===['Action','Science Fiction']&&$s['fields']['country']==='United States'&&$s['fields']['language']==='English','Categories map correctly while complete source lists remain in metadata');omdb_check(count($s['credits'])===4,'Repeated cast/crew names share a reviewable Person choice');
- omdb_at($a,static function()use($s){$q=omdb_request($s);$q['nonce']='invalid';omdb_reject(static fn()=>OmdbImport::import($q),'Import verifies its CSRF nonce',403);$q=omdb_request($s);$q['fields'][]='forged_field';omdb_reject(static fn()=>OmdbImport::import($q),'Import rejects fields outside the saved preview',400);$q=omdb_request($s);$q['fields']=[['title']];omdb_reject(static fn()=>OmdbImport::import($q),'Nested forged field submissions are rejected',400);$q=omdb_request($s,[]);omdb_reject(static fn()=>OmdbImport::import($q),'New imports require the title field',400);});
- omdb_at($b,static fn()=>omdb_reject(static fn()=>OmdbImport::import(omdb_request($s)),'Preview tokens cannot be replayed from another site',403));
- $import=omdb_at($a,static fn()=>OmdbImport::import(omdb_request($s,null,true)));$movie=$import['record'];$id=(int)$movie['id'];omdb_check($movie['type']==='msc_movie'&&$movie['data']['external_ids']['imdb']==='tt0133093','Import creates an identified shared Movie');omdb_check(count($import['people'])===4&&count($movie['data']['actors'])===2&&count($movie['data']['directors'])===2,'Selected credits create linked shared People');omdb_check($movie['data']['directors']===array_reverse($movie['data']['screenwriters']),'Director/writer roles reuse each newly created Person');omdb_check($movie['data']['additional_metadata']['omdb']['Country']==='United States, Australia'&&$movie['data']['additional_metadata']['omdb']['imdbRating']==='8.7','Ratings, complete original lists and provenance are retained');
- omdb_at($a,static function()use($id,$a){$r=Plugin::store()->resolved($id);omdb_check($r['mapping']['status']==='draft'&&get_post_status((int)$r['mapping']['post_id'])==='draft','New imports respect the configured draft default');$ref=$r['data']['poster'];omdb_check($ref['site_id']===$a&&wp_attachment_is_image($ref['attachment_id']),'Poster import creates a genuine owner-scoped media attachment');omdb_check(get_field('msc_poster',(int)$r['mapping']['post_id'])===$ref,'Imported poster is available through the ACF preview adapter');});
- $before_people=omdb_count('msc_person');$duplicate=omdb_at($a,static fn()=>OmdbImport::import(omdb_request($s,null,true)));omdb_check($duplicate['record']['uuid']===$movie['uuid']&&$before_people===omdb_count('msc_person'),'Replaying a create import reuses the IMDb record without duplicate People');
- omdb_drain();omdb_at($b,static function()use($id){$r=Plugin::store()->resolved($id);Plugin::store()->local($id,['runtime'=>999,'genres'=>['Comedy'],'actors'=>[]],[],(int)$r['mapping']['local_version']);});
- omdb_at($a,static function()use($id){$r=Plugin::store()->get($id);Plugin::store()->update($id,['title'=>'Hand-edited title','runtime'=>120,'external_ids'=>array_replace($r['data']['external_ids'],['tmdb'=>42]),'additional_metadata'=>array_replace($r['data']['additional_metadata'],['custom'=>'Keep me'])],(int)$r['version']);});
- $refresh=omdb_at($c,static fn()=>OmdbImport::preview('tt0133093'));omdb_check($refresh['target']===$movie['uuid'],'A fresh title preview identifies the existing shared record');omdb_at($c,static fn()=>OmdbImport::import(omdb_request($refresh,['runtime','genres','additional_metadata'])));omdb_drain();
- omdb_check(msc_get_field($id,'runtime',$a)===136&&msc_get_field($id,'runtime',$c)===136&&msc_get_field($id,'runtime',$b)===999,'Selected global updates propagate while a local runtime override survives');omdb_check(msc_get_field($id,'genres',$b)===['Comedy']&&msc_get_field($id,'actors',$b)===[],'Category and intentionally empty Person overrides survive import');omdb_check(msc_get_global($id,'title')==='Hand-edited title'&&msc_get_global($id,'external_ids')['tmdb']===42&&msc_get_global($id,'additional_metadata')['custom']==='Keep me','Unselected fields and unrelated IDs/metadata are preserved');
- omdb_at($a,static function()use($id){$p=OmdbImport::preview('tt0133093');$r=Plugin::store()->get($id);Plugin::store()->update($id,['seo_title'=>'Concurrent edit'],(int)$r['version']);omdb_reject(static fn()=>OmdbImport::import(omdb_request($p,['runtime'])),'A stale preview cannot overwrite a newer global revision',409);});
- // Simulate a real competing edit while the poster download is in flight.
- omdb_at($a,static function()use($id){$p=OmdbImport::preview('tt0133093');$q=omdb_request($p,['actors','directors','screenwriters','runtime'],true);foreach($q['people'] as &$choice){$choice='new';}unset($choice);$before=omdb_count('msc_person');$attachments=count(get_posts(['post_type'=>'attachment','post_status'=>'inherit','numberposts'=>-1,'fields'=>'ids']));$race=null;$race=static function($check,$args,$url)use($id,&$race){if(str_contains($url,'msc-omdb-fixture.jpg')){remove_filter('pre_http_request',$race,1);$r=Plugin::store()->get($id);Plugin::store()->update($id,['seo_description'=>'Keep concurrent external change'],(int)$r['version']);}return $check;};add_filter('pre_http_request',$race,1,3);try{omdb_reject(static fn()=>OmdbImport::import($q),'A concurrent edit during download rejects the stale import');}finally{remove_filter('pre_http_request',$race,1);}omdb_check($before===omdb_count('msc_person'),'Nested transactions roll back newly created People after an import conflict');omdb_check($attachments===count(get_posts(['post_type'=>'attachment','post_status'=>'inherit','numberposts'=>-1,'fields'=>'ids'])),'Failed imports remove their newly downloaded poster attachment');omdb_check(msc_get_global($id,'seo_description')==='Keep concurrent external change','The competing global edit remains committed');});
- omdb_at($a,static function()use($id){$p=OmdbImport::preview('tt0133093');MSC_Omdb_Fixtures::$bad_poster=true;try{$r=OmdbImport::import(omdb_request($p,['runtime'],true));omdb_check((bool)$r['warnings']&&$r['record']['data']['poster']===msc_get_global($id,'poster'),'Unavailable posters produce a warning and preserve the current image');}finally{MSC_Omdb_Fixtures::$bad_poster=false;}});
- $episode=omdb_at($a,static fn()=>OmdbImport::preview('tt9000011'));omdb_at($a,static fn()=>omdb_reject(static fn()=>OmdbImport::import(omdb_request($episode)),'An Episode import requires a parent Show',400));
- $series=omdb_at($a,static fn()=>OmdbImport::import(omdb_request(OmdbImport::preview('tt9000010'))));omdb_check($series['record']['data']['premiere_date']==='2020-01-01'&&$series['record']['data']['number_of_seasons']===2&&!isset($series['record']['data']['release_date']),'Series data maps only to TV Show fields');
- $episode=omdb_at($a,static fn()=>OmdbImport::preview('tt9000011'));omdb_at($a,static function()use($episode){$q=omdb_request($episode);$q['people'][array_key_first($q['people'])]='';omdb_reject(static fn()=>OmdbImport::import($q),'Selected credit fields require an explicit Person choice instead of silently omitting a link',409);});$ep=omdb_at($a,static fn()=>OmdbImport::import(omdb_request($episode)));omdb_check($ep['record']['data']['parent_show']===$series['record']['uuid']&&$ep['record']['data']['season_number']===1&&$ep['record']['data']['episode_number']===1,'Episode imports resolve series IMDb IDs into permanent Show UUIDs');
- omdb_at($a,static function()use($ep){$p=OmdbImport::preview('tt9000011');$q=omdb_request($p,['parent_show']);$q['parent_show']='';omdb_reject(static fn()=>OmdbImport::import($q),'An update cannot clear the required Episode parent',400);$other=Plugin::store()->create('msc_show',['title'=>'OMDb wrong-parent fixture','external_ids'=>['imdb'=>'tt9000998']]);$q['parent_show']=$other['uuid'];omdb_reject(static fn()=>OmdbImport::import($q),'Episode imports reject a Show with a conflicting IMDb identity',400);omdb_check(msc_get_global($ep['record']['uuid'],'parent_show')===$ep['record']['data']['parent_show'],'Rejected parent changes preserve the existing Episode relationship');});
- omdb_at($a,static function()use($id,$key){$get=$_GET;$_GET=['page'=>'msc-omdb','imdb'=>'tt0133093','_wpnonce'=>wp_create_nonce('msc_omdb_search')];ob_start();OmdbAdmin::page();$html=ob_get_clean();$_GET=$get;omdb_check(str_contains($html,'Review Person links')&&str_contains($html,'Import selected global fields'),'Preview UI renders genuine selective-import and Person controls');omdb_check(!str_contains($html,$key)&&!str_contains($html,'apikey='),'Rendered search/import pages contain no API key');});
- $editor=get_user_by('login','omdb-local-editor');$uid=$editor?$editor->ID:wp_insert_user(['user_login'=>'omdb-local-editor','user_pass'=>wp_generate_password(),'role'=>'editor']);add_user_to_blog($a,(int)$uid,'editor');wp_set_current_user((int)$uid);omdb_check(!OmdbImport::allowed(),'Local-only editors cannot use global OMDb imports');omdb_reject(static fn()=>OmdbClient::search('Matrix'),'Local editors cannot consume the network API key',403);omdb_reject(static fn()=>OmdbClient::set_key('no-key-change'),'Only network administrators can change the provider key');wp_set_current_user(1);
- OmdbClient::set_key('',true);omdb_reject(static fn()=>OmdbClient::search('new missing key query'),'Missing API keys have an actionable configuration message',503);OmdbClient::set_key($key);
- delete_site_transient('msc_omdb_rate_1');for($n=0;$n<30;++$n){OmdbClient::search('rate fixture '.$n);}omdb_reject(static fn()=>OmdbClient::search('rate fixture extra'),'Per-user limits prevent unbounded uncached provider calls',429);omdb_check((bool)OmdbClient::search('Matrix','movie','1999')['Search'],'Cached results remain usable while the new-request budget is exhausted');
- WP_CLI::success($GLOBALS['msc_omdb_checks'].' OMDb API, import, media, transaction, permission and caching checks passed.');
-}finally{wp_set_current_user(1);delete_site_transient('msc_omdb_rate_1');if(false===$old_key){delete_network_option(get_current_network_id(),'msc_omdb_api_key');}else{update_network_option(get_current_network_id(),'msc_omdb_api_key',$old_key);}if(false===$old_env){putenv('OMDB_API_KEY');}else{putenv('OMDB_API_KEY='.$old_env);}}
+use MSC\{OmdbClient, OmdbImport, OmdbError, OmdbAdmin, Plugin, Queue, Database};
+if ( ! defined( 'WP_CLI' ) || ! is_multisite() || wp_get_environment_type() !== 'local' ) {
+	throw new RuntimeException( 'Requires a disposable local multisite.' );
+}
+define( 'MSC_OMDB_TEST_FIXTURES', true );
+require '/msc-tests/omdb-fixtures.php';
+$GLOBALS['msc_omdb_checks'] = 0;
+function omdb_check( $value, $message ): void {
+	++$GLOBALS['msc_omdb_checks'];
+	if ( ! $value ) {
+		throw new RuntimeException( 'FAIL: ' . $message );
+	}WP_CLI::log( 'PASS: ' . $message );
+}
+function omdb_reject( $fn, $message, $status = null ): void {
+	$error = null;
+	try {
+		$fn();
+	} catch ( Throwable $e ) {
+		$error = $e;
+	}omdb_check( $error && ( $status === null || $error instanceof OmdbError && $error->status === $status ), $message );
+}
+function omdb_at( $site, $fn ) {
+	switch_to_blog( $site );
+	try {
+		return $fn();
+	} finally {
+		restore_current_blog();
+	}
+}
+function omdb_drain(): void {
+	for ( $i = 0;$i < 100 && Queue::status()['pending'];++$i ) {
+		$r = Queue::run( 1000 );
+		if ( $r['errors'] || ! $r['processed'] ) {
+			throw new RuntimeException( 'OMDb queue failure.' );
+		}
+	}
+}
+function omdb_request( array $s, ?array $fields = null, bool $poster = false ): array {
+	$people = array();
+	foreach ( $s['credits'] as $key => $credit ) {
+		$people[ $key ] = $credit['suggested'] ?: array_key_first( $s['person_matches'][ $key ]['possible'] );
+	}return array(
+		'nonce'       => wp_create_nonce( 'msc_omdb_import' ),
+		'token'       => $s['token'],
+		'fields'      => $fields ?? array_keys( $s['fields'] ),
+		'people'      => $people,
+		'poster'      => $poster ? '1' : '',
+		'parent_show' => $s['fields']['parent_show'] ?? '',
+	);
+}
+function omdb_count( string $type ): int {
+	global $wpdb;
+	return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Database::table( 'records' ) . ' WHERE type=%s', $type ) );
+}
+wp_set_current_user( 1 );
+$sites = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	if ( in_array( $site->path, array( '/site-a/', '/site-b/', '/site-c/' ), true ) ) {
+		$sites[] = (int) $site->blog_id;
+	}
+}[$a, $b, $c] = $sites;
+$old_env      = getenv( 'OMDB_API_KEY' );
+$old_key      = get_network_option( get_current_network_id(), 'msc_omdb_api_key', false );
+putenv( 'OMDB_API_KEY' );
+$key = 'msc-fixture-' . wp_generate_uuid4();
+try {
+	$schema_before  = \MSC\Schema::all();
+	$schema_version = get_network_option( get_current_network_id(), 'msc_builtin_schema_version' );
+	$legacy         = $schema_before;
+	unset( $legacy['msc_episode']['fields']['external_ids'], $legacy['msc_person'], $legacy['msc_movie']['fields']['official_website'] );
+	try {
+		update_network_option( get_current_network_id(), 'msc_schemas', $legacy );
+		update_network_option( get_current_network_id(), 'msc_builtin_schema_version', 3 );
+		\MSC\Schema::upgrade_defaults();
+		$upgraded = \MSC\Schema::all();
+		omdb_check( isset( $upgraded['msc_episode']['fields']['external_ids'] ) && 'json' === $upgraded['msc_episode']['fields']['external_ids']['type'], 'The 1.3 upgrade adds Episode external IDs' );
+		omdb_check( ! isset( $upgraded['msc_person'] ) && ! isset( $upgraded['msc_movie']['fields']['official_website'] ), 'The upgrade preserves intentionally omitted types and unrelated fields' );
+	} finally {
+		update_network_option( get_current_network_id(), 'msc_schemas', $schema_before );
+		update_network_option( get_current_network_id(), 'msc_builtin_schema_version', $schema_version );
+	}
+	OmdbClient::set_key( $key );
+	omdb_check( OmdbClient::key() === $key, 'Network administrators can configure the API key' );
+	OmdbClient::set_key( '' );
+	omdb_check( OmdbClient::key() === $key, 'Blank settings submissions preserve the key' );
+	putenv( 'OMDB_API_KEY=server-fixture-key' );
+	omdb_check( OmdbClient::key() === 'server-fixture-key', 'Server configuration takes priority over the stored key' );
+	omdb_reject( static fn()=>OmdbClient::set_key( 'replacement' ), 'Server-managed keys cannot be overwritten in settings' );
+	putenv( 'OMDB_API_KEY' );
+	$before = MSC_Omdb_Fixtures::$requests;
+	$search = OmdbClient::search( 'Matrix', 'movie', '1999' );
+	$again  = OmdbClient::search( 'Matrix', 'movie', '1999' );
+	omdb_check( count( $search['Search'] ) === 1 && $search['Search'][0]['imdbID'] === 'tt0133093', 'Title search respects type and release year' );
+	omdb_check( $search === $again && MSC_Omdb_Fixtures::$requests === $before + 1, 'Repeated searches use the provider-response cache' );
+	$paged = OmdbClient::search( 'paged', 'movie', '', 2 );
+	omdb_check( count( $paged['Search'] ) === 2 && $paged['totalResults'] === 12, 'Search pagination preserves the total and second-page results' );
+	omdb_check( array() === OmdbClient::search( 'no such title' )['Search'], 'No-match search is a normal empty result' );
+	omdb_reject( static fn()=>OmdbClient::search( 'Matrix', 'person' ), 'Unsupported API result types are rejected', 400 );
+	omdb_reject( static fn()=>OmdbClient::search( 'Matrix', '', '20xx' ), 'Invalid year is rejected', 400 );
+	omdb_reject( static fn()=>OmdbClient::search( 'Matrix', '', '', 101 ), 'Out-of-range pagination is rejected', 400 );
+	omdb_reject( static fn()=>OmdbClient::search( 'quota' ), 'Provider request limits have an actionable error', 429 );
+	omdb_reject( static fn()=>OmdbClient::search( 'badkey' ), 'Invalid provider keys have an actionable error', 503 );
+	omdb_reject( static fn()=>OmdbClient::search( 'malformed' ), 'Malformed provider JSON is rejected', 502 );
+	try {
+		OmdbClient::search( 'offline' );
+	} catch ( OmdbError $e ) {
+		omdb_check( ! str_contains( $e->getMessage(), $key ) && ! str_contains( $e->getMessage(), 'apikey' ), 'Network errors do not expose API credentials' );
+	}
+	foreach ( array( 'http://m.media-amazon.com/a.jpg', 'https://127.0.0.1/a.jpg', 'https://m.media-amazon.com.evil.example/a.jpg', 'https://m.media-amazon.com/a.jpg?apikey=secret' ) as $url ) {
+		omdb_check( '' === OmdbClient::poster_url( $url ), 'Untrusted or credential-bearing poster URLs are rejected' );
+	}
+	$partial = omdb_at( $a, static fn()=>OmdbImport::preview( 'tt9000020' ) );
+	omdb_check( ! isset( $partial['fields']['release_date'] ) && ! isset( $partial['fields']['runtime'] ) && '' === $partial['data']['Poster'], 'Missing provider dates, runtime and posters are not invented' );
+	MSC_Omdb_Fixtures::$details['tt9000099'] = array(
+		'Response' => 'True',
+		'Title'    => 'Wrong identity',
+		'Type'     => 'movie',
+		'imdbID'   => 'tt9000098',
+	);
+	omdb_reject( static fn()=>OmdbClient::details( 'tt9000099' ), 'Detail responses must match the requested IMDb ID', 502 );
+	$zero = OmdbClient::search( '0', 'movie', '2024' );
+	omdb_check( count( $zero['Search'] ) === 1 && $zero['Search'][0]['Title'] === '0', 'Numeric zero is a valid title search' );
+	$zero = omdb_at( $a, static fn()=>OmdbImport::preview( 'tt9000030' ) );
+	$zero = omdb_at( $a, static fn()=>OmdbImport::import( omdb_request( $zero, array( 'title', 'content', 'runtime' ) ) ) );
+	omdb_check( $zero['record']['data']['title'] === '0' && (float) $zero['record']['data']['runtime'] === 0.0, 'Imports preserve zero-valued titles and runtime' );
+	$s = omdb_at( $a, static fn()=>OmdbImport::preview( 'tt0133093' ) );
+	omdb_check( $s['fields']['release_date'] === '1999-03-31' && (float) $s['fields']['runtime'] === 136.0 && $s['fields']['physical_release_date'] === '1999-09-21', 'Movie release dates, runtime and disc date map into native fields' );
+	omdb_check( $s['fields']['genres'] === array( 'Action', 'Science Fiction' ) && $s['fields']['country'] === 'United States' && $s['fields']['language'] === 'English', 'Categories map correctly while complete source lists remain in metadata' );
+	omdb_check( count( $s['credits'] ) === 4, 'Repeated cast/crew names share a reviewable Person choice' );
+	omdb_at(
+		$a,
+		static function () use ( $s ) {
+			$q          = omdb_request( $s );
+			$q['nonce'] = 'invalid';
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'Import verifies its CSRF nonce', 403 );
+			$q             = omdb_request( $s );
+			$q['fields'][] = 'forged_field';
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'Import rejects fields outside the saved preview', 400 );
+			$q           = omdb_request( $s );
+			$q['fields'] = array( array( 'title' ) );
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'Nested forged field submissions are rejected', 400 );
+			$q = omdb_request( $s, array() );
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'New imports require the title field', 400 );
+		}
+	);
+	omdb_at( $b, static fn()=>omdb_reject( static fn()=>OmdbImport::import( omdb_request( $s ) ), 'Preview tokens cannot be replayed from another site', 403 ) );
+	$import = omdb_at( $a, static fn()=>OmdbImport::import( omdb_request( $s, null, true ) ) );
+	$movie  = $import['record'];
+	$id     = (int) $movie['id'];
+	omdb_check( $movie['type'] === 'msc_movie' && $movie['data']['external_ids']['imdb'] === 'tt0133093', 'Import creates an identified shared Movie' );
+	omdb_check( count( $import['people'] ) === 4 && count( $movie['data']['actors'] ) === 2 && count( $movie['data']['directors'] ) === 2, 'Selected credits create linked shared People' );
+	omdb_check( $movie['data']['directors'] === array_reverse( $movie['data']['screenwriters'] ), 'Director/writer roles reuse each newly created Person' );
+	omdb_check( $movie['data']['additional_metadata']['omdb']['Country'] === 'United States, Australia' && $movie['data']['additional_metadata']['omdb']['imdbRating'] === '8.7', 'Ratings, complete original lists and provenance are retained' );
+	omdb_at(
+		$a,
+		static function () use ( $id, $a ) {
+			$r = Plugin::store()->resolved( $id );
+			omdb_check( $r['mapping']['status'] === 'draft' && get_post_status( (int) $r['mapping']['post_id'] ) === 'draft', 'New imports respect the configured draft default' );
+			$ref = $r['data']['poster'];
+			omdb_check( $ref['site_id'] === $a && wp_attachment_is_image( $ref['attachment_id'] ), 'Poster import creates a genuine owner-scoped media attachment' );
+			omdb_check( get_field( 'msc_poster', (int) $r['mapping']['post_id'] ) === $ref, 'Imported poster is available through the ACF preview adapter' );
+		}
+	);
+	$before_people = omdb_count( 'msc_person' );
+	$duplicate     = omdb_at( $a, static fn()=>OmdbImport::import( omdb_request( $s, null, true ) ) );
+	omdb_check( $duplicate['record']['uuid'] === $movie['uuid'] && $before_people === omdb_count( 'msc_person' ), 'Replaying a create import reuses the IMDb record without duplicate People' );
+	omdb_drain();
+	omdb_at(
+		$b,
+		static function () use ( $id ) {
+			$r = Plugin::store()->resolved( $id );
+			Plugin::store()->local(
+				$id,
+				array(
+					'runtime' => 999,
+					'genres'  => array( 'Comedy' ),
+					'actors'  => array(),
+				),
+				array(),
+				(int) $r['mapping']['local_version']
+			);
+		}
+	);
+	omdb_at(
+		$a,
+		static function () use ( $id ) {
+			$r = Plugin::store()->get( $id );
+			Plugin::store()->update(
+				$id,
+				array(
+					'title'               => 'Hand-edited title',
+					'runtime'             => 120,
+					'external_ids'        => array_replace( $r['data']['external_ids'], array( 'tmdb' => 42 ) ),
+					'additional_metadata' => array_replace( $r['data']['additional_metadata'], array( 'custom' => 'Keep me' ) ),
+				),
+				(int) $r['version']
+			);
+		}
+	);
+	$refresh = omdb_at( $c, static fn()=>OmdbImport::preview( 'tt0133093' ) );
+	omdb_check( $refresh['target'] === $movie['uuid'], 'A fresh title preview identifies the existing shared record' );
+	omdb_at( $c, static fn()=>OmdbImport::import( omdb_request( $refresh, array( 'runtime', 'genres', 'additional_metadata' ) ) ) );
+	omdb_drain();
+	omdb_check( msc_get_field( $id, 'runtime', $a ) === 136 && msc_get_field( $id, 'runtime', $c ) === 136 && msc_get_field( $id, 'runtime', $b ) === 999, 'Selected global updates propagate while a local runtime override survives' );
+	omdb_check( msc_get_field( $id, 'genres', $b ) === array( 'Comedy' ) && msc_get_field( $id, 'actors', $b ) === array(), 'Category and intentionally empty Person overrides survive import' );
+	omdb_check( msc_get_global( $id, 'title' ) === 'Hand-edited title' && msc_get_global( $id, 'external_ids' )['tmdb'] === 42 && msc_get_global( $id, 'additional_metadata' )['custom'] === 'Keep me', 'Unselected fields and unrelated IDs/metadata are preserved' );
+	omdb_at(
+		$a,
+		static function () use ( $id ) {
+			$p = OmdbImport::preview( 'tt0133093' );
+			$r = Plugin::store()->get( $id );
+			Plugin::store()->update( $id, array( 'seo_title' => 'Concurrent edit' ), (int) $r['version'] );
+			omdb_reject( static fn()=>OmdbImport::import( omdb_request( $p, array( 'runtime' ) ) ), 'A stale preview cannot overwrite a newer global revision', 409 );
+		}
+	);
+	// Simulate a real competing edit while the poster download is in flight.
+	omdb_at(
+		$a,
+		static function () use ( $id ) {
+			$p = OmdbImport::preview( 'tt0133093' );
+			$q = omdb_request( $p, array( 'actors', 'directors', 'screenwriters', 'runtime' ), true );
+			foreach ( $q['people'] as &$choice ) {
+				$choice = 'new';
+			}unset( $choice );
+			$before      = omdb_count( 'msc_person' );
+			$attachments = count(
+				get_posts(
+					array(
+						'post_type'   => 'attachment',
+						'post_status' => 'inherit',
+						'numberposts' => -1,
+						'fields'      => 'ids',
+					)
+				)
+			);
+			$race        = null;
+			$race        = static function ( $check, $args, $url ) use ( $id, &$race ) {
+				if ( str_contains( $url, 'msc-omdb-fixture.jpg' ) ) {
+					remove_filter( 'pre_http_request', $race, 1 );
+					$r = Plugin::store()->get( $id );
+					Plugin::store()->update( $id, array( 'seo_description' => 'Keep concurrent external change' ), (int) $r['version'] );
+				}return $check;
+			};
+			add_filter( 'pre_http_request', $race, 1, 3 );
+			try {
+				omdb_reject( static fn()=>OmdbImport::import( $q ), 'A concurrent edit during download rejects the stale import' );
+			} finally {
+				remove_filter( 'pre_http_request', $race, 1 );
+			}omdb_check( $before === omdb_count( 'msc_person' ), 'Nested transactions roll back newly created People after an import conflict' );
+			omdb_check(
+				$attachments === count(
+					get_posts(
+						array(
+							'post_type'   => 'attachment',
+							'post_status' => 'inherit',
+							'numberposts' => -1,
+							'fields'      => 'ids',
+						)
+					)
+				),
+				'Failed imports remove their newly downloaded poster attachment'
+			);
+			omdb_check( msc_get_global( $id, 'seo_description' ) === 'Keep concurrent external change', 'The competing global edit remains committed' );
+		}
+	);
+	omdb_at(
+		$a,
+		static function () use ( $id ) {
+			$p                             = OmdbImport::preview( 'tt0133093' );
+			MSC_Omdb_Fixtures::$bad_poster = true;
+			try {
+				$r = OmdbImport::import( omdb_request( $p, array( 'runtime' ), true ) );
+				omdb_check( (bool) $r['warnings'] && $r['record']['data']['poster'] === msc_get_global( $id, 'poster' ), 'Unavailable posters produce a warning and preserve the current image' );
+			} finally {
+				MSC_Omdb_Fixtures::$bad_poster = false;
+			}
+		}
+	);
+	$episode = omdb_at( $a, static fn()=>OmdbImport::preview( 'tt9000011' ) );
+	omdb_at( $a, static fn()=>omdb_reject( static fn()=>OmdbImport::import( omdb_request( $episode ) ), 'An Episode import requires a parent Show', 400 ) );
+	$series = omdb_at( $a, static fn()=>OmdbImport::import( omdb_request( OmdbImport::preview( 'tt9000010' ) ) ) );
+	omdb_check( $series['record']['data']['premiere_date'] === '2020-01-01' && $series['record']['data']['number_of_seasons'] === 2 && ! isset( $series['record']['data']['release_date'] ), 'Series data maps only to TV Show fields' );
+	$episode = omdb_at( $a, static fn()=>OmdbImport::preview( 'tt9000011' ) );
+	omdb_at(
+		$a,
+		static function () use ( $episode ) {
+			$q = omdb_request( $episode );
+			$q['people'][ array_key_first( $q['people'] ) ] = '';
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'Selected credit fields require an explicit Person choice instead of silently omitting a link', 409 );
+		}
+	);
+	$ep = omdb_at( $a, static fn()=>OmdbImport::import( omdb_request( $episode ) ) );
+	omdb_check( $ep['record']['data']['parent_show'] === $series['record']['uuid'] && $ep['record']['data']['season_number'] === 1 && $ep['record']['data']['episode_number'] === 1, 'Episode imports resolve series IMDb IDs into permanent Show UUIDs' );
+	omdb_at(
+		$a,
+		static function () use ( $ep ) {
+			$p                = OmdbImport::preview( 'tt9000011' );
+			$q                = omdb_request( $p, array( 'parent_show' ) );
+			$q['parent_show'] = '';
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'An update cannot clear the required Episode parent', 400 );
+			$other            = Plugin::store()->create(
+				'msc_show',
+				array(
+					'title'        => 'OMDb wrong-parent fixture',
+					'external_ids' => array( 'imdb' => 'tt9000998' ),
+				)
+			);
+			$q['parent_show'] = $other['uuid'];
+			omdb_reject( static fn()=>OmdbImport::import( $q ), 'Episode imports reject a Show with a conflicting IMDb identity', 400 );
+			omdb_check( msc_get_global( $ep['record']['uuid'], 'parent_show' ) === $ep['record']['data']['parent_show'], 'Rejected parent changes preserve the existing Episode relationship' );
+		}
+	);
+	omdb_at(
+		$a,
+		static function () use ( $id, $key ) {
+			$get  = $_GET;
+			$_GET = array(
+				'page'     => 'msc-omdb',
+				'imdb'     => 'tt0133093',
+				'_wpnonce' => wp_create_nonce( 'msc_omdb_search' ),
+			);
+			ob_start();
+			OmdbAdmin::page();
+			$html = ob_get_clean();
+			$_GET = $get;
+			omdb_check( str_contains( $html, 'Review Person links' ) && str_contains( $html, 'Import selected global fields' ), 'Preview UI renders genuine selective-import and Person controls' );
+			omdb_check( ! str_contains( $html, $key ) && ! str_contains( $html, 'apikey=' ), 'Rendered search/import pages contain no API key' );
+		}
+	);
+	$editor = get_user_by( 'login', 'omdb-local-editor' );
+	$uid    = $editor ? $editor->ID : wp_insert_user(
+		array(
+			'user_login' => 'omdb-local-editor',
+			'user_pass'  => wp_generate_password(),
+			'role'       => 'editor',
+		)
+	);
+	add_user_to_blog( $a, (int) $uid, 'editor' );
+	wp_set_current_user( (int) $uid );
+	omdb_check( ! OmdbImport::allowed(), 'Local-only editors cannot use global OMDb imports' );
+	omdb_reject( static fn()=>OmdbClient::search( 'Matrix' ), 'Local editors cannot consume the network API key', 403 );
+	omdb_reject( static fn()=>OmdbClient::set_key( 'no-key-change' ), 'Only network administrators can change the provider key' );
+	wp_set_current_user( 1 );
+	OmdbClient::set_key( '', true );
+	omdb_reject( static fn()=>OmdbClient::search( 'new missing key query' ), 'Missing API keys have an actionable configuration message', 503 );
+	OmdbClient::set_key( $key );
+	delete_site_transient( 'msc_omdb_rate_1' );for ( $n = 0;$n < 30;++$n ) {
+		OmdbClient::search( 'rate fixture ' . $n );
+	}omdb_reject( static fn()=>OmdbClient::search( 'rate fixture extra' ), 'Per-user limits prevent unbounded uncached provider calls', 429 );
+	omdb_check( (bool) OmdbClient::search( 'Matrix', 'movie', '1999' )['Search'], 'Cached results remain usable while the new-request budget is exhausted' );
+	WP_CLI::success( $GLOBALS['msc_omdb_checks'] . ' OMDb API, import, media, transaction, permission and caching checks passed.' );
+} finally {
+	wp_set_current_user( 1 );
+	delete_site_transient( 'msc_omdb_rate_1' );
+	if ( false === $old_key ) {
+		delete_network_option( get_current_network_id(), 'msc_omdb_api_key' );
+	} else {
+		update_network_option( get_current_network_id(), 'msc_omdb_api_key', $old_key );
+	}if ( false === $old_env ) {
+		putenv( 'OMDB_API_KEY' );
+	} else {
+		putenv( 'OMDB_API_KEY=' . $old_env );
+	}
+}

@@ -1,67 +1,256 @@
 <?php
 /** Real importer, delivery, Site A reconciliation and public season/credit regressions. */
-use MSC\{Plugin,Queue,Database,OpenImport,OpenAdmin,OpenClient,PersonIdentity,PersonReview,Propagation,SiteAUpdate,Presentation,Attribution,Admin,SourceError};
-if ( ! defined( 'WP_CLI' ) || ! is_multisite() || 'local' !== wp_get_environment_type() ) { throw new RuntimeException( 'Disposable multisite required.' ); }
-define( 'MSC_OPEN_TEST_FIXTURES', true ); require '/msc-tests/open-fixtures.php'; require_once ABSPATH . 'wp-admin/includes/admin.php';
+use MSC\{Plugin, Queue, Database, OpenImport, OpenAdmin, OpenClient, PersonIdentity, PersonReview, Propagation, SiteAUpdate, Presentation, Attribution, Admin, SourceError};
+if ( ! defined( 'WP_CLI' ) || ! is_multisite() || 'local' !== wp_get_environment_type() ) {
+	throw new RuntimeException( 'Disposable multisite required.' );
+}
+define( 'MSC_OPEN_TEST_FIXTURES', true );
+require '/msc-tests/open-fixtures.php';
+require_once ABSPATH . 'wp-admin/includes/admin.php';
 $GLOBALS['msc_review_checks'] = 0;
-function review_check( $ok, string $label ): void { ++$GLOBALS['msc_review_checks']; if ( ! $ok ) { throw new RuntimeException( 'FAIL: ' . $label ); } WP_CLI::log( 'PASS: ' . $label ); }
-function review_drain(): void { for ( $i = 0; $i < 100 && Queue::status()['pending']; ++$i ) { $r = Queue::run( 1000 ); if ( $r['errors'] || ! $r['processed'] ) { throw new RuntimeException( 'Fixture synchronization failed.' ); } } }
-function review_reject( callable $fn, string $label ): void { $error = null; try { $fn(); } catch ( Throwable $e ) { $error = $e; } review_check( $error instanceof SourceError && 409 === $error->status, $label ); }
-function review_request( array $s ): array { return array( 'token' => $s['token'], 'nonce' => wp_create_nonce( 'msc_open_import' ), 'fields' => array_keys( $s['fields'] ), 'roles' => array_keys( $s['roles'] ) ); }
-wp_set_current_user( 1 ); $tag = substr( wp_generate_uuid4(), 0, 8 ); $seed = random_int( 500000000, 899999000 ); $old_seed = get_network_option( get_current_network_id(), 'msc_open_fixture_seed', false ); update_network_option( get_current_network_id(), 'msc_open_fixture_seed', $seed );
-$sites = array(); foreach ( get_sites( array( 'number' => 0 ) ) as $site ) { if ( in_array( $site->path, array( '/site-a/', '/site-b/', '/site-c/' ), true ) ) { $sites[] = (int) $site->blog_id; } } [ $a, $b, $c ] = $sites; switch_to_blog( $a );
+function review_check( $ok, string $label ): void {
+	++$GLOBALS['msc_review_checks'];
+	if ( ! $ok ) {
+		throw new RuntimeException( 'FAIL: ' . $label );
+	}
+	WP_CLI::log( 'PASS: ' . $label );
+}
+function review_drain(): void {
+	for ( $i = 0; $i < 100 && Queue::status()['pending']; ++$i ) {
+		$r = Queue::run( 1000 );
+		if ( $r['errors'] || ! $r['processed'] ) {
+			throw new RuntimeException( 'Fixture synchronization failed.' );
+		}
+	}
+}
+function review_reject( callable $fn, string $label ): void {
+	$error = null;
+	try {
+		$fn();
+	} catch ( Throwable $e ) {
+		$error = $e;
+	}
+	review_check( $error instanceof SourceError && 409 === $error->status, $label );
+}
+function review_request( array $s ): array {
+	return array(
+		'token'  => $s['token'],
+		'nonce'  => wp_create_nonce( 'msc_open_import' ),
+		'fields' => array_keys( $s['fields'] ),
+		'roles'  => array_keys( $s['roles'] ),
+	);
+}
+wp_set_current_user( 1 );
+$tag      = substr( wp_generate_uuid4(), 0, 8 );
+$seed     = random_int( 500000000, 899999000 );
+$old_seed = get_network_option( get_current_network_id(), 'msc_open_fixture_seed', false );
+update_network_option( get_current_network_id(), 'msc_open_fixture_seed', $seed );
+$sites = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	if ( in_array( $site->path, array( '/site-a/', '/site-b/', '/site-c/' ), true ) ) {
+		$sites[] = (int) $site->blog_id;
+	}
+} [ $a, $b, $c ] = $sites;
+switch_to_blog( $a );
 $credit_fixture = static function ( $pre, $args, $url ) use ( $seed, $tag ) {
-    $path = wp_parse_url( $url, PHP_URL_PATH ); if ( 'api.tvmaze.com' !== wp_parse_url( $url, PHP_URL_HOST ) || ! in_array( $path, array( '/shows/' . ( $seed + 1 ) . '/cast', '/shows/' . ( $seed + 1 ) . '/crew' ), true ) ) { return $pre; }
-    $person = array( 'id' => $seed + 21, 'name' => 'Gene Roddenberry ' . $tag, 'birthday' => '1921-08-19' );
-    $data = str_ends_with( $path, '/cast' ) ? array() : array( array( 'type' => 'Director', 'person' => $person ), array( 'type' => 'Writer', 'person' => $person ) );
-    return array( 'response' => array( 'code' => 200 ), 'headers' => array(), 'body' => wp_json_encode( $data ) );
-}; add_filter( 'pre_http_request', $credit_fixture, 99, 3 );
+	$path = wp_parse_url( $url, PHP_URL_PATH );
+	if ( 'api.tvmaze.com' !== wp_parse_url( $url, PHP_URL_HOST ) || ! in_array( $path, array( '/shows/' . ( $seed + 1 ) . '/cast', '/shows/' . ( $seed + 1 ) . '/crew' ), true ) ) {
+		return $pre;
+	}
+	$person = array(
+		'id'       => $seed + 21,
+		'name'     => 'Gene Roddenberry ' . $tag,
+		'birthday' => '1921-08-19',
+	);
+	$data   = str_ends_with( $path, '/cast' ) ? array() : array(
+		array(
+			'type'   => 'Director',
+			'person' => $person,
+		),
+		array(
+			'type'   => 'Writer',
+			'person' => $person,
+		),
+	);
+	return array(
+		'response' => array( 'code' => 200 ),
+		'headers'  => array(),
+		'body'     => wp_json_encode( $data ),
+	);
+};
+add_filter( 'pre_http_request', $credit_fixture, 99, 3 );
 try {
-    foreach ( array( 'tvmaze', 'wikidata', 'wikipedia', 'commons' ) as $provider ) { delete_site_transient( 'msc_open_rate_' . $provider ); delete_site_transient( 'msc_open_backoff_' . $provider ); }
-    $legacy = Plugin::store()->create( 'msc_person', array( 'title' => 'gene  Roddenberry ' . $tag, 'professions' => array( 'Writer' ), 'content' => '<p>Curated biography.</p>' ) ); review_drain();
-    review_check( PersonIdentity::name( "Gene\xc2\xa0Roddenberry" ) === PersonIdentity::name( ' gene Roddenberry ' ), 'Person name checks normalize case and Unicode spacing across roles' );
-    $preview = OpenImport::preview( 'tvmaze', (string) ( $seed + 1 ), 'msc_show' ); $key = array_key_first( $preview['credits'] );
-    review_check( 1 === count( $preview['credits'] ) && isset( $preview['person_matches'][ $key ]['possible'][ $legacy['uuid'] ] ), 'A writer draft is offered when the same Person is imported as a director' );
-    review_reject( static fn() => OpenImport::import( review_request( $preview ) ), 'An unreviewed name match cannot create another automatic Person draft' );
-    review_check( ! OpenImport::matches( 'msc_show', array( 'tvmaze' => (string) ( $seed + 1 ) ) ), 'Duplicate rejection rolls back the parent import atomically' );
-    $request = review_request( $preview ); $request['people'] = array( $key => $legacy['uuid'] ); $saved = OpenImport::import( $request ); $show = $saved['record']; $person = Plugin::store()->get( $legacy['uuid'] );
-    review_check( $show['data']['directors'] === $show['data']['screenwriters'] && $show['data']['directors'] === array( $legacy['uuid'] ), 'Director and writer credits reuse the selected existing Person UUID' );
-    review_check( in_array( 'Writer', $person['data']['professions'], true ) && in_array( 'Director', $person['data']['professions'], true ) && '<p>Curated biography.</p>' === $person['data']['content'], 'Reused People gain professions while retaining curated biography data' );
-    review_check( (string) ( $seed + 21 ) === $person['data']['external_ids']['tvmaze'] && 'draft' === Plugin::store()->resolved( $person['uuid'] )['mapping']['status'], 'Identity connection preserves the existing Person draft and publication status' );
-    $count = count( PersonIdentity::catalogue() ); $again = OpenImport::preview( 'tvmaze', (string) ( $seed + 1 ), 'msc_show' ); OpenImport::import( review_request( $again ) );
-    review_check( $count === count( PersonIdentity::catalogue() ), 'Repeated role imports reuse source-identified People without duplicates' );
-    $same = PersonIdentity::assess( $person['data']['title'], array( 'wikidata' => 'Q' . ( $seed + 77 ) ), '1921-08-19' ); review_check( isset( $same['strong'][ $person['uuid'] ] ), 'Matching full name and exact birth date can connect disjoint provider identities' );
-    $different = PersonIdentity::assess( $person['data']['title'], array( 'tvmaze' => (string) ( $seed + 22 ) ), '1921-08-19' ); review_check( ! $different['strong'] && ! $different['possible'], 'Conflicting source IDs keep actual namesakes distinct' );
-    $extra = Plugin::store()->create( 'msc_person', array( 'title' => 'GENE RODDENBERRY ' . $tag, 'professions' => array( 'Director' ) ) ); $groups = PersonReview::groups(); $found = false; foreach ( $groups as $group ) { if ( in_array( $legacy['uuid'], array_column( $group, 'uuid' ), true ) && in_array( $extra['uuid'], array_column( $group, 'uuid' ), true ) ) { $found = true; } }
-    review_check( $found, 'Duplicate People review includes pre-existing separate writer/director drafts' );
-    review_reject( static fn() => PersonIdentity::resolve( $extra['data']['title'], array(), '', 'new' ), 'Even a stale create request checks existing People again on the server' );
-    review_check( null === PersonIdentity::resolve( $extra['data']['title'], array(), '', 'new_distinct' ), 'Explicit distinct-person confirmation supports genuine same-name people' );
-    review_check( Admin::global_scope( '' ) && Admin::global_scope( 'global' ) && ! Admin::global_scope( 'local' ), 'Global-capable editors default to global mode while explicit local mode remains available' );
-    review_check( str_contains( get_edit_post_link( msc_local_post_id( $show['uuid'] ), 'raw' ), 'mode=global' ), 'The standard Edit link opens global editing for shared content' );
-    review_drain();
-    switch_to_blog( $b ); $local = Plugin::store()->resolved( $show['uuid'] ); Plugin::store()->local( $show['uuid'], array( 'premiere_date' => '2020-02-03' ), array(), (int) $local['mapping']['local_version'] ); restore_current_blog();
-    $show = Plugin::store()->get( $show['uuid'] ); $show = Plugin::store()->update( $show['uuid'], array( 'premiere_date' => '2031-04-09' ), (int) $show['version'] ); Propagation::send( $show );
-    $statuses = array_column( Propagation::status( $show ), null, 'id' );
-    review_check( 'Up to date' === $statuses[ $a ]['state'] && 'Up to date' === $statuses[ $b ]['state'] && 'Up to date' === $statuses[ $c ]['state'], 'Global saves deliver the revision to all three participating sites without a worker tick' );
-    review_check( '2031-04-09' === Plugin::store()->resolved( $show['uuid'], $c )['data']['premiere_date'] && '2020-02-03' === Plugin::store()->resolved( $show['uuid'], $b )['data']['premiere_date'] && in_array( 'premiere_date', $statuses[ $b ]['overrides'], true ), 'Delivery status distinguishes received global data from an intentional local override' );
-    $failure = static function ( $data ) use ( $c ) { if ( get_current_blog_id() === $c && 'msc_show' === $data['post_type'] ) { throw new RuntimeException( 'Injected site delivery failure' ); } return $data; }; add_filter( 'wp_insert_post_data', $failure, 1 );
-    $show = Plugin::store()->update( $show['uuid'], array( 'premiere_date' => '2032-04-09' ), (int) $show['version'] ); Propagation::send( $show ); remove_filter( 'wp_insert_post_data', $failure, 1 );
-    $statuses = array_column( Propagation::status( $show ), null, 'id' ); review_check( str_contains( $statuses[ $c ]['state'], 'Injected site delivery failure' ) && '2032-04-09' === Plugin::store()->get( $show['uuid'] )['data']['premiere_date'], 'A failed site is reported and queued without rolling back the global save' );
-    Propagation::send( $show, $c ); $statuses = array_column( Propagation::status( $show ), null, 'id' ); review_check( 'Up to date' === $statuses[ $c ]['state'], 'A targeted retry delivers a failed site immediately' );
-    $r = Plugin::store()->resolved( $show['uuid'] ); Plugin::store()->local( $show['uuid'], array( 'premiere_date' => '2035-06-07', 'title' => 'Site A title ' . $tag ), array(), (int) $r['mapping']['local_version'] );
-    $reconciled = SiteAUpdate::apply( Plugin::store()->get( $show['uuid'] ), $a ); Propagation::send( $reconciled );
-    foreach ( array( $a, $b, $c ) as $site ) { $r = Plugin::store()->resolved( $show['uuid'], $site ); review_check( '2035-06-07' === $r['data']['premiere_date'] && 'Site A title ' . $tag === $r['data']['title'], 'Site A catch-up replaces conflicting shared values on site ' . $site ); }
-    review_check( ! Plugin::store()->overrides( (int) $show['id'], $a ) && ! isset( Plugin::store()->overrides( (int) $show['id'], $b )['premiere_date'] ), 'Catch-up clears source overrides and conflicting destination overrides to restore inheritance' );
-    $backup = get_network_option( get_current_network_id(), SiteAUpdate::MARKER . '_backup_' . $show['id'] ); review_check( '2035-06-07' === $backup['overrides'][ $a ]['premiere_date'] && '2020-02-03' === $backup['overrides'][ $b ]['premiere_date'], 'Recovery snapshots retain both source and destination values before catch-up' );
-    $again = SiteAUpdate::apply( Plugin::store()->get( $show['uuid'] ), $a ); review_check( (int) $again['version'] === (int) $reconciled['version'], 'Repeating catch-up on a reconciled record is idempotent' );
-    $episodes = array(); foreach ( array( 'zero' => 0, 'one' => 1, 'seven' => 7, 'unset' => null, 'draft' => 8 ) as $name => $season ) { $values = array( 'title' => 'Season fixture ' . $tag . ' ' . $name, 'parent_show' => $show['uuid'], 'episode_number' => 1 ); if ( null !== $season ) { $values['season_number'] = $season; } $episodes[ $name ] = Plugin::store()->create( 'msc_episode', $values ); }
-    for ( $n = 2; $n <= 51; ++$n ) { $episodes[ 'extra' . $n ] = Plugin::store()->create( 'msc_episode', array( 'title' => 'Season seven ' . $tag . ' ' . $n, 'parent_show' => $show['uuid'], 'season_number' => 7, 'episode_number' => $n ) ); } review_drain();
-    foreach ( array_merge( array( 'show' => Plugin::store()->get( $show['uuid'] ) ), $episodes ) as $name => $r ) { if ( 'draft' === $name ) { continue; } $m = Plugin::store()->mapping( (int) $r['id'] ); Plugin::store()->local( $r['uuid'], array(), array(), (int) $m['local_version'], 'publish' ); }
-    $guide = Presentation::season_page( $show['uuid'] ); review_check( $guide['seasons'] === array( '0', '1', '7', 'unknown' ) && '0' === $guide['season'], 'Public season links include zero and missing seasons but exclude draft-only seasons' );
-    $guide = Presentation::season_page( $show['uuid'], '7' ); review_check( 51 === $guide['total'] && 50 === count( $guide['episodes'] ) && 2 === $guide['pages'] && array( 1, 2, 3 ) === array_column( array_slice( array_column( $guide['episodes'], 'data' ), 0, 3 ), 'episode_number' ), 'Selecting season seven returns only that season in numeric episode order with bounded pagination' );
-    $guide = Presentation::season_page( $show['uuid'], '7', '2' ); review_check( 1 === count( $guide['episodes'] ) && 51 === $guide['episodes'][0]['data']['episode_number'], 'Episode pagination includes the final row beyond the 50-Episode boundary' );
-    review_check( '0' === Presentation::season_page( $show['uuid'], array( '7' ) )['season'] && '0' === Presentation::season_page( $show['uuid'], '999' )['season'], 'Malformed or absent seasons fall back to an available public season' );
-    $record = Plugin::store()->resolved( $show['uuid'] ); review_check( '' === Attribution::collect( $record ) && str_contains( Attribution::footer(), 'Sources and image credits' ) && str_contains( Attribution::footer(), 'tvmaze.com' ), 'Public credits are collected once in the footer without inline output' );
-    $uid = wp_insert_user( array( 'user_login' => 'review-local-' . $tag, 'user_pass' => wp_generate_password(), 'role' => 'editor' ) ); add_user_to_blog( $a, (int) $uid, 'editor' ); wp_set_current_user( (int) $uid ); review_check( ! Admin::global_scope( '' ), 'Local-only editors retain a permitted local default' );
-    wp_set_current_user( 1 ); review_drain(); WP_CLI::success( $GLOBALS['msc_review_checks'] . ' duplicate, import review, propagation, Site A catch-up, season and footer checks passed.' );
-} finally { wp_set_current_user( 1 ); remove_filter( 'pre_http_request', $credit_fixture, 99 ); restore_current_blog(); if ( false === $old_seed ) { delete_network_option( get_current_network_id(), 'msc_open_fixture_seed' ); } else { update_network_option( get_current_network_id(), 'msc_open_fixture_seed', $old_seed ); } foreach ( array( 'tvmaze', 'wikidata', 'wikipedia', 'commons' ) as $provider ) { delete_site_transient( 'msc_open_rate_' . $provider ); delete_site_transient( 'msc_open_backoff_' . $provider ); } }
+	foreach ( array( 'tvmaze', 'wikidata', 'wikipedia', 'commons' ) as $provider ) {
+		delete_site_transient( 'msc_open_rate_' . $provider );
+		delete_site_transient( 'msc_open_backoff_' . $provider );
+	}
+	$legacy = Plugin::store()->create(
+		'msc_person',
+		array(
+			'title'       => 'gene  Roddenberry ' . $tag,
+			'professions' => array( 'Writer' ),
+			'content'     => '<p>Curated biography.</p>',
+		)
+	);
+	review_drain();
+	review_check( PersonIdentity::name( "Gene\xc2\xa0Roddenberry" ) === PersonIdentity::name( ' gene Roddenberry ' ), 'Person name checks normalize case and Unicode spacing across roles' );
+	$preview = OpenImport::preview( 'tvmaze', (string) ( $seed + 1 ), 'msc_show' );
+	$key     = array_key_first( $preview['credits'] );
+	review_check( 1 === count( $preview['credits'] ) && isset( $preview['person_matches'][ $key ]['possible'][ $legacy['uuid'] ] ), 'A writer draft is offered when the same Person is imported as a director' );
+	review_reject( static fn() => OpenImport::import( review_request( $preview ) ), 'An unreviewed name match cannot create another automatic Person draft' );
+	review_check( ! OpenImport::matches( 'msc_show', array( 'tvmaze' => (string) ( $seed + 1 ) ) ), 'Duplicate rejection rolls back the parent import atomically' );
+	$request           = review_request( $preview );
+	$request['people'] = array( $key => $legacy['uuid'] );
+	$saved             = OpenImport::import( $request );
+	$show              = $saved['record'];
+	$person            = Plugin::store()->get( $legacy['uuid'] );
+	review_check( $show['data']['directors'] === $show['data']['screenwriters'] && $show['data']['directors'] === array( $legacy['uuid'] ), 'Director and writer credits reuse the selected existing Person UUID' );
+	review_check( in_array( 'Writer', $person['data']['professions'], true ) && in_array( 'Director', $person['data']['professions'], true ) && '<p>Curated biography.</p>' === $person['data']['content'], 'Reused People gain professions while retaining curated biography data' );
+	review_check( (string) ( $seed + 21 ) === $person['data']['external_ids']['tvmaze'] && 'draft' === Plugin::store()->resolved( $person['uuid'] )['mapping']['status'], 'Identity connection preserves the existing Person draft and publication status' );
+	$count = count( PersonIdentity::catalogue() );
+	$again = OpenImport::preview( 'tvmaze', (string) ( $seed + 1 ), 'msc_show' );
+	OpenImport::import( review_request( $again ) );
+	review_check( $count === count( PersonIdentity::catalogue() ), 'Repeated role imports reuse source-identified People without duplicates' );
+	$same = PersonIdentity::assess( $person['data']['title'], array( 'wikidata' => 'Q' . ( $seed + 77 ) ), '1921-08-19' );
+	review_check( isset( $same['strong'][ $person['uuid'] ] ), 'Matching full name and exact birth date can connect disjoint provider identities' );
+	$different = PersonIdentity::assess( $person['data']['title'], array( 'tvmaze' => (string) ( $seed + 22 ) ), '1921-08-19' );
+	review_check( ! $different['strong'] && ! $different['possible'], 'Conflicting source IDs keep actual namesakes distinct' );
+	$extra  = Plugin::store()->create(
+		'msc_person',
+		array(
+			'title'       => 'GENE RODDENBERRY ' . $tag,
+			'professions' => array( 'Director' ),
+		)
+	);
+	$groups = PersonReview::groups();
+	$found  = false;
+	foreach ( $groups as $group ) {
+		if ( in_array( $legacy['uuid'], array_column( $group, 'uuid' ), true ) && in_array( $extra['uuid'], array_column( $group, 'uuid' ), true ) ) {
+			$found = true;
+		}
+	}
+	review_check( $found, 'Duplicate People review includes pre-existing separate writer/director drafts' );
+	review_reject( static fn() => PersonIdentity::resolve( $extra['data']['title'], array(), '', 'new' ), 'Even a stale create request checks existing People again on the server' );
+	review_check( null === PersonIdentity::resolve( $extra['data']['title'], array(), '', 'new_distinct' ), 'Explicit distinct-person confirmation supports genuine same-name people' );
+	review_check( Admin::global_scope( '' ) && Admin::global_scope( 'global' ) && ! Admin::global_scope( 'local' ), 'Global-capable editors default to global mode while explicit local mode remains available' );
+	review_check( str_contains( get_edit_post_link( msc_local_post_id( $show['uuid'] ), 'raw' ), 'mode=global' ), 'The standard Edit link opens global editing for shared content' );
+	review_drain();
+	switch_to_blog( $b );
+	$local = Plugin::store()->resolved( $show['uuid'] );
+	Plugin::store()->local( $show['uuid'], array( 'premiere_date' => '2020-02-03' ), array(), (int) $local['mapping']['local_version'] );
+	restore_current_blog();
+	$show = Plugin::store()->get( $show['uuid'] );
+	$show = Plugin::store()->update( $show['uuid'], array( 'premiere_date' => '2031-04-09' ), (int) $show['version'] );
+	Propagation::send( $show );
+	$statuses = array_column( Propagation::status( $show ), null, 'id' );
+	review_check( 'Up to date' === $statuses[ $a ]['state'] && 'Up to date' === $statuses[ $b ]['state'] && 'Up to date' === $statuses[ $c ]['state'], 'Global saves deliver the revision to all three participating sites without a worker tick' );
+	review_check( '2031-04-09' === Plugin::store()->resolved( $show['uuid'], $c )['data']['premiere_date'] && '2020-02-03' === Plugin::store()->resolved( $show['uuid'], $b )['data']['premiere_date'] && in_array( 'premiere_date', $statuses[ $b ]['overrides'], true ), 'Delivery status distinguishes received global data from an intentional local override' );
+	$failure = static function ( $data ) use ( $c ) {
+		if ( get_current_blog_id() === $c && 'msc_show' === $data['post_type'] ) {
+			throw new RuntimeException( 'Injected site delivery failure' );
+		}
+		return $data;
+	};
+	add_filter( 'wp_insert_post_data', $failure, 1 );
+	$show = Plugin::store()->update( $show['uuid'], array( 'premiere_date' => '2032-04-09' ), (int) $show['version'] );
+	Propagation::send( $show );
+	remove_filter( 'wp_insert_post_data', $failure, 1 );
+	$statuses = array_column( Propagation::status( $show ), null, 'id' );
+	review_check( str_contains( $statuses[ $c ]['state'], 'Injected site delivery failure' ) && '2032-04-09' === Plugin::store()->get( $show['uuid'] )['data']['premiere_date'], 'A failed site is reported and queued without rolling back the global save' );
+	Propagation::send( $show, $c );
+	$statuses = array_column( Propagation::status( $show ), null, 'id' );
+	review_check( 'Up to date' === $statuses[ $c ]['state'], 'A targeted retry delivers a failed site immediately' );
+	$r = Plugin::store()->resolved( $show['uuid'] );
+	Plugin::store()->local(
+		$show['uuid'],
+		array(
+			'premiere_date' => '2035-06-07',
+			'title'         => 'Site A title ' . $tag,
+		),
+		array(),
+		(int) $r['mapping']['local_version']
+	);
+	$reconciled = SiteAUpdate::apply( Plugin::store()->get( $show['uuid'] ), $a );
+	Propagation::send( $reconciled );
+	foreach ( array( $a, $b, $c ) as $site ) {
+		$r = Plugin::store()->resolved( $show['uuid'], $site );
+		review_check( '2035-06-07' === $r['data']['premiere_date'] && 'Site A title ' . $tag === $r['data']['title'], 'Site A catch-up replaces conflicting shared values on site ' . $site );
+	}
+	review_check( ! Plugin::store()->overrides( (int) $show['id'], $a ) && ! isset( Plugin::store()->overrides( (int) $show['id'], $b )['premiere_date'] ), 'Catch-up clears source overrides and conflicting destination overrides to restore inheritance' );
+	$backup = get_network_option( get_current_network_id(), SiteAUpdate::MARKER . '_backup_' . $show['id'] );
+	review_check( '2035-06-07' === $backup['overrides'][ $a ]['premiere_date'] && '2020-02-03' === $backup['overrides'][ $b ]['premiere_date'], 'Recovery snapshots retain both source and destination values before catch-up' );
+	$again = SiteAUpdate::apply( Plugin::store()->get( $show['uuid'] ), $a );
+	review_check( (int) $again['version'] === (int) $reconciled['version'], 'Repeating catch-up on a reconciled record is idempotent' );
+	$episodes = array();
+	foreach ( array(
+		'zero'  => 0,
+		'one'   => 1,
+		'seven' => 7,
+		'unset' => null,
+		'draft' => 8,
+	) as $name => $season ) {
+		$values = array(
+			'title'          => 'Season fixture ' . $tag . ' ' . $name,
+			'parent_show'    => $show['uuid'],
+			'episode_number' => 1,
+		);
+		if ( null !== $season ) {
+			$values['season_number'] = $season;
+		}
+		$episodes[ $name ] = Plugin::store()->create( 'msc_episode', $values );
+	}
+	for ( $n = 2; $n <= 51; ++$n ) {
+		$episodes[ 'extra' . $n ] = Plugin::store()->create(
+			'msc_episode',
+			array(
+				'title'          => 'Season seven ' . $tag . ' ' . $n,
+				'parent_show'    => $show['uuid'],
+				'season_number'  => 7,
+				'episode_number' => $n,
+			)
+		);
+	}
+	review_drain();
+	foreach ( array_merge( array( 'show' => Plugin::store()->get( $show['uuid'] ) ), $episodes ) as $name => $r ) {
+		if ( 'draft' === $name ) {
+			continue;
+		}
+		$m = Plugin::store()->mapping( (int) $r['id'] );
+		Plugin::store()->local( $r['uuid'], array(), array(), (int) $m['local_version'], 'publish' );
+	}
+	$guide = Presentation::season_page( $show['uuid'] );
+	review_check( $guide['seasons'] === array( '0', '1', '7', 'unknown' ) && '0' === $guide['season'], 'Public season links include zero and missing seasons but exclude draft-only seasons' );
+	$guide = Presentation::season_page( $show['uuid'], '7' );
+	review_check( 51 === $guide['total'] && 50 === count( $guide['episodes'] ) && 2 === $guide['pages'] && array( 1, 2, 3 ) === array_column( array_slice( array_column( $guide['episodes'], 'data' ), 0, 3 ), 'episode_number' ), 'Selecting season seven returns only that season in numeric episode order with bounded pagination' );
+	$guide = Presentation::season_page( $show['uuid'], '7', '2' );
+	review_check( 1 === count( $guide['episodes'] ) && 51 === $guide['episodes'][0]['data']['episode_number'], 'Episode pagination includes the final row beyond the 50-Episode boundary' );
+	review_check( '0' === Presentation::season_page( $show['uuid'], array( '7' ) )['season'] && '0' === Presentation::season_page( $show['uuid'], '999' )['season'], 'Malformed or absent seasons fall back to an available public season' );
+	$record = Plugin::store()->resolved( $show['uuid'] );
+	review_check( '' === Attribution::collect( $record ) && str_contains( Attribution::footer(), 'Sources and image credits' ) && str_contains( Attribution::footer(), 'tvmaze.com' ), 'Public credits are collected once in the footer without inline output' );
+	$uid = wp_insert_user(
+		array(
+			'user_login' => 'review-local-' . $tag,
+			'user_pass'  => wp_generate_password(),
+			'role'       => 'editor',
+		)
+	);
+	add_user_to_blog( $a, (int) $uid, 'editor' );
+	wp_set_current_user( (int) $uid );
+	review_check( ! Admin::global_scope( '' ), 'Local-only editors retain a permitted local default' );
+	wp_set_current_user( 1 );
+	review_drain();
+	WP_CLI::success( $GLOBALS['msc_review_checks'] . ' duplicate, import review, propagation, Site A catch-up, season and footer checks passed.' );
+} finally {
+	wp_set_current_user( 1 );
+	remove_filter( 'pre_http_request', $credit_fixture, 99 );
+	restore_current_blog();
+	if ( false === $old_seed ) {
+		delete_network_option( get_current_network_id(), 'msc_open_fixture_seed' );
+	} else {
+		update_network_option( get_current_network_id(), 'msc_open_fixture_seed', $old_seed );
+	}
+	foreach ( array( 'tvmaze', 'wikidata', 'wikipedia', 'commons' ) as $provider ) {
+		delete_site_transient( 'msc_open_rate_' . $provider );
+		delete_site_transient( 'msc_open_backoff_' . $provider );
+	}
+}

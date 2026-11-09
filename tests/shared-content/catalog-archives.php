@@ -1,27 +1,132 @@
 <?php
-use MSC\{CatalogArchive,GamePolicy,NetworkSites,Plugin,Schema};
-if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) { throw new RuntimeException( 'Disposable local network required.' ); }
+use MSC\{CatalogArchive, GamePolicy, NetworkSites, Plugin, Schema};
+if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
+	throw new RuntimeException( 'Disposable local network required.' );
+}
 $GLOBALS['ar_checks'] = 0;
-function ar_check( $ok, string $message ): void { if ( ! $ok ) { throw new RuntimeException( 'FAIL: ' . $message ); } ++$GLOBALS['ar_checks']; WP_CLI::log( 'PASS: ' . $message ); }
-$saved = array(); foreach ( get_sites( array( 'number' => 0 ) ) as $site ) { $saved[ $site->blog_id ] = array( 'types' => get_blog_option( $site->blog_id, 'msc_types', array() ), 'policy' => GamePolicy::mode( (int) $site->blog_id ), 'children' => get_blog_option( $site->blog_id, 'msc_episodes_as_children', false ) ); }
-define( 'MSC_ARCHIVE_FIXTURE_INCLUDE', true ); require __DIR__ . '/archive-fixtures.php';
+function ar_check( $ok, string $message ): void {
+	if ( ! $ok ) {
+		throw new RuntimeException( 'FAIL: ' . $message );
+	}
+	++$GLOBALS['ar_checks'];
+	WP_CLI::log( 'PASS: ' . $message );
+}
+$saved = array();
+foreach ( get_sites( array( 'number' => 0 ) ) as $site ) {
+	$saved[ $site->blog_id ] = array(
+		'types'    => get_blog_option( $site->blog_id, 'msc_types', array() ),
+		'policy'   => GamePolicy::mode( (int) $site->blog_id ),
+		'children' => get_blog_option( $site->blog_id, 'msc_episodes_as_children', false ),
+	);
+}
+define( 'MSC_ARCHIVE_FIXTURE_INCLUDE', true );
+require __DIR__ . '/archive-fixtures.php';
 try {
-    ar_at( $sites['a'], static function () use ( $fixture ) {
-        extract( $fixture ); $model = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => $prefix, 'catalog_sort' => 'title_asc' ) );
-        ar_check( 21 === count( $model['records'] ) && $movies[0]['uuid'] === $model['records'][0]['uuid'], 'Title search and stable A–Z sorting return only the 21 public matching Movies' );
-        ar_check( ! isset( $model['facets'][ 'PRIVATE_GENRE_' . $tag ] ) && ! array_intersect( array_column( $hidden, 'uuid' ), array_column( $model['records'], 'uuid' ) ), 'Draft, private, password-protected and archived records cannot leak titles or facets' );
-        ar_check( ! array_key_exists( 'excerpt', $model['records'][0]['data'] ) && ! array_key_exists( 'content', $model['records'][0]['data'] ) && $excerpt === Plugin::store()->get( $movies[0]['uuid'] )['data']['excerpt'], 'Listing models omit excerpts and bodies while stored content remains unchanged' );
-        $filtered = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => $prefix, 'catalog_facet' => 'Drama', 'catalog_year' => '2091' ) ); ar_check( 10 === count( $filtered['records'] ), 'Genre and year filters combine using effective fields' );
-        $dated = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => $prefix, 'catalog_sort' => 'date_old' ) ); ar_check( $movies[0]['uuid'] === $dated['records'][0]['uuid'] && $movies[20]['uuid'] === $dated['records'][20]['uuid'], 'Release-date sorting keeps undated titles last' );
-        $none = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => 'No matching title ' . $tag ) ); ar_check( ! $none['records'], 'An unmatched search produces a real empty result set' );
-        $bad = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => array( 'bad' ), 'catalog_sort' => 'bad' ) ); ar_check( '' === $bad['filters']['catalog_q'] && 'updated' === $bad['filters']['catalog_sort'], 'Malformed query values and unsupported sorts fall back safely' );
-        $term = get_term_by( 'name', 'Science Fiction', 'msc_genre' ); $tax = CatalogArchive::build( array( 'msc_movie', 'msc_show' ), array( 'catalog_q' => $prefix ), $term ); ar_check( in_array( $movies[0]['uuid'], array_column( $tax['records'], 'uuid' ), true ) && ! in_array( $movies[1]['uuid'], array_column( $tax['records'], 'uuid' ), true ), 'Taxonomy archives keep their category scope alongside title search' );
-        $episode_model = CatalogArchive::build( array( 'msc_episode' ), array( 'catalog_q' => $prefix, 'catalog_facet' => $show['uuid'] ) ); ar_check( 1 === count( $episode_model['records'] ) && isset( $episode_model['facets'][ $show['uuid'] ] ), 'Episode catalogs provide a published parent-Show filter' );
-        $person_model = CatalogArchive::build( array( 'msc_person' ), array( 'catalog_q' => $prefix, 'catalog_facet' => 'Director' ) ); ar_check( 'people' === $person_model['spec']['layout'] && count( $person_model['records'] ) === 1, 'People use profession filtering and the portrait directory model' );
-        ob_start(); msc_archive_card( $model['records'][0] ); $html = ob_get_clean(); ar_check( ! str_contains( $html, $excerpt ) && ! str_contains( $html, $description ) && str_contains( $html, 'PG-13' ) && str_contains( $html, '91 min' ), 'Movie cards show useful metadata without rendering excerpts or descriptions' );
-    } );
-    ar_at( $sites['b'], static function () use ( $prefix ) { $model = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => $prefix . ' Local', 'catalog_year' => '2095', 'catalog_facet' => 'Mystery' ) ); ar_check( 1 === count( $model['records'] ) && '2095-03-04' === $model['records'][0]['catalog_date'], 'Archive search, dates and facets respect local overrides on Site B' ); } );
-    ar_at( $sites['d'], static function () use ( $prefix, $game, $pc, $tag ) { $model = CatalogArchive::build( array( 'msc_game' ), array( 'catalog_q' => $prefix, 'catalog_year' => '2094' ) ); ar_check( array( $game['uuid'] ) === array_column( $model['records'], 'uuid' ) && array( 'PlayStation 5' ) === $model['records'][0]['data']['platforms'], 'Sony archives use the projected Sony release year and platform labels' ); ar_check( ! isset( $model['facets'][ 'PC_ONLY_' . $tag ] ) && ! isset( $model['platforms']['PC (Microsoft Windows)'] ), 'Stale native PC projections cannot leak titles or options after a policy change' ); } );
-    foreach ( $entities as $type => $entity ) { ar_at( in_array( $type, array( 'msc_developer', 'msc_publisher', 'msc_console' ), true ) ? $sites['c'] : $sites['a'], static function () use ( $type, $prefix ) { $model = CatalogArchive::build( array( $type ), array( 'catalog_q' => $prefix ) ); ar_check( 1 === count( $model['records'] ) && in_array( $model['spec']['layout'], array( 'directory', 'hardware' ), true ), 'Entity catalogs have an appropriate directory or hardware model' ); } ); }
-} finally { wp_set_current_user( 1 ); NetworkSites::apply( $saved ); }
+	ar_at(
+		$sites['a'],
+		static function () use ( $fixture ) {
+			extract( $fixture );
+			$model = CatalogArchive::build(
+				array( 'msc_movie' ),
+				array(
+					'catalog_q'    => $prefix,
+					'catalog_sort' => 'title_asc',
+				)
+			);
+			ar_check( 21 === count( $model['records'] ) && $movies[0]['uuid'] === $model['records'][0]['uuid'], 'Title search and stable A–Z sorting return only the 21 public matching Movies' );
+			ar_check( ! isset( $model['facets'][ 'PRIVATE_GENRE_' . $tag ] ) && ! array_intersect( array_column( $hidden, 'uuid' ), array_column( $model['records'], 'uuid' ) ), 'Draft, private, password-protected and archived records cannot leak titles or facets' );
+			ar_check( ! array_key_exists( 'excerpt', $model['records'][0]['data'] ) && ! array_key_exists( 'content', $model['records'][0]['data'] ) && $excerpt === Plugin::store()->get( $movies[0]['uuid'] )['data']['excerpt'], 'Listing models omit excerpts and bodies while stored content remains unchanged' );
+			$filtered = CatalogArchive::build(
+				array( 'msc_movie' ),
+				array(
+					'catalog_q'     => $prefix,
+					'catalog_facet' => 'Drama',
+					'catalog_year'  => '2091',
+				)
+			);
+			ar_check( 10 === count( $filtered['records'] ), 'Genre and year filters combine using effective fields' );
+			$dated = CatalogArchive::build(
+				array( 'msc_movie' ),
+				array(
+					'catalog_q'    => $prefix,
+					'catalog_sort' => 'date_old',
+				)
+			);
+			ar_check( $movies[0]['uuid'] === $dated['records'][0]['uuid'] && $movies[20]['uuid'] === $dated['records'][20]['uuid'], 'Release-date sorting keeps undated titles last' );
+			$none = CatalogArchive::build( array( 'msc_movie' ), array( 'catalog_q' => 'No matching title ' . $tag ) );
+			ar_check( ! $none['records'], 'An unmatched search produces a real empty result set' );
+			$bad = CatalogArchive::build(
+				array( 'msc_movie' ),
+				array(
+					'catalog_q'    => array( 'bad' ),
+					'catalog_sort' => 'bad',
+				)
+			);
+			ar_check( '' === $bad['filters']['catalog_q'] && 'updated' === $bad['filters']['catalog_sort'], 'Malformed query values and unsupported sorts fall back safely' );
+			$term = get_term_by( 'name', 'Science Fiction', 'msc_genre' );
+			$tax  = CatalogArchive::build( array( 'msc_movie', 'msc_show' ), array( 'catalog_q' => $prefix ), $term );
+			ar_check( in_array( $movies[0]['uuid'], array_column( $tax['records'], 'uuid' ), true ) && ! in_array( $movies[1]['uuid'], array_column( $tax['records'], 'uuid' ), true ), 'Taxonomy archives keep their category scope alongside title search' );
+			$episode_model = CatalogArchive::build(
+				array( 'msc_episode' ),
+				array(
+					'catalog_q'     => $prefix,
+					'catalog_facet' => $show['uuid'],
+				)
+			);
+			ar_check( 1 === count( $episode_model['records'] ) && isset( $episode_model['facets'][ $show['uuid'] ] ), 'Episode catalogs provide a published parent-Show filter' );
+			$person_model = CatalogArchive::build(
+				array( 'msc_person' ),
+				array(
+					'catalog_q'     => $prefix,
+					'catalog_facet' => 'Director',
+				)
+			);
+			ar_check( 'people' === $person_model['spec']['layout'] && count( $person_model['records'] ) === 1, 'People use profession filtering and the portrait directory model' );
+			ob_start();
+			msc_archive_card( $model['records'][0] );
+			$html = ob_get_clean();
+			ar_check( ! str_contains( $html, $excerpt ) && ! str_contains( $html, $description ) && str_contains( $html, 'PG-13' ) && str_contains( $html, '91 min' ), 'Movie cards show useful metadata without rendering excerpts or descriptions' );
+		}
+	);
+	ar_at(
+		$sites['b'],
+		static function () use ( $prefix ) {
+			$model = CatalogArchive::build(
+				array( 'msc_movie' ),
+				array(
+					'catalog_q'     => $prefix . ' Local',
+					'catalog_year'  => '2095',
+					'catalog_facet' => 'Mystery',
+				)
+			);
+			ar_check( 1 === count( $model['records'] ) && '2095-03-04' === $model['records'][0]['catalog_date'], 'Archive search, dates and facets respect local overrides on Site B' );
+		}
+	);
+	ar_at(
+		$sites['d'],
+		static function () use ( $prefix, $game, $pc, $tag ) {
+			$model = CatalogArchive::build(
+				array( 'msc_game' ),
+				array(
+					'catalog_q'    => $prefix,
+					'catalog_year' => '2094',
+				)
+			);
+			ar_check( array( $game['uuid'] ) === array_column( $model['records'], 'uuid' ) && array( 'PlayStation 5' ) === $model['records'][0]['data']['platforms'], 'Sony archives use the projected Sony release year and platform labels' );
+			ar_check( ! isset( $model['facets'][ 'PC_ONLY_' . $tag ] ) && ! isset( $model['platforms']['PC (Microsoft Windows)'] ), 'Stale native PC projections cannot leak titles or options after a policy change' );
+		}
+	);
+	foreach ( $entities as $type => $entity ) {
+		ar_at(
+			in_array( $type, array( 'msc_developer', 'msc_publisher', 'msc_console' ), true ) ? $sites['c'] : $sites['a'],
+			static function () use ( $type, $prefix ) {
+				$model = CatalogArchive::build( array( $type ), array( 'catalog_q' => $prefix ) );
+				ar_check( 1 === count( $model['records'] ) && in_array( $model['spec']['layout'], array( 'directory', 'hardware' ), true ), 'Entity catalogs have an appropriate directory or hardware model' );
+			}
+		);
+	}
+} finally {
+	wp_set_current_user( 1 );
+	NetworkSites::apply( $saved );
+}
 WP_CLI::success( $GLOBALS['ar_checks'] . ' archive filtering, privacy, projection and excerpt-preservation checks passed.' );
