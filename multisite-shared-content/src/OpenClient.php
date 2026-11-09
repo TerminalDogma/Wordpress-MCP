@@ -25,8 +25,28 @@ final class OpenClient {
 	public static function fresh( string $name ) {
 		return Transients::fresh( $name );
 	}
+	/** True while a caller that already checked local permission runs allowing_local(). */
+	private static bool $local_sources = false;
+
+	/**
+	 * Let users with local override permission read Wikipedia and Wikidata
+	 * during the callback. The caller must check that permission first; other
+	 * sources (TVmaze, Commons) still need global editing permission.
+	 */
+	public static function allowing_local( callable $callback ) {
+		$previous            = self::$local_sources;
+		self::$local_sources = true;
+		try {
+			return $callback();
+		} finally {
+			self::$local_sources = $previous;
+		}
+	}
+	private static function local_allowed( string $provider ): bool {
+		return in_array( $provider, array( 'wikipedia', 'wikidata' ), true ) && current_user_can( 'msc_override_local' ) && ( self::$local_sources || 'wikipedia' === $provider );
+	}
 	public static function get( string $provider, string $path = '', array $params = array(), int $ttl = 3600 ): array {
-		if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) && ! ( 'wikipedia' === $provider && current_user_can( 'msc_override_local' ) ) ) {
+		if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) && ! self::local_allowed( $provider ) ) {
 			throw new SourceError( 'Source editing permission is required.', 403 );
 		}
 		if ( ! isset( self::ROOTS[ $provider ] ) || ! preg_match( '~^[a-zA-Z0-9/]*$~D', $path ) || 'tvmaze' !== $provider && '' !== $path ) {
@@ -139,8 +159,43 @@ final class OpenClient {
 		}
 		return $id;
 	}
+	/**
+	 * English labels for up to 50 Wikidata items, without their claims.
+	 *
+	 * @return array<string, string> Item ID => label, for items that have one.
+	 */
+	public static function labels( array $ids ): array {
+		$ids = array_slice( array_values( array_unique( array_filter( $ids ) ) ), 0, 50 );
+		foreach ( $ids as $id ) {
+			self::qid( $id );
+		}
+		if ( ! $ids ) {
+			return array();
+		}
+		$response = self::get(
+			'wikidata',
+			'',
+			array(
+				'action'           => 'wbgetentities',
+				'ids'              => implode( '|', $ids ),
+				'props'            => 'labels',
+				'languages'        => 'en|mul',
+				'languagefallback' => 1,
+			),
+			DAY_IN_SECONDS
+		);
+		$labels   = array();
+		foreach ( $ids as $id ) {
+			$entity = $response['entities'][ $id ] ?? array();
+			$label  = $entity['labels']['en']['value'] ?? $entity['labels']['mul']['value'] ?? '';
+			if ( is_string( $label ) && '' !== $label ) {
+				$labels[ $id ] = $label;
+			}
+		}
+		return $labels;
+	}
 	public static function entities( array $ids, bool $claims_only = false ): array {
-		if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) ) {
+		if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) && ! self::local_allowed( 'wikidata' ) ) {
 			throw new SourceError( 'Global editing permission is required.', 403 );
 		}
 		$result = array();
