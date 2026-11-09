@@ -38,4 +38,6 @@ Each site's Release Calendar has **Month** and **Week** links. Week view uses th
 
 **Daily display** offers the first 3, 5, 10 or all releases. The default is 3. A busy day shows **Show N more** to expand its remaining entries in place and **Show fewer** to collapse them. This also works without JavaScript. The view and display choice remain in the URL when navigating and can be bookmarked.
 
+Episode cards include the published parent TV Show name above the Episode title in month and week views. Parent names follow local title overrides.
+
 Calendars continue to use effective published dates and the site's type/platform rules. Published console/platform launch dates now also appear. Company foundation dates and Person birthdays do not create release events. Undated release windows remain on the title page.

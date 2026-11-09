@@ -1,0 +1,48 @@
+<?php
+use MSC\{Attribution,GamePolicy,OpenClient,Plugin,Presentation,Reviews,ReviewScores,Schema,ScoreImport,SourceError,WikipediaScores};
+if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) { throw new RuntimeException( 'Disposable local network required.' ); }
+wp_set_current_user( 1 ); $GLOBALS['wiki_score_checks'] = 0;
+function ws_check( $ok, string $message ): void { if ( ! $ok ) { throw new RuntimeException( 'FAIL: ' . $message ); } ++$GLOBALS['wiki_score_checks']; WP_CLI::log( 'PASS: ' . $message ); }
+$html = file_get_contents( __DIR__ . '/wiki-scores-clair.html' ); $parsed = WikipediaScores::parse( $html );
+ws_check( array( 92.0, 91.0, 91.0 ) === array_column( $parsed['metacritic'], 'score' ), 'An actual Wikipedia reception table yields separate Metacritic platform scores' );
+ws_check( array( 'PlayStation 5', 'PC', 'Xbox Series X/S' ) === array_column( $parsed['metacritic'], 'platform' ), 'Platform abbreviations normalize without selecting the highest score' );
+ws_check( str_contains( $parsed['metacritic'][0]['url'], 'platform=playstation-5' ) && str_contains( $parsed['metacritic'][1]['url'], 'platform=pc' ), 'Each platform keeps its own Metacritic citation URL' );
+ws_check( 98.0 === $parsed['opencritic'][0]['score'] && 'recommended' === $parsed['opencritic'][0]['metric'] && str_contains( $parsed['opencritic'][0]['url'], '/game/18026/' ), 'Wikipedia OpenCritic recommendations retain their percent-recommended meaning and citation' );
+$average = WikipediaScores::parse( '<table><tr><td>OpenCritic</td><td>89/100</td></tr></table>' ); ws_check( 'average' === $average['opencritic'][0]['metric'], 'A genuine OpenCritic critic average remains a separate measure' );
+$columns = WikipediaScores::parse( '<table><tr><th>Aggregator</th><th>PC</th><th>PS5</th></tr><tr><td>Metacritic</td><td>80/100</td><td>90/100</td></tr></table>' ); ws_check( 'PC' === $columns['metacritic'][0]['platform'] && 'PlayStation 5' === $columns['metacritic'][1]['platform'], 'Multi-column platform tables are supported' );
+$prose = WikipediaScores::parse( '<p>Metacritic assigned the game a weighted average score of 84 out of 100, based on 20 reviews.</p>' ); ws_check( 84.0 === $prose['metacritic'][0]['score'], 'Explicit Metacritic prose scores are supported' );
+foreach ( array( 'N/A', 'Pending', '111/100', '-1/100', '98% positive', 'Mighty' ) as $text ) { $empty = WikipediaScores::parse( '<table><tr><td>OpenCritic</td><td>' . $text . '</td></tr></table>' ); ws_check( array() === $empty['opencritic'], 'Unrated, invalid or ambiguous values are not invented or relabeled' ); }
+ws_check( 'Clair Obscur: Expedition 33' === WikipediaScores::title( 'https://en.wikipedia.org/wiki/Clair_Obscur:_Expedition_33#Reception' ), 'Wikipedia URLs normalize to their article title' );
+foreach ( array( 'https://en.wikipedia.org.evil.test/wiki/Game', 'https://127.0.0.1/wiki/Game', 'Template:Game', 'Special:Search', 'Game|other' ) as $bad ) { try { WikipediaScores::title( $bad ); throw new RuntimeException( 'Bad title accepted' ); } catch ( SourceError $e ) { ws_check( true, 'Unsafe URL or non-article namespace rejected' ); } }
+ws_check( ! isset( Schema::defaults()['msc_movie']['fields']['score_wikipedia_title'] ) && ! isset( Schema::defaults()['msc_show']['fields']['score_wikipedia_title'] ), 'Wikipedia score fields are games-only; Movie/TV schemas retain OMDb' );
+$sites = array(); foreach ( get_sites( array( 'number' => 0 ) ) as $site ) { $sites[ $site->path ] = (int) $site->blog_id; } $c = $sites['/site-c/']; $d = $sites['/site-d/']; $title = 'Wikipedia Game Fixture ' . wp_generate_uuid4(); $calls = 0; $paid = 0;
+$saved_rate = get_site_transient( 'msc_open_rate_wikipedia' ); $saved_backoff = get_site_transient( 'msc_open_backoff_wikipedia' ); delete_site_transient( 'msc_open_rate_wikipedia' ); delete_site_transient( 'msc_open_backoff_wikipedia' );
+$mock = static function ( $pre, $args, $url ) use ( &$calls, &$paid, $title, $html ) {
+    if ( str_contains( $url, 'rawg.io' ) || str_contains( $url, 'rapidapi.com' ) ) { ++$paid; throw new RuntimeException( 'Paid provider contacted' ); }
+    if ( ! str_starts_with( $url, 'https://en.wikipedia.org/w/api.php?' ) ) { return $pre; } ++$calls; parse_str( wp_parse_url( $url, PHP_URL_QUERY ), $q );
+    if ( str_contains( $q['page'] ?? '', 'Busy Fixture' ) ) { return array( 'response' => array( 'code' => 429 ), 'headers' => array( 'retry-after' => '30' ), 'body' => '{}' ); }
+    $data = 'query' === $q['action'] ? array( 'query' => array( 'search' => array( array( 'title' => $title, 'snippet' => 'A <b>video game</b> article.' ) ) ) ) : array( 'parse' => array( 'title' => $title, 'revid' => 123456789, 'text' => $html, 'categories' => array() ) );
+    return array( 'response' => array( 'code' => 200 ), 'headers' => array(), 'body' => wp_json_encode( $data ) );
+}; add_filter( 'pre_http_request', $mock, 10, 3 );
+switch_to_blog( $c );
+try {
+    $s = Plugin::store(); $game = $s->create( 'msc_game', array( 'title' => $title, 'platforms' => array( 'PlayStation 5', 'PC' ), 'platform_ids' => array( 167, 6 ) ) ); Plugin::materializer()->sync( (int) $game['id'], $c ); $m = $s->mapping( (int) $game['id'] ); $s->local( $game['id'], array(), array(), (int) $m['local_version'], 'publish' );
+    $search = ScoreImport::preview( $game['uuid'], array() ); ws_check( $title === $search['wiki_candidates'][0]['title'] && empty( $search['values']['metacritic_score'] ), 'Unmatched games offer article choices before importing any score' );
+    $preview = ScoreImport::preview( $game['uuid'], array( 'wikipedia' => $title ) ); ws_check( 92.0 === $preview['values']['metacritic_score'] && 'recommended' === $preview['values']['opencritic_metric'] && 3 === count( $preview['choices']['metacritic'] ), 'Preview supplies explicit platform choices and the correct OpenCritic measure' );
+    ws_check( str_contains( $preview['values']['metacritic_data_source'], 'oldid=123456789' ) && str_contains( $preview['values']['opencritic_data_source'], 'oldid=123456789' ), 'Both scores retain the exact Wikipedia revision as provenance' );
+    $before = $calls; ScoreImport::preview( $game['uuid'], array( 'wikipedia' => $title ) ); ws_check( $before === $calls && 0 === $paid, 'Repeated lookups are cached and no RAWG/RapidAPI request is made' );
+    $s->update( $game['id'], $preview['values'], (int) $game['version'] ); $r = Presentation::record( $game['uuid'] ); ws_check( '' === ReviewScores::badge( $r ) && 2 === count( ReviewScores::rows( $r ) ), 'Aggregate-only items have no image/card badge while keeping their item-page scores' );
+    ob_start(); Presentation::card( $r ); $card = ob_get_clean(); ws_check( ! str_contains( $card, 'item-score-badge' ), 'General catalog cards do not show aggregate score badges' );
+    ob_start(); ReviewScores::render( $r ); $render = ob_get_clean(); ws_check( str_contains( $render, 'Critics recommend' ) && str_contains( $render, '98<small>%' ) && str_contains( $render, 'PlayStation 5' ), 'Item pages label OpenCritic percentages and Metacritic platforms accurately' );
+    $footer = Attribution::footer(); ws_check( str_contains( $footer, 'Wikipedia contributors' ) && str_contains( $footer, 'CC BY-SA 4.0' ) && str_contains( $footer, 'oldid=123456789' ), 'Wikipedia attribution, license and revision links appear in the footer' );
+    $review = wp_insert_post( array( 'post_type' => 'msc_review', 'post_status' => 'publish', 'post_title' => 'Our Wikipedia Fixture Review', 'meta_input' => array( '_msc_review_item' => $game['uuid'], '_msc_review_score' => 8.5 ) ), true ); if ( is_wp_error( $review ) ) { throw new RuntimeException( $review->get_error_message() ); }
+    $badge = ReviewScores::badge( $r ); ws_check( str_contains( $badge, '8.5' ) && str_contains( $badge, 'award-copper' ) && ! str_contains( $badge, 'Metacritic' ) && ! str_contains( $badge, 'OpenCritic' ), 'Only our published review supplies the image score and recommendation' );
+    wp_set_current_user( 0 ); try { ScoreImport::preview( $game['uuid'], array( 'wikipedia' => $title ) ); throw new RuntimeException( 'Anonymous preview accepted' ); } catch ( SourceError $e ) { ws_check( 403 === $e->status, 'Anonymous users cannot fetch or read cached source previews' ); } finally { wp_set_current_user( 1 ); }
+    switch_to_blog( $d ); try { $sony = WikipediaScores::article( $title, $r ); ws_check( 1 === count( $sony['choices']['metacritic'] ) && str_starts_with( $sony['choices']['metacritic'][0]['label'], 'PlayStation 5' ), 'Sony-only sites offer the Sony Metacritic score rather than PC/Xbox scores' ); } finally { restore_current_blog(); }
+    try { WikipediaScores::article( 'Busy Fixture ' . wp_generate_uuid4(), $r ); throw new RuntimeException( 'Quota fixture accepted' ); } catch ( SourceError $e ) { ws_check( 429 === $e->status, 'Wikipedia provider cooldowns are honored' ); }
+    ob_start(); ScoreImport::settings(); $settings = ob_get_clean(); ws_check( ! str_contains( $settings, 'type="password"' ) && str_contains( $settings, 'without API keys' ), 'Score source settings no longer request paid game API keys' );
+} finally {
+    restore_current_blog(); remove_filter( 'pre_http_request', $mock, 10 );
+    false === $saved_rate ? delete_site_transient( 'msc_open_rate_wikipedia' ) : set_site_transient( 'msc_open_rate_wikipedia', $saved_rate, 10 ); false === $saved_backoff ? delete_site_transient( 'msc_open_backoff_wikipedia' ) : set_site_transient( 'msc_open_backoff_wikipedia', $saved_backoff, 300 );
+}
+WP_CLI::success( $GLOBALS['wiki_score_checks'] . ' Wikipedia score, provenance and editorial-only badge checks passed.' );

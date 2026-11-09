@@ -119,6 +119,7 @@ final class Admin {
 		self::form_start( $global ? 'global' : 'local' ); self::hidden( 'type', $type ); self::hidden( 'record', $r['uuid'] ?? '' ); self::hidden( 'version', $r['version'] ?? 0 ); self::hidden( 'local_version', $r['mapping']['local_version'] ?? 0 );
 		echo '<table class="form-table msc-fields"><tbody>';
 		foreach ( $schema['fields'] as $key => $field ) {
+			if ( ! empty( $field['hidden'] ) ) { continue; }
 			$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : '' );
 			if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
 			echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ) . '</label></th><td>';

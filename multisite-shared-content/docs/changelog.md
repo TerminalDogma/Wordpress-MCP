@@ -1,5 +1,13 @@
 # Changelog and release boundaries
 
+## 2.3.1
+
+Episode calendar cards now include the published parent Show name above the Episode title in month/week views, respecting local parent titles and public visibility.
+
+Game aggregates now use Wikipedia instead of RAWG/RapidAPI, with article search/selection, cited revision links, explicit Metacritic platform choices and correctly distinguished OpenCritic critic averages versus recommendation percentages. No paid game API credentials are needed. Movie/TV OMDb imports are unchanged. Legacy lookup fields are hidden without deleting saved values.
+
+Image/poster/catalog badges now show only the site’s own published editorial review. Aggregates remain in the item-page score section. Wikipedia attribution and license details are collected in the footer.
+
 ## 2.3.0
 
 Adds site-specific native Reviews with ACF Free item links, half-point 1–10 scores, verdicts, positives/negatives, platform context and dedicated review/archive designs. Reviews can be disabled per site without deleting posts. Published unprotected editorial reviews take precedence on item images, catalog cards and score sections. Recommendations are Gold at 9.5/10, Silver at 9 and Copper at 8.5. Native review associations use shared item UUIDs, while editorial scores remain independent per site.

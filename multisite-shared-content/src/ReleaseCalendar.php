@@ -62,13 +62,19 @@ final class ReleaseCalendar {
         $args = array_merge( array( get_current_blog_id(), $range['start'], $range['end'] ), $types );
         $sql = "SELECT DISTINCT r.id FROM $lookup l INNER JOIN $records r ON r.id=l.record_id INNER JOIN $maps m ON m.record_id=r.id AND m.site_id=l.site_id INNER JOIN $wpdb->posts p ON p.ID=m.post_id WHERE l.site_id=%d AND l.field LIKE 'cal:%%' AND l.text_value>=%s AND l.text_value<%s AND r.state='active' AND m.status='publish' AND m.suppressed=0 AND p.post_status='publish' AND p.post_password='' AND r.type IN (" . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ') ORDER BY r.id';
         $ids = $wpdb->get_col( $wpdb->prepare( $sql, ...$args ) );
+        $parents = array();
         foreach ( $ids as $id ) {
             $r = Presentation::record( (int) $id ); if ( ! $r ) { continue; }
+            $show_title = ''; $parent_uuid = $r['data']['parent_show'] ?? '';
+            if ( 'msc_episode' === $r['type'] && is_string( $parent_uuid ) && $parent_uuid ) {
+                if ( ! array_key_exists( $parent_uuid, $parents ) ) { $parent = Presentation::record( $parent_uuid ); $parents[ $parent_uuid ] = $parent && 'msc_show' === $parent['type'] && '' === get_post_field( 'post_password', (int) $parent['mapping']['post_id'] ) ? $parent : null; }
+                $parent = $parents[ $parent_uuid ]; if ( $parent ) { $show_title = $parent['data']['title'] ?? ''; Attribution::collect( $parent, array( 'title' ) ); }
+            }
             foreach ( self::events( $r, get_current_blog_id() ) as $event ) {
                 if ( $event['date'] < $range['start'] || $event['date'] >= $range['end'] ) { continue; } $result['platforms'] = array_merge( $result['platforms'], $event['platforms'] ); if ( $event['region'] ) { $result['regions'][] = $event['region']; }
                 if ( $platform && ! in_array( $platform, $event['platforms'], true ) || $region && $region !== $event['region'] ) { continue; }
                 Attribution::collect( $r, array( $event['field'] ) );
-                $event += array( 'title' => $r['data']['title'] ?? '(Untitled)', 'url' => Presentation::url( $r ), 'type' => $r['type'], 'uuid' => $r['uuid'] ); $result['events'][] = $event;
+                $event += array( 'title' => $r['data']['title'] ?? '(Untitled)', 'url' => Presentation::url( $r ), 'type' => $r['type'], 'uuid' => $r['uuid'], 'show_title' => $show_title ); $result['events'][] = $event;
             }
         }
         foreach ( array( 'platforms', 'regions' ) as $key ) { $result[ $key ] = array_values( array_unique( $result[ $key ] ) ); natcasesort( $result[ $key ] ); $result[ $key ] = array_values( $result[ $key ] ); }
@@ -83,7 +89,7 @@ final class ReleaseCalendar {
     }
     private static function url( array $f ): string { return add_query_arg( array_filter( array( 'calendar_month' => $f['month'], 'calendar_view' => $f['view'], 'calendar_date' => $f['date'], 'calendar_limit' => (string) $f['limit'], 'release_type' => $f['type'], 'release_platform' => $f['platform'], 'release_region' => $f['region'] ), 'strlen' ), NetworkSites::calendar_url() ) . '#release-calendar'; }
     private static function event_markup( array $event ): string {
-        $html = '<a class="calendar-event type-' . esc_attr( $event['type'] ) . '" href="' . esc_url( $event['url'] ) . '"><span class="calendar-event-kind">' . esc_html( $event['kind'] ) . '</span><strong>' . esc_html( $event['title'] ) . '</strong>';
+        $html = '<a class="calendar-event type-' . esc_attr( $event['type'] ) . '" href="' . esc_url( $event['url'] ) . '"><span class="calendar-event-kind">' . esc_html( $event['kind'] ) . '</span>' . ( ! empty( $event['show_title'] ) ? '<span class="calendar-event-show">' . esc_html( $event['show_title'] ) . '</span>' : '' ) . '<strong>' . esc_html( $event['title'] ) . '</strong>';
         if ( $event['platforms'] || $event['region'] ) { $html .= '<small>' . esc_html( implode( ' · ', array_filter( array( implode( ', ', $event['platforms'] ), $event['region'] ) ) ) ) . '</small>'; } return $html . '</a>';
     }
     public static function markup( array $args ): string {

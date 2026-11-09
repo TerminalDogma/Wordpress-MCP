@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 8;
+	public const BUILTIN_VERSION = 9;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -109,7 +109,7 @@ final class Schema {
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 8 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
+					if ( $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -120,6 +120,7 @@ final class Schema {
 					if ( isset( $field['property'] ) ) { $properties[] = $field['property']; }
 				}
 			}
+			if ( $previous_version < 9 ) { foreach ( $schemas as &$schema ) { foreach ( array( 'score_rawg_id', 'score_opencritic_id' ) as $obsolete ) { if ( isset( $schema['fields'][ $obsolete ] ) ) { $schema['fields'][ $obsolete ]['hidden'] = true; } } if ( 'OpenCritic critic score / 100' === ( $schema['fields']['opencritic_score']['label'] ?? '' ) ) { $schema['fields']['opencritic_score']['label'] = 'OpenCritic score or critics recommended (0–100)'; } } unset( $schema ); }
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
 			if ( ! update_network_option( $network, 'msc_builtin_schema_version', self::BUILTIN_VERSION ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== self::BUILTIN_VERSION ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );
@@ -174,9 +175,10 @@ final class Schema {
 		$type = $field['type'];
 		if ( in_array( $field['format'] ?? '', array( 'score_url', 'score_source_url' ), true ) ) {
 			if ( '' === $value || null === $value ) { return ''; }
-			$url = 'score_url' === $field['format'] ? ReviewScores::provider_url( $field['provider'], $value ) : ( is_string( $value ) && preg_match( '~^https://(?:www\.)?rawg\.io/games/[a-z0-9-]+/?$~D', $value ) ? $value : '' );
+			$url = 'score_url' === $field['format'] ? ReviewScores::provider_url( $field['provider'], $value ) : ReviewScores::source_url( $value );
 			if ( ! $url ) { throw new \InvalidArgumentException( 'Enter an HTTPS title page URL on the selected score provider’s website.' ); } return $url;
 		}
+		if ( 'wikipedia_title' === ( $field['format'] ?? '' ) ) { return WikipediaScores::title( $value ); }
 		if ( 'trailers' === ( $field['format'] ?? '' ) ) { return Trailers::sanitize( $value ); }
 		if ( isset( self::$types[ $type ] ) ) { return ( self::$types[ $type ] )( $value, $field ); }
 		if ( 'relationship_list' === $type ) {

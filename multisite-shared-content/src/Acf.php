@@ -26,7 +26,7 @@ final class Acf {
 		foreach ( Schema::all() as $type => $schema ) {
 			$fields = array();
 			foreach ( $schema['fields'] as $name => $definition ) {
-				if ( isset( $definition['property'] ) || ! isset( $types[ $definition['type'] ] ) ) { continue; }
+				if ( ! empty( $definition['hidden'] ) || isset( $definition['property'] ) || ! isset( $types[ $definition['type'] ] ) ) { continue; }
 				$key = self::key( $type, $name );
 				$field = array( 'key' => $key, 'name' => 'msc_' . $name, 'label' => $definition['label'] ?? ucwords( str_replace( '_', ' ', $name ) ), 'type' => $types[ $definition['type'] ], 'msc_type' => $type, 'msc_name' => $name, 'required' => 0 );
 				if ( ! empty( $definition['taxonomy'] ) ) { $field['type'] = 'select'; $field['multiple'] = 'multiselect' === $definition['type']; $field['ui'] = 1; $choices = Taxonomies::choices( $definition ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }

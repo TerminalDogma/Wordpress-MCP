@@ -26,7 +26,17 @@ async def main():
             if urlparse(route.request.url).hostname not in ('localhost','127.0.0.1'): await route.abort(); return
             body = parse_qs(route.request.post_data or '')
             if body.get('action') == ['msc_score_preview']:
-                assert body.get('nonce') and body.get('record') == [data['movie']['uuid']]
+                assert body.get('nonce')
+                if body.get('record') == [data['game']['uuid']]:
+                    if not body.get('wikipedia'):
+                        await route.fulfill(json={'success':True,'data':{'values':{},'matches':[],'warnings':['Choose the matching article.'],'wiki_candidates':[{'title':'Fixture Game Wikipedia','description':'Video game article'}],'choices':{}}}); return
+                    source = 'https://en.wikipedia.org/w/index.php?title=Fixture_Game&oldid=123456789'
+                    ps5 = {'metacritic_score':92,'metacritic_url':'https://www.metacritic.com/game/fixture/?platform=playstation-5','metacritic_platform':'PlayStation 5','metacritic_data_source':source}
+                    pc = dict(ps5,metacritic_score=90,metacritic_platform='PC',metacritic_url='https://www.metacritic.com/game/fixture/?platform=pc')
+                    oc = {'opencritic_score':98,'opencritic_url':'https://opencritic.com/game/1234','opencritic_metric':'recommended','opencritic_data_source':source}
+                    values = dict(ps5,**oc,score_wikipedia_title='Fixture Game Wikipedia',score_updated_at='2099-01-01T12:00:00Z')
+                    await route.fulfill(json={'success':True,'data':{'values':values,'matches':['Wikipedia: Fixture Game Wikipedia'],'warnings':[],'wiki_candidates':[],'choices':{'metacritic':[{'label':'PlayStation 5 · 92/100','values':ps5},{'label':'PC · 90/100','values':pc}],'opencritic':[{'label':'98% critics recommend','values':oc}]}}}); return
+                assert body.get('record') == [data['movie']['uuid']]
                 await route.fulfill(json={'success':True,'data':{'values':{'rotten_tomatoes_score':90,'metacritic_score':preview_score,'metacritic_url':'https://www.metacritic.com/movie/fixture/','score_updated_at':'2099-01-01T12:00:00Z'},'matches':['OMDb: Matched Movie Fixture'],'warnings':[]}}); return
             await route.continue_()
         await context.route('**/*', route_request)
@@ -61,6 +71,12 @@ async def main():
         assert await page.locator('.review-archive-card .excerpt').count() == 0
         await page.goto(base+'/site-c/games/')
         await expect(page.locator('a[href="'+data['game']['url']+'"] .item-score-badge').first).to_be_visible()
+        await page.goto(data['aggregate_only']['url'])
+        await expect(page.locator('.hero-art .item-score-badge')).to_have_count(0)
+        await expect(page.locator('.review-score-card')).to_have_count(2)
+        await page.goto(base+'/site-c/games/')
+        await expect(page.locator('a[href="'+data['aggregate_only']['url']+'"] .item-score-badge')).to_have_count(0)
+        print('PASS: Aggregate-only items show scores only on their item pages; hero posters and archive cards have no outside-score badges.',flush=True)
         print('PASS: Review archives omit excerpts, catalog cards carry image scores, and review/item layouts fit mobile.',flush=True)
         await page.goto(base+'/wp-login.php'); await page.fill('#user_login',config['WORDPRESS_ADMIN_USER']); await page.fill('#user_pass',config['WORDPRESS_ADMIN_PASSWORD']); await page.click('#wp-submit'); await page.wait_for_url('**/wp-admin/**')
         bad = await context.request.post(base+'/site-a/wp-admin/admin-ajax.php',form={'action':'msc_score_preview','record':data['movie']['uuid']})
@@ -78,6 +94,22 @@ async def main():
                 await page.goto(data['movie']['url']); await expect(page.locator('.review-score-card').nth(2).locator('.review-score-value')).to_contain_text('84')
                 await expect(page.locator('.hero-art .item-score-badge strong')).to_contain_text('9.5')
                 preview_score = 83
+        await page.goto(data['game']['acf'])
+        article = page.locator('.acf-field[data-name="msc_score_wikipedia_title"] input')
+        await article.fill('')
+        await page.get_by_role('button',name='Fetch aggregate scores',exact=True).click()
+        await page.get_by_role('combobox',name='Wikipedia article',exact=True).select_option('Fixture Game Wikipedia')
+        await page.get_by_role('button',name='Fetch aggregate scores',exact=True).click()
+        await page.locator('[data-provider-choice="metacritic"]').select_option('1')
+        await page.get_by_role('button',name='Use selected scores',exact=True).click()
+        await expect(page.locator('.acf-field[data-name="msc_metacritic_score"] input')).to_have_value('90')
+        async with page.expect_navigation(wait_until='domcontentloaded'): await page.get_by_role('button',name='Save shared fields globally',exact=True).click()
+        await page.goto(data['game']['url'])
+        await expect(page.locator('.review-score-card').nth(1)).to_contain_text('PC')
+        await expect(page.locator('.review-score-card').nth(2)).to_contain_text('Critics recommend')
+        await expect(page.locator('.review-score-card').nth(2).locator('.review-score-value')).to_contain_text('98%')
+        await expect(page.locator('.hero-art .item-score-badge strong')).to_contain_text('9')
+        print('PASS: Game editor searches Wikipedia, selects the article/platform and saves correctly labeled OpenCritic percentages; own-review image priority stays intact.',flush=True)
         await page.goto(data['movie']['edit'])
         welcome = page.get_by_role('dialog',name='Welcome to the editor')
         if await welcome.count(): await welcome.get_by_role('button',name='Close',exact=True).click()

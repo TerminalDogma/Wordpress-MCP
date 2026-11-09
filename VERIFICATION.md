@@ -1,4 +1,10 @@
-# Shared Content 2.3.0 verification
+# Shared Content 2.3.1 verification
+
+Episode calendar checks additionally cover parent titles in month/week cards, local parent-title overrides and exclusion of private Show names.
+
+## Wikipedia game aggregates and editorial-only badges
+
+All 33 focused Wikipedia checks, 34 editorial/OMDb checks and the review browser workflow passed. A reduced real Wikipedia reception table verifies per-platform Metacritic scores/citations and OpenCritic percent-recommended data. Focused checks cover alternate tables/prose, missing and ambiguous values, article URL normalization, revision provenance, caches, permissions, Sony filtering, no paid provider calls, source attribution and editorial-only image/card badges. The existing Movie/TV OMDb regressions remain in place. Chromium covers article/platform selection, persisted recommendation percentages, unchanged Movie forms and the absence of aggregate badges on unreviewed posters/archive cards. Provider network replies use deterministic fixtures; extraction is also exercised against the captured Wikipedia table.
 
 ## Editorial reviews and aggregate scores
 
