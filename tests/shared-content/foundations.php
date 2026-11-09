@@ -8,7 +8,7 @@
  * @package MultisiteSharedContent
  */
 
-use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Rest, Schema, Transients};
+use MSC\{BusyError, ConflictError, Database, HttpError, NotFoundError, OmdbClient, OpenClient, PermissionError, Queue, Rest, Schema, Transients};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() ) {
 	throw new RuntimeException( 'Disposable local network required.' );
@@ -109,5 +109,46 @@ try {
 	update_network_option( $network, 'msc_schemas', $saved );
 }
 foundation_check( Schema::all() === $saved, 'Restored schemas are visible again' );
+
+// Queue lease: a worker that dies during a job does not block the queue.
+global $wpdb;
+$jobs = Database::table( 'jobs' );
+for ( $i = 0; $i < 50 && Queue::status()['pending']; ++$i ) {
+	Queue::run( 1000 );
+}
+$site_a  = (int) get_id_from_blogname( 'site-a' );
+$records = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( 'SELECT record_id FROM ' . Database::table( 'maps' ) . ' WHERE site_id=%d AND post_id IS NOT NULL ORDER BY record_id LIMIT 2', $site_a ) ) );
+foundation_check( 2 === count( $records ), 'Two materialized records are available for queue tests' );
+list( $dying, $healthy ) = $records;
+Queue::sync( $dying, $site_a );
+$child = 'add_action( "msc_materialized", static function () { exit( 3 ); } ); MSC\Queue::run( 1 );';
+shell_exec( 'wp eval ' . escapeshellarg( $child ) . ' 2>&1' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.system_calls_shell_exec
+$row = $wpdb->get_row( $wpdb->prepare( "SELECT attempts,state,available_at>UTC_TIMESTAMP() AS leased FROM $jobs WHERE job_key=%s", "sync:$dying:$site_a" ), ARRAY_A );
+foundation_check( $row && 1 === (int) $row['attempts'] && 'pending' === $row['state'] && '1' === (string) $row['leased'], 'A job whose worker died is leased instead of staying first in line' );
+Queue::sync( $healthy, $site_a );
+Queue::run( 100 );
+foundation_check( null === $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $jobs WHERE job_key=%s", "sync:$healthy:$site_a" ) ), 'Later jobs still run while the dead job waits out its lease' );
+$wpdb->query( $wpdb->prepare( "UPDATE $jobs SET attempts=5,available_at=UTC_TIMESTAMP() WHERE job_key=%s", "sync:$dying:$site_a" ) );
+$reported = '';
+$listener = static function ( $job, $error ) use ( &$reported ) {
+	$reported = $error;
+};
+add_action( 'msc_job_failed', $listener, 10, 2 );
+Queue::run( 100 );
+remove_action( 'msc_job_failed', $listener, 10 );
+$row = $wpdb->get_row( $wpdb->prepare( "SELECT state,last_error FROM $jobs WHERE job_key=%s", "sync:$dying:$site_a" ), ARRAY_A );
+foundation_check( 'failed' === $row['state'] && str_contains( $row['last_error'], 'worker stopped' ), 'A job that kills the worker every time fails with an explanation' );
+foundation_check( str_contains( $reported, 'worker stopped' ), 'msc_job_failed reports the failure' );
+$wpdb->delete( $jobs, array( 'job_key' => "sync:$dying:$site_a" ) );
+
+// The cron tick skips quietly while another worker holds the lock.
+$second = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+$worker = 'msc:' . md5( Database::table( 'worker' ) );
+$second->get_var( $second->prepare( 'SELECT GET_LOCK(%s, 0)', $worker ) );
+$started = microtime( true );
+$error   = foundation_error( static fn() => do_action( 'msc_tick' ) );
+$second->get_var( $second->prepare( 'SELECT RELEASE_LOCK(%s)', $worker ) );
+$second->close();
+foundation_check( null === $error && microtime( true ) - $started < 2, 'The cron tick does not wait for or fail on a busy worker lock' );
 
 WP_CLI::success( $GLOBALS['foundation_checks'] . ' foundation checks passed.' );

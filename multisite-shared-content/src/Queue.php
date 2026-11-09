@@ -14,19 +14,50 @@ final class Queue {
 	public static function seed( int $site, string $type ): void {
 		self::put( "seed:$site:$type", 'seed', 0, $site, $type );
 	}
-	public static function run( int $limit = 20 ): array {
+	/**
+	 * Run due jobs while holding the network worker lock.
+	 *
+	 * Each job is claimed before it runs: its attempt count goes up and it is
+	 * hidden for a lease period. If PHP dies during the job (fatal error,
+	 * timeout, out of memory), the job reappears after the lease instead of
+	 * blocking the queue, and fails for good after the maximum attempts.
+	 *
+	 * Filters: msc_queue_max_attempts (5), msc_queue_lease_seconds (300),
+	 * msc_queue_time_limit (20 seconds), msc_queue_batch_limit (5000).
+	 * Action: msc_job_failed( array $job, string $error ) when a job gives up.
+	 *
+	 * @param int $limit Maximum jobs to run.
+	 * @param int $wait  Seconds to wait for the worker lock.
+	 */
+	public static function run( int $limit = 20, int $wait = 5 ): array {
 		return Database::lock(
 			'worker',
 			static function () use ( $limit ) {
 				global $wpdb;
-				$ok     = 0;
-				$failed = 0;
-				$table  = Database::table( 'jobs' );
-				$start  = microtime( true );
-				for ( $n = 0; $n < min( 5000, $limit ) && microtime( true ) - $start < 20; ++$n ) {
-					$j = $wpdb->get_row( "SELECT * FROM $table WHERE state='pending' AND available_at<=UTC_TIMESTAMP() ORDER BY id LIMIT 1", ARRAY_A );
+				$ok           = 0;
+				$failed       = 0;
+				$table        = Database::table( 'jobs' );
+				$start        = microtime( true );
+				$max_attempts = max( 1, (int) apply_filters( 'msc_queue_max_attempts', 5 ) );
+				$lease        = max( 30, (int) apply_filters( 'msc_queue_lease_seconds', 300 ) );
+				$time_limit   = (float) apply_filters( 'msc_queue_time_limit', 20 );
+				$batch        = min( $limit, max( 1, (int) apply_filters( 'msc_queue_batch_limit', 5000 ) ) );
+				for ( $n = 0; $n < $batch && microtime( true ) - $start < $time_limit; ++$n ) {
+					$j = $wpdb->get_row( "SELECT * FROM $table WHERE state='pending' AND available_at<=UTC_TIMESTAMP() ORDER BY available_at,id LIMIT 1", ARRAY_A );
 					if ( ! $j ) {
 						break;
+					}
+					if ( (int) $j['attempts'] >= $max_attempts ) {
+						// Every earlier attempt ended without reaching the catch block below.
+						$error = 'The worker stopped during this job (fatal error or timeout).';
+						$wpdb->query( $wpdb->prepare( "UPDATE $table SET state='failed',last_error=%s WHERE id=%d AND generation=%d", $error, $j['id'], $j['generation'] ) );
+						do_action( 'msc_job_failed', $j, $error );
+						++$failed;
+						continue;
+					}
+					$claimed = Database::check( $wpdb->query( $wpdb->prepare( "UPDATE $table SET attempts=attempts+1,available_at=DATE_ADD(UTC_TIMESTAMP(),INTERVAL %d SECOND) WHERE id=%d AND generation=%d AND state='pending'", $lease, $j['id'], $j['generation'] ) ) );
+					if ( 1 !== $claimed ) {
+						continue; // Re-queued with new work since it was read.
 					}
 					try {
 						$scan_after = self::execute( $j );
@@ -41,12 +72,16 @@ final class Queue {
 								)
 							);
 						} else {
-							Database::check( $wpdb->query( $wpdb->prepare( "UPDATE $table SET scan_after=%d WHERE id=%d AND generation=%d", $scan_after, $j['id'], $j['generation'] ) ) );
+							Database::check( $wpdb->query( $wpdb->prepare( "UPDATE $table SET scan_after=%d,attempts=0,available_at=UTC_TIMESTAMP() WHERE id=%d AND generation=%d", $scan_after, $j['id'], $j['generation'] ) ) );
 						}
 						++$ok;
 					} catch ( \Throwable $e ) {
-						$a = (int) $j['attempts'] + 1;
-						$wpdb->query( $wpdb->prepare( "UPDATE $table SET attempts=%d,state=%s,available_at=DATE_ADD(UTC_TIMESTAMP(),INTERVAL %d SECOND),last_error=%s WHERE id=%d AND generation=%d", $a, $a >= 5 ? 'failed' : 'pending', min( 3600, 30 * ( 2 ** $a ) ), substr( sanitize_text_field( $e->getMessage() ), 0, 1000 ), $j['id'], $j['generation'] ) );
+						$attempts = (int) $j['attempts'] + 1;
+						$error    = substr( sanitize_text_field( $e->getMessage() ), 0, 1000 );
+						$wpdb->query( $wpdb->prepare( "UPDATE $table SET state=%s,available_at=DATE_ADD(UTC_TIMESTAMP(),INTERVAL %d SECOND),last_error=%s WHERE id=%d AND generation=%d", $attempts >= $max_attempts ? 'failed' : 'pending', min( 3600, 30 * ( 2 ** $attempts ) ), $error, $j['id'], $j['generation'] ) );
+						if ( $attempts >= $max_attempts ) {
+							do_action( 'msc_job_failed', $j, $error );
+						}
 						++$failed;
 					}
 				}
@@ -55,7 +90,8 @@ final class Queue {
 					'errors'    => $failed,
 					'status'    => self::status(),
 				);
-			}
+			},
+			$wait
 		);
 	}
 	private static function execute( array $j ): ?int {

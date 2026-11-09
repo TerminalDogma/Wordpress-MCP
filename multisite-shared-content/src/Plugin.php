@@ -20,6 +20,19 @@ final class Plugin {
 		Permissions::install_roles();
 		self::schedule();
 	}
+	/**
+	 * Run boot-time work without letting one failure break every request.
+	 *
+	 * Errors are logged and passed to the msc_error action.
+	 */
+	public static function guard( string $context, callable $callback ): void {
+		try {
+			$callback();
+		} catch ( \Throwable $e ) {
+			error_log( 'Multisite Shared Content (' . $context . '): ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			do_action( 'msc_error', $e, $context );
+		}
+	}
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( 'msc_tick' );
 	}
@@ -40,7 +53,7 @@ final class Plugin {
 			return;
 		}
 		Schema::boot();
-		Schema::upgrade_defaults();
+		self::guard( 'schema upgrade', array( Schema::class, 'upgrade_defaults' ) );
 		GameFields::boot();
 		MediaImport::boot();
 		ImageSearch::boot();
@@ -61,9 +74,14 @@ final class Plugin {
 		add_action(
 			'init',
 			static function () {
-				if ( 1 !== (int) get_network_option( get_current_network_id(), 'msc_db_version' ) ) {
-					Database::migrate();
-				}
+				self::guard(
+					'database migration',
+					static function () {
+						if ( 1 !== (int) get_network_option( get_current_network_id(), 'msc_db_version' ) ) {
+							Database::migrate();
+						}
+					}
+				);
 				self::register_posts();
 			},
 			8
@@ -86,7 +104,17 @@ final class Plugin {
 		add_action(
 			'msc_tick',
 			static function () {
-				Queue::run( 100 );
+				// Another worker (system cron, WP-CLI) may hold the lock; skip this tick quietly.
+				self::guard(
+					'queue',
+					static function () {
+						try {
+							Queue::run( 100, 0 );
+						} catch ( BusyError $e ) {
+							return;
+						}
+					}
+				);
 			}
 		);
 		add_action(
