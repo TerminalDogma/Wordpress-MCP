@@ -10,9 +10,10 @@ final class Publication {
         if ( 'global' === $scope && ! self::global_allowed() ) { throw new \RuntimeException( 'Network administrator permission is required to publish globally.' ); }
         if ( 'active' !== $record['state'] ) { throw new \InvalidArgumentException( 'Restore the shared record before publishing it.' ); }
     }
-    public static function publish( int $id, string $scope, int $local_version ): array {
+    public static function publish( int $id, string $scope, int $local_version, ?int $global_version = null ): array {
         $store = Plugin::store(); $r = $store->get( $id ); if ( ! $r ) { throw new \InvalidArgumentException( 'Record not found.' ); } self::require( $scope, $r );
-        return Database::transaction( static function () use ( $store, $r, $id, $scope, $local_version ) {
+        return Database::transaction( static function () use ( $store, $r, $id, $scope, $local_version, $global_version ) {
+            if ( null !== $global_version ) { global $wpdb; $actual = $wpdb->get_var( $wpdb->prepare( 'SELECT version FROM ' . Database::table( 'records' ) . ' WHERE id=%d FOR UPDATE', $id ) ); if ( (int) $actual !== $global_version ) { throw new \RuntimeException( 'The global record changed after selection; review and select it again.' ); } }
             $current = get_current_blog_id(); $m = $store->mapping( $id, $current );
             if ( ! $m || (int) $m['local_version'] !== $local_version ) { throw new \RuntimeException( 'Conflict: local publication changed. Reload before publishing.' ); }
             $sites = 'site' === $scope ? array( get_site( $current ) ) : get_sites( array( 'network_id' => get_current_network_id(), 'number' => 0, 'deleted' => 0, 'spam' => 0, 'archived' => 0, 'orderby' => 'id', 'order' => 'ASC' ) );

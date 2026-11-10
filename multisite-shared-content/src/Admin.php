@@ -98,7 +98,7 @@ final class Admin {
 		if ( ! $r && empty( $_GET['new'] ) ) {
 			if ( 'msc_episode' === $type ) { EpisodeAdmin::shared_list(); echo '</div>'; return; }
 			if ( current_user_can( 'msc_create_global' ) ) { echo '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=msc&type=' . $type . '&new=1' ) ) . '">Create global record</a></p>'; }
-			echo '<p>Use the regular post list for local publishing, search, bulk changes, and Gutenberg editing.</p><table class="widefat striped"><thead><tr><th>Title</th><th>Global identifier</th><th>Actions</th></tr></thead><tbody>';
+			echo '<p><a class="button" href="' . esc_url( add_query_arg( 'post_type', $type, admin_url( 'edit.php' ) ) ) . '">Open post list for bulk publishing</a></p><p>Use the regular post list for local publishing, search, bulk changes, and Gutenberg editing.</p><table class="widefat striped"><thead><tr><th>Title</th><th>Global identifier</th><th>Actions</th></tr></thead><tbody>';
 			$after = absint( $_GET['after'] ?? 0 ); $ids = Plugin::store()->query( $type, array(), 0, 50, $after );
 			foreach ( $ids as $record ) { $row = Plugin::store()->get( $record ); echo '<tr><td>' . esc_html( $row['data']['title'] ?? '(Untitled)' ) . '</td><td><code>' . esc_html( $row['uuid'] ) . '</code></td><td><a href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $row['uuid'] ) ) . '">Manage fields</a></td></tr>'; }
 			echo '</tbody></table>';

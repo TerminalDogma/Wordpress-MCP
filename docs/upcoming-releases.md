@@ -1,4 +1,4 @@
-# Upcoming release guides (2.5.0)
+# Upcoming release guides (2.6.0)
 
 Update the existing Mac checkout with Docker Desktop running:
 
@@ -10,16 +10,16 @@ sh bin/shared-content.sh setup
 
 Setup creates **Upcoming Releases** at `/upcoming-releases/` on each demo site and adds it to the catalog navigation. The guide follows each site's enabled content types and platform policy, including Sony-only releases on Site D and Comic Issues on Site B. The original Release Calendar remains available.
 
-## Generate monthly pages
+## Generate monthly posts for review
 
-1. Open **Shared Content → Release Pages**.
+1. Open **Shared Content → Release Posts**.
 2. Choose a first month and **1–12 months**.
 3. Optionally choose a content type and/or a published streaming service.
-4. Click **Generate monthly release pages**.
+4. Click **Generate release posts for review**.
 
-These are ordinary WordPress Pages beneath Upcoming Releases. Editors can add an introduction around the shortcode. The listings remain live: changing a published date, title, artwork, service assignment, local override or publication state updates the page's contents. No scheduled scraper, paid API or recurring regeneration is required.
+These are ordinary WordPress Posts created as Pending Review. They must be reviewed and published before readers can see them. The rolling Upcoming Releases hub remains a Page. Editors can add an introduction around the shortcode. The listings remain live: changing a published date, title, artwork, service assignment, local override or publication state updates the page's contents. No scheduled scraper, paid API or recurring regeneration is required.
 
-Repeating the same month/type/service selection reuses the existing page and preserves its copy and publication state. Trashed guides stay trashed; restore them in Pages → Trash if needed. Generated pages can be viewed/edited from the generator table.
+Repeating the same month/type/service selection reuses the existing page and preserves its copy and publication state. Trashed guides stay trashed; restore them in Posts → Trash if needed. Generated posts can be viewed/edited from the generator table and the ordinary Posts list.
 
 For a manually created page, insert `[msc_upcoming_releases]`. Optional attributes include `month="2030-05"`, `type="msc_show"`, `service="SERVICE-UUID"` and `view="list"`. Omit the month for a rolling current-month guide.
 

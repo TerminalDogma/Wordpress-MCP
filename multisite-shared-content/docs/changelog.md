@@ -1,5 +1,13 @@
 # Changelog and release boundaries
 
+## 2.6.0
+
+A bundled Wikidata CC0 training catalog provides 250 distinct Movies and 250 distinct TV Shows, ranked by Wikipedia-language coverage within a documented candidate sample. The repeatable import creates drafts on enabled sites, reuses source identities and matching title/year records, preserves editorial fields and local overrides, and reports conflicts. Both a resumable admin importer and `wp msc training` / `sh bin/shared-content.sh training` are included. Native title lists have a Training catalog filter.
+
+Native Posts, Pages, Reviews and shared-type lists offer Publish selected on this site. Shared types also offer Publish selected globally for authorized network administrators. Batches process ten records per request, can pause/resume, validate ownership and permissions, skip changed selections, preserve field overrides/local removals, and retain the originating list filters. Global versions are checked under a record lock during publication.
+
+Monthly release guides are now regular Posts created as Pending Review. Existing generated Pages move to Posts, retaining their IDs and text; published/scheduled guides are held for review. Private, draft and trashed states are retained. The rolling Upcoming Releases hub remains a Page. The normal Posts list includes a Release guides filter, and article titles/authors use the regular post template.
+
 ## 2.5.0
 
 Each demo site has a live Upcoming Releases hub. A TV Insider calendar reference informed its date-grouped cards, month navigation and provider badges; existing site branding is retained. Search, type/service filters, compact lists, AJAX navigation/history, busy-month pagination and mobile layouts are included.

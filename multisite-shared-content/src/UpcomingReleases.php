@@ -61,9 +61,10 @@ final class UpcomingReleases {
     private static function service_logo( array $service ): string {
         return $service['logo'] ? '<img src="' . esc_url( $service['logo'] ) . '" alt="" width="90" height="42" loading="lazy">' : '<span class="release-service-initial" aria-hidden="true">' . esc_html( mb_substr( $service['title'], 0, 1 ) ) . '</span>';
     }
-    public static function markup( array $args, string $base = '' ): string {
+    public static function markup( array $args, string $base = '', int $heading_level = 1 ): string {
         $d = self::data( $args ); $f = $d['filters']; $month = new \DateTimeImmutable( $f['month'] . '-01', wp_timezone() ); $base = $base ?: self::hub_url();
         $directory = $d['directory']; $selected = $f['service'] ? $directory[ $f['service'] ] : null;
+        $heading_tag = 2 === $heading_level ? 'h2' : 'h1';
         ob_start();
         include dirname( MSC_FILE ) . '/views/upcoming-releases.php';
         return ob_get_clean();
@@ -72,7 +73,7 @@ final class UpcomingReleases {
         $args = array_intersect_key( (array) $atts, array_flip( array( 'month', 'type', 'service', 'view' ) ) );
         foreach ( array( 'month', 'type', 'service', 'search', 'view', 'past', 'page' ) as $key ) { if ( isset( $_GET[ 'release_' . $key ] ) ) { $args[ $key ] = wp_unslash( $_GET[ 'release_' . $key ] ); } }
         $base = is_singular() ? (string) get_permalink() : self::hub_url();
-        try { return '<section id="upcoming-releases" class="msc-upcoming" data-endpoint="' . esc_url( rest_url( 'msc/v1/upcoming-releases' ) ) . '" data-base="' . esc_url( $base ) . '">' . self::markup( $args, $base ) . '</section>'; }
+        try { return '<section id="upcoming-releases" class="msc-upcoming" data-endpoint="' . esc_url( rest_url( 'msc/v1/upcoming-releases' ) ) . '" data-base="' . esc_url( $base ) . '" data-heading-level="' . ( is_singular( 'post' ) ? '2' : '1' ) . '">' . self::markup( $args, $base, is_singular( 'post' ) ? 2 : 1 ) . '</section>'; }
         catch ( \Throwable $e ) { return '<p class="empty-state">' . esc_html( $e->getMessage() ) . ' <a href="' . esc_url( self::hub_url() ) . '">Reset release filters</a></p>'; }
     }
     public static function boot(): void {
@@ -80,7 +81,7 @@ final class UpcomingReleases {
         add_action( 'rest_api_init', static function () { register_rest_route( 'msc/v1', '/upcoming-releases', array( 'methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => static function ( $request ) {
             try { $args = array(); foreach ( array( 'month', 'type', 'service', 'search', 'view', 'past', 'page' ) as $key ) { if ( isset( $request[ $key ] ) ) { $args[ $key ] = $request[ $key ]; } }
                 $base = $request['base'] ?? ''; if ( ! is_string( $base ) || $base && ! wp_validate_redirect( $base, '' ) ) { throw new \InvalidArgumentException( 'Invalid release page URL.' ); }
-                return array( 'html' => self::markup( $args, $base ), 'credits_html' => Attribution::footer() );
+                return array( 'html' => self::markup( $args, $base, '2' === (string) ( $request['heading_level'] ?? '1' ) ? 2 : 1 ), 'credits_html' => Attribution::footer() );
             } catch ( \Throwable $e ) { return new \WP_Error( 'msc_upcoming', $e->getMessage(), array( 'status' => 400 ) ); }
         } ) ); } );
         add_action( 'wp_enqueue_scripts', static function () {

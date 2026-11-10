@@ -1,5 +1,5 @@
 <?php get_header(); $key = get_option( 'msc_site_identity', 'a' ); $profile = msc_screen_identity(); $posts = get_posts( array( 'post_type' => 'post', 'posts_per_page' => 18, 'meta_key' => '_msc_network_demo_slug', 'orderby' => 'menu_order', 'order' => 'ASC' ) ); ?>
-<p class="demo-disclosure">Presentation demo · All news, reviews and features below are fictional.</p>
+<p class="demo-disclosure">Presentation demo · Seeded demonstration features are fictional.</p>
 <?php if ( in_array( $key, array( 'c', 'd' ), true ) ) : ?>
 <div class="ad-placeholder" aria-label="Advertisement placeholder">Advertisement</div>
 <section class="news-section lead-section"><h1 class="news-section-title"><?php echo esc_html( $profile['sections'][0] ); ?></h1><div class="feature-split"><div><?php if ( isset( $posts[0] ) ) { msc_news_card( $posts[0], 'lead-feature', 'c' === $key ); } ?></div><div class="compact-stack"><?php foreach ( array_slice( $posts, 1, 5 ) as $post ) { msc_news_card( $post, 'compact-card', 'c' === $key ); } ?></div></div></section>
@@ -9,4 +9,8 @@
 <section class="news-section secondary-section"><h2 class="news-section-title"><?php echo esc_html( $profile['sections'][1] ); ?></h2><div class="news-grid four"><?php foreach ( array_slice( $posts, 3, 4 ) as $post ) { msc_news_card( $post ); } ?></div></section>
 <?php endif; ?>
 <section class="news-section news-with-sidebar"><div><h2 class="news-section-title"><?php echo esc_html( 'd' === $key ? 'More Stories' : $profile['sections'][2] ); ?></h2><div class="news-list"><?php foreach ( array_slice( $posts, in_array( $key, array( 'c', 'd' ), true ) ? 6 : 7, 7 ) as $post ) { msc_news_card( $post, 'list-card' ); } ?></div></div><aside><h2 class="news-section-title">Trending</h2><?php foreach ( array_slice( $posts, 2, 4 ) as $post ) { msc_news_card( $post, 'sidebar-card' ); } ?><a class="calendar-promo" href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>"><span>Release Calendar</span><strong>Upcoming releases</strong><span>Browse titles by month →</span></a></aside></section>
-<?php get_footer(); ?>
+<?php
+$release_guides = get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'has_password' => false, 'posts_per_page' => 6, 'meta_key' => '_msc_release_page_key', 'orderby' => 'date', 'order' => 'DESC' ) );
+if ( $release_guides ) { echo '<section class="news-section release-guides-section"><h2 class="news-section-title">Release guides</h2><div class="news-grid three">'; foreach ( $release_guides as $guide ) { msc_news_card( $guide ); } echo '</div></section>'; }
+get_footer();
+?>

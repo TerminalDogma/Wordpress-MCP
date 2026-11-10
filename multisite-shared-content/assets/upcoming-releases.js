@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const endpoint = new URL(root.dataset.endpoint, location.href);
                 keys.forEach(key => endpoint.searchParams.set(key, params.get('release_' + key) ?? defaults[key]));
                 endpoint.searchParams.set('base', root.dataset.base);
+                endpoint.searchParams.set('heading_level', root.dataset.headingLevel || '1');
                 const response = await fetch(endpoint, {signal: controller.signal, credentials: 'same-origin'});
                 const result = await response.json();
                 if (!response.ok || !result.html) throw new Error(result.message || 'Releases could not be loaded. Please retry.');

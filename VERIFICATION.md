@@ -1,4 +1,14 @@
-# Shared Content 2.5.0 verification
+# Shared Content 2.6.0 verification
+
+## Training catalog, bulk publication and reviewed release posts
+
+The actual 500-title import completed in the disposable network: 499 new drafts and one existing title reused. The frozen Wikidata CC0 dataset has 250 distinct Movie QIDs and 250 distinct TV Show QIDs, with sourced metadata and an explicit Wikipedia-coverage methodology. Source facts are bundled; installation does not call external APIs.
+
+All 19 focused checks passed, including 500 imported memberships, duplicate prevention, preserved editorial fields, draft defaults, local/global publication, changed-record rejection, cross-user and role permissions, local removals, migration of generated Pages into pending Posts, scheduled native publication and a complete 250-Movie global publication in ten-record batches. A separate cross-site check verified that first-time imports immediately create draft projections even when the schema's normal default is publish.
+
+Chromium verified the 250-title native filters, global bulk actions for shared titles, local publication for regular Posts, hidden pending guides, publication from the normal Posts list, post-owned titles, and resumable training imports. Published release Posts also appear in the homepage release-guide section. The updated guide browser workflow passed with regular Post templates and heading levels.
+
+Regression checks passed: 71 source/import, 42 Episode, 35 entity/calendar, 18 ACF publication, 34 review and 57 comic checks, plus 38 release-guide checks. PHP/JavaScript syntax, workflow YAML and packaged ZIP integrity were checked. A stylesheet overwrite found by the mobile browser regression was restored before packaging.
 
 ## Upcoming release guides and streaming services
 

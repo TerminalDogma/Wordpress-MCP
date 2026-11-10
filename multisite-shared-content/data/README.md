@@ -1,0 +1,13 @@
+# Training catalog — source and methodology
+
+Snapshot: 2026-11-10. The bundled JSON has 250 distinct Movie identities and 250 distinct TV Show identities, licensed as Wikidata CC0 facts. Source entity URLs are reconstructible from each item's QID; IMDb IDs are identifiers, not redistributed rating data. There are no invented synopses, critic scores or poster images.
+
+“Popularity” here is a documented proxy, not an authoritative all-time ranking. Candidate items came from Wikidata's public MediaWiki search API, ordered by incoming links: up to 500 direct film instances (`Q11424`), 100 animated films (`Q202866`), 500 television series (`Q5398426`), animated series (`Q581714`, 70 returned), and 100 miniseries (`Q1259759`). After deduplication there were 595 film and 670 television candidates. Entries with an English Wikipedia sitelink were ranked by the number of Wikipedia-language editions, excluding administrative Wikimedia sites; the first 250 in each group were retained, with no QID shared between groups. This favors broad international coverage and includes children's/animated shows alongside live-action series.
+
+Candidate search example: `action=query&list=search&srsearch=haswbstatement:P31=Q5398426&srlimit=500&srsort=incoming_links_desc&format=json` on https://www.wikidata.org/w/api.php. Item facts use `action=wbgetentities`. The live SPARQL endpoint was unavailable to this environment, so no SPARQL ranking or official chart is claimed.
+
+Metadata includes available descriptions, genres (`P136`), country (`P495`), original language (`P364`), original title (`P1476`), director (`P57`), TV network (`P449`), IMDb ID (`P345`), runtimes in minutes (`P2047`), seasons (`P2437`) and episode totals (`P1113`). Original film dates use `P577`; series starts use `P580`, falling back to `P577`, and ends use `P582`. Deprecated statements were excluded, preferred statements used when available, and exact dates retained only when source precision supports a full day. Dates are original source publication/premiere facts, not a promise of current regional availability.
+
+Only selected facts and English Wikidata descriptions are bundled. Labels/descriptions are not copied from Wikipedia article prose. Data is sanitized against the installed schemas when imported, with source hashes and attribution retained in additional metadata. Artwork can be added with the existing editor/import tools; it is not fabricated by this dataset.
+
+Licence: https://www.wikidata.org/wiki/Wikidata:Licensing and https://creativecommons.org/publicdomain/zero/1.0/.

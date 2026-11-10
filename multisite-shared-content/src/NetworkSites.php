@@ -26,7 +26,7 @@ final class NetworkSites {
                 update_blog_option( $id, 'show_on_front', 'posts' ); update_blog_option( $id, 'timezone_string', 'America/New_York' ); update_blog_option( $id, 'msc_network_profile_version', 200 );
                 switch_to_blog( $id ); try { switch_theme( 'msc-screening-room' ); } finally { restore_current_blog(); }
             }
-            switch_to_blog( $id ); try { self::calendar_page(); UpcomingReleases::hub(); update_option( 'msc_flush_rewrite', 1 ); } finally { restore_current_blog(); }
+            switch_to_blog( $id ); try { self::calendar_page(); UpcomingReleases::hub(); ReleasePages::upgrade(); update_option( 'msc_flush_rewrite', 1 ); } finally { restore_current_blog(); }
         }
         EntityCatalog::enroll(); Comics::enroll(); StreamingServices::seed();
     }
