@@ -1,4 +1,10 @@
-# Shared Content 2.4.1 verification
+# Shared Content 2.5.0 verification
+
+## Upcoming release guides and streaming services
+
+All 37 focused WordPress checks passed. Coverage includes idempotent hubs, eight local service logos, published-date filtering, private parent protection, episode inheritance, explicit empty overrides, distinct movie streaming dates, page-generation permissions and bounds, duplicate prevention, preserved editorial introductions, automatic date updates, calendar service badges/filters, past-date controls and pagination beyond sixty results.
+
+Chromium passed the public card/list workflow, provider logos and filters, AJAX month/view/history navigation, resetting initially selected/generated defaults with and without JavaScript, service retention in calendar month/week views, mobile overflow, saved monthly guides, service profile links and the admin generator. The existing 239 movie/import, episode, entity/calendar, review and comic checks also passed. All PHP files passed syntax checks; JavaScript syntax and release ZIP integrity were verified. Screenshots of the implemented desktop/mobile layout were inspected. The reference's own screenshot host was blocked; layout patterns were extracted from its HTML/text and branding metadata.
 
 ## Comic series, issue arcs and GCD imports
 

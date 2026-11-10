@@ -29,3 +29,16 @@ The game-site references have approximately 300px advertising/loading gaps above
 ## API contract
 
 [IGDB's official documentation](https://api-docs.igdb.com/) supplies Twitch authentication, game search, platform IDs and regional release-date formats. IGDB supports commercial use through its partner program. Commercial publication should use the appropriate IGDB agreement. Credentials are configured privately in Network Admin. The presentation uses fictional records and fixture-based verification until credentials are configured.
+
+
+## Upcoming-release guide reference (2.5.0)
+
+Reference: https://www.tvinsider.com/shows/calendar/ (retrieved 2026-11-10 using Firecrawl).
+
+Observed from page content and branding metadata: a TV Premieres Calendar heading, month tabs, date-grouped entries, premiere labels, provider-logo badges, artwork and linked show titles. Branding extraction reports Open Sans body text, IBM Plex Sans Condensed headings, white backgrounds and blue accents (#0996D6 / #00AEEF). These values describe the reference, not the network theme.
+
+The reference's screenshot URL was returned but its storage host was denied by the environment network policy. Source screenshot pixels were therefore not inspected; no exact spacing or pixel-fidelity claim is made. The implementation preserves each network site's existing logos, colors and typography. Local Chromium screenshots verify the implemented layout.
+
+Proposed improvements implemented here: full-width release-guide heading and count; nine scrollable month choices; title search and type filters; published service-logo selectors with counts; separate service-profile links; date-grouped artwork cards without excerpts; compact list view; service filters retained in month/week grids; AJAX navigation with ordinary-link fallbacks; sixty-entry result pagination and clear empty states. Generated monthly WordPress pages use the same live renderer and retain editorial introductions. Responsive layouts use three, two and one card columns; service/month rows scroll within their own bounds.
+
+Service assets and sources: multisite-shared-content/assets/services/README.md. SVG originals and PNG renderings are bundled, then seeded into ordinary shared Streaming Service records and WordPress media attachments.

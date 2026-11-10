@@ -42,7 +42,7 @@ async def main():
             assert await page.locator('.news-card').count() >= 14
             assert 'fictional' in await page.locator('.demo-disclosure').inner_text()
             links = await page.locator('.catalog-navigation a').all_text_contents()
-            assert links[:-1] == types, (key, links)
+            assert links[:-1] == types + ['Upcoming Releases'], (key, links)
             colors.append(await page.locator('.network-masthead').evaluate('(el) => getComputedStyle(el).backgroundColor'))
             fonts.append(await page.locator('.news-card h3').first.evaluate('(el) => getComputedStyle(el).fontFamily'))
             await page.screenshot(path=str(shots / ('site-' + key + '-desktop.png')), full_page=True)

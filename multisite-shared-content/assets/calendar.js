@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
             calendar.setAttribute('aria-busy', 'true');
             try {
                 const endpoint = new URL(calendar.dataset.endpoint, window.location.href);
-                endpoint.search = new URLSearchParams({month: params.get('calendar_month') || initialMonth, type: params.get('release_type') || '', platform: params.get('release_platform') || '', region: params.get('release_region') || '', view: params.get('calendar_view') || 'month', date: params.get('calendar_date') || '', limit: params.get('calendar_limit') || '3'});
+                endpoint.search = new URLSearchParams({month: params.get('calendar_month') || initialMonth, type: params.get('release_type') || '', platform: params.get('release_platform') || '', region: params.get('release_region') || '', service: params.get('release_service') || '', view: params.get('calendar_view') || 'month', date: params.get('calendar_date') || '', limit: params.get('calendar_limit') || '3'});
                 const response = await fetch(endpoint, {signal: controller.signal, credentials: 'same-origin'});
                 const data = await response.json();
                 if (!response.ok || !data.html) throw new Error(data.message || 'Calendar could not be loaded.');

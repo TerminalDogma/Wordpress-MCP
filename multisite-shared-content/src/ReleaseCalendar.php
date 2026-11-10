@@ -54,10 +54,12 @@ final class ReleaseCalendar {
         $end = $date->modify( 'week' === $view ? '+7 days' : '+1 month' );
         return array( 'start' => $date->format( 'Y-m-d' ), 'end' => $end->format( 'Y-m-d' ), 'date' => $anchor, 'view' => $view );
     }
-    public static function data( string $month, string $type = '', string $platform = '', string $region = '', string $view = 'month', string $anchor = '' ): array {
+    public static function data( string $month, string $type = '', string $platform = '', string $region = '', string $view = 'month', string $anchor = '', string $service = '' ): array {
+        $directory = StreamingServices::directory();
+        if ( $service && ! isset( $directory[ $service ] ) ) { throw new \InvalidArgumentException( 'Choose a published streaming service.' ); }
         $range = self::range( $month, $view, $anchor ); $types = array_values( array_filter( array_keys( self::FIELDS ), static fn( $t ) => Schema::enabled( $t ) ) );
         if ( $type && ! in_array( $type, $types, true ) ) { throw new \InvalidArgumentException( 'This content type is not available on this site.' ); } if ( $type ) { $types = array( $type ); }
-        $result = array( 'month' => $month, 'events' => array(), 'platforms' => array(), 'regions' => array(), 'types' => $types ) + $range; if ( ! $types ) { return $result; }
+        $result = array( 'month' => $month, 'events' => array(), 'platforms' => array(), 'regions' => array(), 'types' => $types, 'services' => $directory ) + $range; if ( ! $types ) { return $result; }
         global $wpdb; $lookup = Database::table( 'lookup' ); $records = Database::table( 'records' ); $maps = Database::table( 'maps' );
         $args = array_merge( array( get_current_blog_id(), $range['start'], $range['end'] ), $types );
         $sql = "SELECT DISTINCT r.id FROM $lookup l INNER JOIN $records r ON r.id=l.record_id INNER JOIN $maps m ON m.record_id=r.id AND m.site_id=l.site_id INNER JOIN $wpdb->posts p ON p.ID=m.post_id WHERE l.site_id=%d AND l.field LIKE 'cal:%%' AND l.text_value>=%s AND l.text_value<%s AND r.state='active' AND m.status='publish' AND m.suppressed=0 AND p.post_status='publish' AND p.post_password='' AND r.type IN (" . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ') ORDER BY r.id';
@@ -65,7 +67,7 @@ final class ReleaseCalendar {
         $parents = array();
         foreach ( $ids as $id ) {
             $r = Presentation::record( (int) $id ); if ( ! $r ) { continue; }
-            $show_title = ''; $parent_field = 'msc_comic_issue' === $r['type'] ? 'parent_comic' : 'parent_show'; $parent_type = 'msc_comic_issue' === $r['type'] ? 'msc_comic' : 'msc_show'; $parent_uuid = $r['data'][ $parent_field ] ?? '';
+            $parent = null; $show_title = ''; $parent_field = 'msc_comic_issue' === $r['type'] ? 'parent_comic' : 'parent_show'; $parent_type = 'msc_comic_issue' === $r['type'] ? 'msc_comic' : 'msc_show'; $parent_uuid = $r['data'][ $parent_field ] ?? '';
             if ( in_array( $r['type'], array( 'msc_episode', 'msc_comic_issue' ), true ) && is_string( $parent_uuid ) && $parent_uuid ) {
                 if ( ! array_key_exists( $parent_uuid, $parents ) ) { $parent = Presentation::record( $parent_uuid ); $parents[ $parent_uuid ] = $parent && $parent_type === $parent['type'] && '' === get_post_field( 'post_password', (int) $parent['mapping']['post_id'] ) ? $parent : null; }
                 $parent = $parents[ $parent_uuid ]; if ( $parent ) { $show_title = $parent['data']['title'] ?? ''; Attribution::collect( $parent, array( 'title' ) ); }
@@ -73,8 +75,12 @@ final class ReleaseCalendar {
             foreach ( self::events( $r, get_current_blog_id() ) as $event ) {
                 if ( $event['date'] < $range['start'] || $event['date'] >= $range['end'] ) { continue; } $result['platforms'] = array_merge( $result['platforms'], $event['platforms'] ); if ( $event['region'] ) { $result['regions'][] = $event['region']; }
                 if ( $platform && ! in_array( $platform, $event['platforms'], true ) || $region && $region !== $event['region'] ) { continue; }
+                $services = array();
+                if ( in_array( $r['type'], array( 'msc_show', 'msc_episode' ), true ) || 'msc_movie' === $r['type'] && 'streaming_release_date' === $event['field'] ) { $services = StreamingServices::for_record( $r, $directory, $parent ); }
+                if ( $service && ! in_array( $service, array_column( $services, 'uuid' ), true ) ) { continue; }
+                foreach ( $services as $entry ) { Attribution::collect_media( (array) $entry['logo_ref'], $entry['title'] ); }
                 Attribution::collect( $r, array( $event['field'] ) );
-                $event += array( 'title' => $r['data']['title'] ?? '(Untitled)', 'url' => Presentation::url( $r ), 'type' => $r['type'], 'uuid' => $r['uuid'], 'show_title' => $show_title ); $result['events'][] = $event;
+                $event += array( 'title' => $r['data']['title'] ?? '(Untitled)', 'url' => Presentation::url( $r ), 'type' => $r['type'], 'uuid' => $r['uuid'], 'show_title' => $show_title, 'services' => $services ); $result['events'][] = $event;
             }
         }
         foreach ( array( 'platforms', 'regions' ) as $key ) { $result[ $key ] = array_values( array_unique( $result[ $key ] ) ); natcasesort( $result[ $key ] ); $result[ $key ] = array_values( $result[ $key ] ); }
@@ -82,18 +88,19 @@ final class ReleaseCalendar {
     }
     private static function filters( array $args ): array {
         $month = $args['month'] ?? wp_date( 'Y-m' ); self::month( $month ); $out = array( 'month' => $month );
-        foreach ( array( 'type', 'platform', 'region', 'view', 'date' ) as $key ) { $value = $args[ $key ] ?? ( 'view' === $key ? 'month' : '' ); if ( ! is_string( $value ) || strlen( $value ) > 120 ) { throw new \InvalidArgumentException( 'Invalid calendar filter.' ); } $out[ $key ] = sanitize_text_field( $value ); }
+        foreach ( array( 'type', 'platform', 'region', 'view', 'date', 'service' ) as $key ) { $value = $args[ $key ] ?? ( 'view' === $key ? 'month' : '' ); if ( ! is_string( $value ) || strlen( $value ) > 120 ) { throw new \InvalidArgumentException( 'Invalid calendar filter.' ); } $out[ $key ] = sanitize_text_field( $value ); }
         $limit = $args['limit'] ?? '3'; if ( ! is_scalar( $limit ) || ! in_array( (string) $limit, array( '0', '3', '5', '10' ), true ) ) { throw new \InvalidArgumentException( 'Choose a daily limit of 3, 5, 10 or all releases.' ); } $out['limit'] = (int) $limit;
         $range = self::range( $month, $out['view'], $out['date'] ); $out['date'] = $range['date'];
         if ( 'week' === $out['view'] ) { $out['month'] = substr( $out['date'], 0, 7 ); } elseif ( substr( $out['date'], 0, 7 ) !== $month ) { $out['date'] = $month . '-01'; } return $out;
     }
-    private static function url( array $f ): string { return add_query_arg( array_filter( array( 'calendar_month' => $f['month'], 'calendar_view' => $f['view'], 'calendar_date' => $f['date'], 'calendar_limit' => (string) $f['limit'], 'release_type' => $f['type'], 'release_platform' => $f['platform'], 'release_region' => $f['region'] ), 'strlen' ), NetworkSites::calendar_url() ) . '#release-calendar'; }
+    private static function url( array $f ): string { return add_query_arg( array_filter( array( 'calendar_month' => $f['month'], 'calendar_view' => $f['view'], 'calendar_date' => $f['date'], 'calendar_limit' => (string) $f['limit'], 'release_type' => $f['type'], 'release_platform' => $f['platform'], 'release_region' => $f['region'], 'release_service' => $f['service'] ), 'strlen' ), NetworkSites::calendar_url() ) . '#release-calendar'; }
     private static function event_markup( array $event ): string {
         $html = '<a class="calendar-event type-' . esc_attr( $event['type'] ) . '" href="' . esc_url( $event['url'] ) . '"><span class="calendar-event-kind">' . esc_html( $event['kind'] ) . '</span>' . ( ! empty( $event['show_title'] ) ? '<span class="calendar-event-show">' . esc_html( $event['show_title'] ) . '</span>' : '' ) . '<strong>' . esc_html( $event['title'] ) . '</strong>';
+        foreach ( $event['services'] ?? array() as $entry ) { $html .= '<span class="calendar-event-service">' . ( $entry['logo'] ? '<img src="' . esc_url( $entry['logo'] ) . '" alt="" width="32" height="16" loading="lazy">' : '' ) . esc_html( $entry['title'] ) . '</span>'; }
         if ( $event['platforms'] || $event['region'] ) { $html .= '<small>' . esc_html( implode( ' · ', array_filter( array( implode( ', ', $event['platforms'] ), $event['region'] ) ) ) ) . '</small>'; } return $html . '</a>';
     }
     public static function markup( array $args ): string {
-        $f = self::filters( $args ); $d = self::data( $f['month'], $f['type'], $f['platform'], $f['region'], $f['view'], $f['date'] ); $week = 'week' === $f['view']; $date = new \DateTimeImmutable( $d['start'], wp_timezone() ); $last = ( new \DateTimeImmutable( $d['end'], wp_timezone() ) )->modify( '-1 day' );
+        $f = self::filters( $args ); $d = self::data( $f['month'], $f['type'], $f['platform'], $f['region'], $f['view'], $f['date'], $f['service'] ); $week = 'week' === $f['view']; $date = new \DateTimeImmutable( $d['start'], wp_timezone() ); $last = ( new \DateTimeImmutable( $d['end'], wp_timezone() ) )->modify( '-1 day' );
         $label = $week ? wp_date( 'M j, Y', $date->getTimestamp() ) . ' – ' . wp_date( 'M j, Y', $last->getTimestamp() ) : wp_date( 'F Y', $date->getTimestamp() );
         $prev = $f; $next = $f;
         foreach ( array( 'prev' => -1, 'next' => 1 ) as $key => $direction ) { $target = $date->modify( $direction . ( $week ? ' week' : ' month' ) ); $nav = $f; $nav['month'] = $target->format( 'Y-m' ); $nav['date'] = $target->format( 'Y-m-d' ); if ( 'prev' === $key ) { $prev = $nav; } else { $next = $nav; } }
@@ -108,6 +115,7 @@ final class ReleaseCalendar {
         echo '<label>Content<select name="release_type"><option value="">All release types</option>';
         foreach ( array_keys( self::FIELDS ) as $type ) { if ( Schema::enabled( $type ) ) { echo '<option value="' . esc_attr( $type ) . '"' . selected( $f['type'], $type, false ) . '>' . esc_html( Schema::get( $type )['label'] ) . '</option>'; } } echo '</select></label>';
         if ( Schema::enabled( 'msc_game' ) ) { foreach ( array( 'platform' => 'Platform', 'region' => 'Region' ) as $key => $text ) { $options = $d[ $key . 's' ]; if ( $f[ $key ] && ! in_array( $f[ $key ], $options, true ) ) { $options[] = $f[ $key ]; } echo '<label>' . $text . '<select name="release_' . $key . '"><option value="">All ' . strtolower( $text ) . 's</option>'; foreach ( $options as $value ) { echo '<option value="' . esc_attr( $value ) . '"' . selected( $f[ $key ], $value, false ) . '>' . esc_html( $value ) . '</option>'; } echo '</select></label>'; } }
+        if ( $d['services'] ) { echo '<label>Streaming service<select name="release_service"><option value="">All services</option>'; foreach ( $d['services'] as $entry ) { echo '<option value="' . esc_attr( $entry['uuid'] ) . '"' . selected( $f['service'], $entry['uuid'], false ) . '>' . esc_html( $entry['title'] ) . '</option>'; } echo '</select></label>'; }
         echo '<label>Daily display<select name="calendar_limit">'; foreach ( array( 3 => 'First 3 releases', 5 => 'First 5 releases', 10 => 'First 10 releases', 0 => 'All releases' ) as $limit => $text ) { echo '<option value="' . $limit . '"' . selected( $f['limit'], $limit, false ) . '>' . $text . '</option>'; } echo '</select></label><button class="calendar-apply" type="submit">Show releases</button></form><p class="calendar-count" role="status">' . esc_html( count( $d['events'] ) . ' releases ' . ( $week ? 'this week' : 'in ' . $label ) ) . '</p>';
         $by_date = array(); foreach ( $d['events'] as $event ) { $by_date[ $event['date'] ][] = $event; }
         $start = (int) get_option( 'start_of_week', 0 ); $offset = $week ? 0 : ( (int) $date->format( 'w' ) - $start + 7 ) % 7; $days = $week ? 7 : (int) $date->format( 't' ); $today = wp_date( 'Y-m-d' );
@@ -123,12 +131,12 @@ final class ReleaseCalendar {
         echo '<p class="calendar-note">Dates update from this site’s catalog. Release windows without an exact day remain on the title’s page.</p></div>'; return ob_get_clean();
     }
     public static function shortcode(): string {
-        $args = array(); foreach ( array( 'month' => 'calendar_month', 'view' => 'calendar_view', 'date' => 'calendar_date', 'limit' => 'calendar_limit', 'type' => 'release_type', 'platform' => 'release_platform', 'region' => 'release_region' ) as $key => $query ) { if ( isset( $_GET[ $query ] ) ) { $args[ $key ] = wp_unslash( $_GET[ $query ] ); } }
+        $args = array(); foreach ( array( 'month' => 'calendar_month', 'view' => 'calendar_view', 'date' => 'calendar_date', 'limit' => 'calendar_limit', 'type' => 'release_type', 'platform' => 'release_platform', 'region' => 'release_region', 'service' => 'release_service' ) as $key => $query ) { if ( isset( $_GET[ $query ] ) ) { $args[ $key ] = wp_unslash( $_GET[ $query ] ); } }
         try { return '<section id="release-calendar" class="release-calendar" data-endpoint="' . esc_url( rest_url( 'msc/v1/calendar' ) ) . '">' . self::markup( $args ) . '</section>'; } catch ( \Throwable $e ) { return '<p class="empty-state">' . esc_html( $e->getMessage() ) . '</p>'; }
     }
     public static function boot(): void {
         add_shortcode( 'msc_release_calendar', array( self::class, 'shortcode' ) );
-        add_action( 'rest_api_init', static function () { register_rest_route( 'msc/v1', '/calendar', array( 'methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => static function ( $q ) { try { $f = self::filters( array( 'month' => $q['month'] ?? wp_date( 'Y-m' ), 'type' => $q['type'] ?? '', 'platform' => $q['platform'] ?? '', 'region' => $q['region'] ?? '', 'view' => $q['view'] ?? 'month', 'date' => $q['date'] ?? '', 'limit' => $q['limit'] ?? '3' ) ); return array( 'month' => $f['month'], 'data' => self::data( $f['month'], $f['type'], $f['platform'], $f['region'], $f['view'], $f['date'] ), 'html' => self::markup( $f ), 'credits_html' => Attribution::footer() ); } catch ( \Throwable $e ) { return new \WP_Error( 'msc_calendar', $e->getMessage(), array( 'status' => 400 ) ); } } ) ); } );
+        add_action( 'rest_api_init', static function () { register_rest_route( 'msc/v1', '/calendar', array( 'methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => static function ( $q ) { try { $f = self::filters( array( 'month' => $q['month'] ?? wp_date( 'Y-m' ), 'type' => $q['type'] ?? '', 'platform' => $q['platform'] ?? '', 'region' => $q['region'] ?? '', 'view' => $q['view'] ?? 'month', 'date' => $q['date'] ?? '', 'limit' => $q['limit'] ?? '3', 'service' => $q['service'] ?? '' ) ); return array( 'month' => $f['month'], 'data' => self::data( $f['month'], $f['type'], $f['platform'], $f['region'], $f['view'], $f['date'], $f['service'] ), 'html' => self::markup( $f ), 'credits_html' => Attribution::footer() ); } catch ( \Throwable $e ) { return new \WP_Error( 'msc_calendar', $e->getMessage(), array( 'status' => 400 ) ); } } ) ); } );
         add_action( 'wp_enqueue_scripts', static function () { if ( is_page( (int) get_option( 'msc_calendar_page' ) ) || is_singular() && has_shortcode( get_post_field( 'post_content', get_queried_object_id() ), 'msc_release_calendar' ) ) { wp_enqueue_style( 'msc-release-calendar', plugins_url( 'assets/calendar.css', MSC_FILE ), array(), MSC_VERSION ); wp_enqueue_script( 'msc-release-calendar', plugins_url( 'assets/calendar.js', MSC_FILE ), array(), MSC_VERSION, true ); } } );
     }
 }

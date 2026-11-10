@@ -1,5 +1,13 @@
 # Changelog and release boundaries
 
+## 2.5.0
+
+Each demo site has a live Upcoming Releases hub. A TV Insider calendar reference informed its date-grouped cards, month navigation and provider badges; existing site branding is retained. Search, type/service filters, compact lists, AJAX navigation/history, busy-month pagination and mobile layouts are included.
+
+Shared Content → Release Pages generates 1–12 ordinary monthly WordPress pages, optionally scoped to a content type and streaming service. Repeated generation reuses pages, preserving editorial copy and publication states. Listings follow effective published catalog fields without a regeneration job.
+
+Eight streaming-service entries receive locally bundled logos and profile links through one-time network setup. Existing service records and publication choices are retained. Episode cards inherit services from an accessible parent unless explicitly overridden. Movie service badges apply to streaming release dates. The existing month/week calendar also supports service filters and logo badges.
+
 ## 2.4.1
 
 GCD import previews now offer available issue covers and an early-issue cover for a series. Issue batches have an optional cover-download control. Images are stored in WordPress with separate artwork credits in the footer; unavailable or failed images leave existing covers intact.

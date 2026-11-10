@@ -72,7 +72,7 @@ final class Plugin {
 			return $url ? '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( $data['title'] ?? '' ) . '" loading="lazy">' : '';
 		}, 10, 2 );
 		add_filter( 'has_post_thumbnail', static function ( $has, $post ) { $post = get_post( $post ); if ( ! $post ) { return $has; } $r = self::store()->by_post( (int) $post->ID ); return $r ? (bool) Media::url( (array) ( self::store()->resolved( $r['id'] )['data']['featured_image'] ?? array() ) ) : $has; }, 10, 2 );
-		Seo::boot(); Admin::boot(); Acf::boot(); Presentation::boot(); OpenAdmin::boot(); EpisodeAdmin::boot(); PersonReview::boot(); Propagation::boot(); GamePolicy::boot(); NetworkSites::boot(); IgdbAdmin::boot(); ReleaseCalendar::boot(); if ( defined( 'MSC_ENABLE_LEGACY_OMDB' ) && MSC_ENABLE_LEGACY_OMDB ) { OmdbAdmin::boot(); }
+		Seo::boot(); Admin::boot(); Acf::boot(); Presentation::boot(); OpenAdmin::boot(); EpisodeAdmin::boot(); PersonReview::boot(); Propagation::boot(); GamePolicy::boot(); NetworkSites::boot(); IgdbAdmin::boot(); ReleaseCalendar::boot(); UpcomingReleases::boot(); if ( defined( 'MSC_ENABLE_LEGACY_OMDB' ) && MSC_ENABLE_LEGACY_OMDB ) { OmdbAdmin::boot(); }
 		if ( defined( 'WP_CLI' ) && WP_CLI ) { \WP_CLI::add_command( 'msc', CLI::class ); }
 		do_action( 'msc_register_field_types' );
 	}
