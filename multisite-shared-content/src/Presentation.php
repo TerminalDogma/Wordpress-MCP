@@ -50,13 +50,13 @@ final class Presentation {
 		return array( 'seasons' => $seasons, 'season' => $selected, 'episodes' => array_values( array_filter( array_map( array( self::class, 'record' ), $ids ) ) ), 'total' => $total, 'page' => $page, 'pages' => $pages );
 	}
 	public static function image( array $r, string $class = '', string $size = 'large' ): string {
-		$d = $r['data']; $keys = array( 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_person' => 'headshot', 'msc_game' => 'poster' );
+		$d = $r['data']; $keys = array( 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_person' => 'headshot', 'msc_game' => 'poster', 'msc_comic' => 'poster', 'msc_comic_issue' => 'poster', 'msc_comic_arc' => 'poster' );
 		$url = Media::url( (array) ( $d[ $keys[ $r['type'] ] ?? ( isset( EntityCatalog::definitions()[ $r['type'] ] ) ? 'logo' : 'featured_image' ) ] ?? array() ), $size );
 		if ( ! $url ) { $url = Media::url( (array) ( $d['featured_image'] ?? array() ), $size ); }
 		return $url ? '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $url ) . '" alt="' . esc_attr( $d['title'] ?? '' ) . '" loading="lazy" decoding="async">' : '<div class="art-placeholder ' . esc_attr( $class ) . '" aria-label="No image available"><span>' . esc_html( mb_substr( $d['title'] ?? '?', 0, 1 ) ) . '</span></div>';
 	}
 	public static function card( array $r ): void {
-		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person', 'msc_game' => 'Video Game' )[ $r['type'] ] ?? ( EntityCatalog::definitions()[ $r['type'] ][1] ?? 'Content' );
+		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person', 'msc_game' => 'Video Game' )[ $r['type'] ] ?? ( EntityCatalog::definitions()[ $r['type'] ][1] ?? ( Comics::singular( $r['type'] ) ?: 'Content' ) );
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . '<span class="catalog-card-media">' . self::image( $r, 'card-art', 'medium_large' ) . ReviewScores::badge( $r ) . '</span><div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::collect( $r, array( 'title', 'excerpt' ) ) . Attribution::collect_image( $r ) . '</article>';
 	}
 	public static function credits( array $r ): void {

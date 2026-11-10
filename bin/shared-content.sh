@@ -45,6 +45,8 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/entities-calendar.php
     wp --url="$site_a_url" eval-file /msc-tests/credit-visibility.php
     wp --url="$site_a_url" eval-file /msc-tests/catalog-archives.php
+    if ! docker compose run --rm -T -e MSC_DISPOSABLE_TESTS=1 cli --url="$site_a_url" eval-file /msc-tests/comics.php > /tmp/msc-comics-fixtures.log 2>&1; then cat /tmp/msc-comics-fixtures.log; exit 1; fi
+    cat /tmp/msc-comics-fixtures.log
     ;;
   stop) docker compose down ;;
   *) echo 'Usage: sh bin/shared-content.sh setup|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;

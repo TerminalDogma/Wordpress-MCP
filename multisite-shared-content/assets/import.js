@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (select) select.addEventListener('change', () => document.querySelectorAll('input[name="episodes[]"]').forEach(input => { input.checked = select.checked; }));
     const job = document.querySelector('#msc-import-job');
     if (!job) return;
+    const itemLabel = job.dataset.itemLabel || 'episode';
+    const pluralLabel = job.dataset.pluralLabel || 'Episodes';
     const resume = job.querySelector('[data-msc-resume]');
     const pause = job.querySelector('[data-msc-pause]');
     const status = job.querySelector('[role="status"]');
@@ -12,13 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let running = false;
     let busy = false;
     let retries = 0;
-    pause.addEventListener('click', () => { running = false; status.textContent = 'Pausing after the current episode…'; });
+    pause.addEventListener('click', () => { running = false; status.textContent = `Pausing after the current ${itemLabel}…`; });
     async function run() {
         if (busy || Number(progress.value) >= Number(job.dataset.total)) return;
         running = true; busy = true; resume.disabled = true;
         try {
             while (running && Number(progress.value) < Number(job.dataset.total)) {
-                status.textContent = `Importing episode ${Number(progress.value) + 1} of ${job.dataset.total}…`;
+                status.textContent = `Importing ${itemLabel} ${Number(progress.value) + 1} of ${job.dataset.total}…`;
                 const body = new URLSearchParams({action: 'msc_open_step', token: job.dataset.token, nonce: job.dataset.nonce});
                 const response = await fetch(window.ajaxurl, {method: 'POST', credentials: 'same-origin', body});
                 const result = await response.json();
@@ -34,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 results.replaceChildren(...result.data.results.map(row => { const li = document.createElement('li'); li.textContent = `${row.title} — ${row.status}`; return li; }));
             }
             const done = Number(progress.value) >= Number(job.dataset.total);
-            status.textContent = done ? `${job.dataset.total} episodes processed. Review the results below; saved Episodes follow your publication defaults.` : `${progress.value} / ${job.dataset.total} processed. Paused; resume when ready.`;
-        } catch (error) { running = false; status.textContent = error.message || 'Connection interrupted. Resume to continue from the last saved episode.'; }
+            status.textContent = done ? `${job.dataset.total} ${pluralLabel.toLowerCase()} processed. Review the results below; saved ${pluralLabel} follow your publication defaults.` : `${progress.value} / ${job.dataset.total} processed. Paused; resume when ready.`;
+        } catch (error) { running = false; status.textContent = error.message || 'Connection interrupted. Resume to continue from the last saved item.'; }
         finally { busy = false; resume.disabled = false; }
     }
     resume.addEventListener('click', run);

@@ -68,10 +68,14 @@ jobs:
         run: sh bin/shared-content.sh wp eval-file /msc-tests/wikipedia-scores.php
       - name: Browser editorial reviews, score medals and aggregate imports
         run: MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/reviews-browser.py
+      - name: Browser Comic Books, issue arcs and source batches
+        run: |
+          MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh wp --url=http://localhost:8080/site-b/ eval-file /msc-tests/comics.php > /tmp/msc-comics-fixtures.log
+          MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/comics-browser.py /tmp/msc-comics-fixtures.log
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.3.1
+          name: multisite-shared-content-2.4.0
           path: dist/
       - name: Stop services
         if: always()

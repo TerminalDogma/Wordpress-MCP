@@ -2,9 +2,13 @@
 
 A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Custom Fields Free 6.8.10**. This repository contains the configuration and setup automation; a running site needs Docker or a PHP/database hosting service. GitHub Pages cannot run this installation.
 
+## Comic Books on SuperHeroHype
+
+Version 2.4.0 adds Comic Books, Comic Issues and Story Arcs on Site B. Series pages list their issues; arcs provide a reading order across series. Search and batch-import metadata from the free Grand Comics Database API, then set arc membership and part numbers in the editor. Exact on-sale dates feed the release calendar. See [the comic workflow](docs/comic-books.md).
+
 ## Four branded sites with shared catalogs
 
-The **Multisite Shared Content 2.3.1** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
+The **Multisite Shared Content 2.4.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 

@@ -3,13 +3,13 @@ namespace MSC;
 
 /** Reviewed global imports; local overrides and publication settings remain authoritative. */
 final class OpenImport {
-    public const TYPES = array( 'msc_movie' => 'Movies', 'msc_show' => 'TV Shows', 'msc_episode' => 'Episodes', 'msc_person' => 'People', 'msc_game' => 'Video Games' );
+    public const TYPES = array( 'msc_movie' => 'Movies', 'msc_show' => 'TV Shows', 'msc_episode' => 'Episodes', 'msc_person' => 'People', 'msc_game' => 'Video Games', 'msc_comic' => 'Comic Books', 'msc_comic_issue' => 'Comic Issues' );
     public static function allowed(): bool {
         return ( current_user_can( 'msc_create_global' ) || current_user_can( 'msc_edit_global' ) ) && (bool) array_filter( array_keys( self::TYPES ), static fn( $type ) => isset( Schema::all()[ $type ] ) && Schema::enabled( $type ) );
     }
     public static function matches( string $type, array $ids ): array {
         global $wpdb; $clauses = array(); $params = array( $type );
-        foreach ( array( 'wikidata', 'tvmaze', 'imdb', 'igdb' ) as $provider ) {
+        foreach ( array( 'wikidata', 'tvmaze', 'imdb', 'igdb', 'gcd' ) as $provider ) {
             if ( ! isset( $ids[ $provider ] ) || '' === (string) $ids[ $provider ] ) { continue; }
             $clauses[] = "JSON_UNQUOTE(JSON_EXTRACT(data,'$.external_ids." . $provider . "'))=%s"; $params[] = (string) $ids[ $provider ];
         }
@@ -58,6 +58,7 @@ final class OpenImport {
             $show = self::parent( $parent, $s['parent_tvmaze'] ); $s['fields']['parent_show'] = $show['uuid'];
             if ( $r && ! empty( $r['data']['parent_show'] ) && $r['data']['parent_show'] !== $show['uuid'] ) { throw new SourceError( 'This Episode is linked to another Show. Correct that relationship before importing.', 409 ); }
         }
+        if ( 'msc_comic_issue' === $type ) { ComicImport::connect( $s, $parent, $r ); }
         $original = $s['fields']; $s['fields'] = self::fit( $type, $original, $s['warnings'] );
         // Keep source associations when a network schema renames a native property field.
         foreach ( Schema::defaults()[ $type ]['fields'] as $key => $definition ) { if ( ! isset( $definition['property'], $original[ $key ] ) ) { continue; } foreach ( Schema::get( $type )['fields'] as $dest => $field ) { if ( ( $field['property'] ?? '' ) === $definition['property'] && isset( $s['field_sources'][ $key ] ) ) { $s['field_sources'][ $dest ] = $s['field_sources'][ $key ]; } } }
@@ -146,6 +147,7 @@ final class OpenImport {
                 $parent = $values['parent_show'] ?? $r['data']['parent_show'] ?? ''; self::parent( $parent, $s['parent_tvmaze'] );
                 if ( $parent !== $s['fields']['parent_show'] ) { throw new SourceError( 'The Episode parent changed. Open a fresh preview.', 409 ); }
             }
+            if ( 'msc_comic_issue' === $s['type'] ) { $comic = $values['parent_comic'] ?? $r['data']['parent_comic'] ?? ''; ComicImport::parent( $comic, $s['details']['parent_gcd'] ); if ( $comic !== $s['fields']['parent_comic'] ) { throw new SourceError( 'The issue parent changed. Open a fresh preview.', 409 ); } }
             if ( ! $r ) { $title = false; foreach ( Schema::get( $s['type'] )['fields'] as $key => $field ) { if ( 'post_title' === ( $field['property'] ?? '' ) && '' !== (string) ( $values[ $key ] ?? '' ) ) { $title = true; } } if ( ! $title ) { throw new SourceError( 'Select the title field when creating a record.' ); } }
             $values['external_ids'] = array_replace( (array) ( $r['data']['external_ids'] ?? array() ), $s['external_ids'] );
             if ( 'msc_game' === $s['type'] && ! GamePolicy::accepts( array( 'type' => 'msc_game', 'data' => array_replace( $r['data'] ?? array(), $values ) ) ) ) { throw new SourceError( 'Select Sony platforms or Sony platform release dates when creating a game on this site.' ); }
@@ -196,6 +198,7 @@ final class OpenImport {
     }
     public static function batch( string $token ): array { return self::snapshot( $token, 'job' ); }
     public static function batch_step( string $token ): array {
+        if ( ! empty( self::batch( $token )['comic'] ) ) { return ComicImport::step( $token ); }
         self::validate_type( 'msc_episode' );
         return Database::lock( 'open:job:' . $token, static function () use ( $token ) {
             $job = self::batch( $token ); self::parent( $job['parent'], $job['show_id'] );

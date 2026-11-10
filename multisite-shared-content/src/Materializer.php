@@ -35,6 +35,8 @@ final class Materializer {
 					$existing = get_posts( array( 'post_type' => $r['type'], 'post_status' => 'any', 'meta_key' => '_msc_uuid', 'meta_value' => $r['uuid'], 'numberposts' => 1, 'fields' => 'ids' ) );
 					if ( $existing ) { $post['ID'] = $existing[0]; }
 				}
+				// A password is local publication protection, never an inherited field.
+				if ( ! empty( $post['ID'] ) ) { $post['post_password'] = get_post_field( 'post_password', (int) $post['ID'], 'raw' ); }
 				$post['meta_input'] = array( '_msc_uuid' => $r['uuid'] );
 				$post_id = wp_insert_post( wp_slash( $post ), true );
 				if ( is_wp_error( $post_id ) ) { throw new \RuntimeException( $post_id->get_error_message() ); }

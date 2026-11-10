@@ -6,7 +6,7 @@ final class NetworkSites {
     public static function profiles(): array {
         $profiles = array(
             'a' => array( 'name' => 'ComingSoon.net', 'label' => 'Site A · ComingSoon', 'source' => 'https://www.comingsoon.net/', 'color' => '#187DAF', 'ink' => '#ffffff', 'header' => '#122E39', 'highlight' => '#DFE000', 'font' => 'Archivo', 'body_font' => 'Open Sans', 'tagline' => 'Movie, TV and streaming news', 'types' => array( 'msc_movie', 'msc_show', 'msc_episode', 'msc_person' ), 'policy' => 'all', 'sections' => array( 'Top Stories', 'Must Read', 'Breaking News' ), 'nav' => array( 'Streaming', 'Movies', 'TV', 'Games', 'Trailers', 'Genres' ) ),
-            'b' => array( 'name' => 'SuperHeroHype', 'label' => 'Site B · SuperHeroHype', 'source' => 'https://www.superherohype.com/', 'color' => '#C30912', 'ink' => '#ffffff', 'header' => '#87060C', 'highlight' => '#F6C223', 'font' => 'Roboto', 'body_font' => 'Rubik', 'tagline' => 'Superhero movie and TV news', 'types' => array( 'msc_movie', 'msc_show', 'msc_episode' ), 'policy' => 'all', 'sections' => array( 'Top Stories', 'Breaking News', 'Latest News' ), 'nav' => array( 'Movies', 'TV', 'Comics', 'News', 'Geek Culture', 'Features' ) ),
+            'b' => array( 'name' => 'SuperHeroHype', 'label' => 'Site B · SuperHeroHype', 'source' => 'https://www.superherohype.com/', 'color' => '#C30912', 'ink' => '#ffffff', 'header' => '#87060C', 'highlight' => '#F6C223', 'font' => 'Roboto', 'body_font' => 'Rubik', 'tagline' => 'Superhero movie and TV news', 'types' => array( 'msc_movie', 'msc_show', 'msc_episode', 'msc_comic', 'msc_comic_issue', 'msc_comic_arc' ), 'policy' => 'all', 'sections' => array( 'Top Stories', 'Breaking News', 'Latest News' ), 'nav' => array( 'Movies', 'TV', 'Comics', 'News', 'Geek Culture', 'Features' ) ),
             'c' => array( 'name' => 'GameRevolution', 'label' => 'Site C · GameRevolution', 'source' => 'https://www.gamerevolution.com/', 'color' => '#DF1362', 'ink' => '#ffffff', 'header' => '#ffffff', 'highlight' => '#DF1362', 'font' => 'Play', 'body_font' => 'Rubik', 'tagline' => 'Video game news, reviews and guides', 'types' => array( 'msc_game' ), 'policy' => 'all', 'sections' => array( 'Featured Reviews', 'Gaming Culture', 'Gaming News' ), 'nav' => array( 'Home', 'News', 'Reviews', 'Guides', 'Games', 'Videos', 'Best Products' ) ),
             'd' => array( 'name' => 'PlayStation LifeStyle', 'label' => 'Site D · PlayStation LifeStyle', 'source' => 'https://www.playstationlifestyle.net/', 'color' => '#0072BB', 'ink' => '#ffffff', 'header' => '#030C1B', 'highlight' => '#2BA1CB', 'font' => 'Inter', 'body_font' => 'Inter', 'tagline' => 'PlayStation news, reviews and features', 'types' => array( 'msc_game' ), 'policy' => 'sony_all', 'sections' => array( 'Featured Stories', 'More Stories', 'Trending' ), 'nav' => array( 'News', 'PS5', 'PS4', 'PSVR', 'Features', 'Reviews' ) ),
         );
@@ -28,7 +28,7 @@ final class NetworkSites {
             }
             switch_to_blog( $id ); try { self::calendar_page(); update_option( 'msc_flush_rewrite', 1 ); } finally { restore_current_blog(); }
         }
-        EntityCatalog::enroll();
+        EntityCatalog::enroll(); Comics::enroll();
     }
     public static function calendar_page(): int {
         $saved = (int) get_option( 'msc_calendar_page', 0 ); $post = $saved ? get_post( $saved ) : null; if ( $post && 'trash' !== $post->post_status && 'page' === $post->post_type ) { return $saved; }

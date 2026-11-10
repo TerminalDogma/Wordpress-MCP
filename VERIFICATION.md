@@ -1,4 +1,13 @@
-# Shared Content 2.3.1 verification
+# Shared Content 2.4.0 verification
+
+## Comic series, issues and arcs
+
+All 43 focused WordPress/ACF checks passed. Coverage includes initial SuperHeroHype-only enrollment, preserving later type switches, source contracts and cache behavior, duplicate identities, verified parent IDs, distinct cover/on-sale dates, cross-series arc order, field overrides, draft/private/protected visibility, password preservation during synchronization, calendar parent labels, resumable batches and pagination beyond 50 issues. Source network responses use deterministic HTTP fixtures. The live GCD name/year search endpoint was checked separately against Batman (1940).
+
+Chromium verifies the series/arc/issue templates, both numbering systems, footer attribution, AJAX arc filtering and pagination, mobile overflow, Site A exclusion, ACF parent/arc controls and selectable issue-batch progress.
+
+Existing regressions also passed: 71 source/import checks, 42 Episode administration checks, 35 entity/calendar checks and 34 review/aggregate checks.
+
 
 Episode calendar checks additionally cover parent titles in month/week cards, local parent-title overrides and exclusion of private Show names.
 

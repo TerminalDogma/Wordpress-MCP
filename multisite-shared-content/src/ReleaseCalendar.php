@@ -6,7 +6,7 @@ final class ReleaseCalendar {
     public const FIELDS = array(
         'msc_movie' => array( 'release_date' => 'Theatrical', 'digital_release_date' => 'Digital', 'streaming_release_date' => 'Streaming', 'physical_release_date' => 'Disc' ),
         'msc_show' => array( 'premiere_date' => 'TV premiere', 'finale_date' => 'TV finale' ),
-        'msc_episode' => array( 'release_date' => 'Episode' ), 'msc_game' => array( 'release_date' => 'Video Game' ), 'msc_console' => array( 'release_date' => 'Platform launch' ),
+        'msc_episode' => array( 'release_date' => 'Episode' ), 'msc_game' => array( 'release_date' => 'Video Game' ), 'msc_console' => array( 'release_date' => 'Platform launch' ), 'msc_comic_issue' => array( 'release_date' => 'Comic issue' ),
     );
     public static function date( $value ): string {
         if ( ! is_string( $value ) || ! preg_match( '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/D', $value ) ) { return ''; }
@@ -65,9 +65,9 @@ final class ReleaseCalendar {
         $parents = array();
         foreach ( $ids as $id ) {
             $r = Presentation::record( (int) $id ); if ( ! $r ) { continue; }
-            $show_title = ''; $parent_uuid = $r['data']['parent_show'] ?? '';
-            if ( 'msc_episode' === $r['type'] && is_string( $parent_uuid ) && $parent_uuid ) {
-                if ( ! array_key_exists( $parent_uuid, $parents ) ) { $parent = Presentation::record( $parent_uuid ); $parents[ $parent_uuid ] = $parent && 'msc_show' === $parent['type'] && '' === get_post_field( 'post_password', (int) $parent['mapping']['post_id'] ) ? $parent : null; }
+            $show_title = ''; $parent_field = 'msc_comic_issue' === $r['type'] ? 'parent_comic' : 'parent_show'; $parent_type = 'msc_comic_issue' === $r['type'] ? 'msc_comic' : 'msc_show'; $parent_uuid = $r['data'][ $parent_field ] ?? '';
+            if ( in_array( $r['type'], array( 'msc_episode', 'msc_comic_issue' ), true ) && is_string( $parent_uuid ) && $parent_uuid ) {
+                if ( ! array_key_exists( $parent_uuid, $parents ) ) { $parent = Presentation::record( $parent_uuid ); $parents[ $parent_uuid ] = $parent && $parent_type === $parent['type'] && '' === get_post_field( 'post_password', (int) $parent['mapping']['post_id'] ) ? $parent : null; }
                 $parent = $parents[ $parent_uuid ]; if ( $parent ) { $show_title = $parent['data']['title'] ?? ''; Attribution::collect( $parent, array( 'title' ) ); }
             }
             foreach ( self::events( $r, get_current_blog_id() ) as $event ) {

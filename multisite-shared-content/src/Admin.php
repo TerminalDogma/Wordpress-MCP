@@ -110,7 +110,7 @@ final class Admin {
 		if ( ! $r ) { EpisodeAdmin::new_context( $type ); }
 		if ( $r ) {
 			PersonReview::notice( $r );
-			EpisodeAdmin::context( $r, $global );
+			EpisodeAdmin::context( $r, $global ); ComicAdmin::context( $r );
 			if ( function_exists( 'acf_form' ) ) { echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( $global ? 'global' : 'local' ) ) ) . '">Edit supported fields with ACF</a></p>'; }
 			echo '<p><code>' . esc_html( $r['uuid'] ) . '</code> · Global revision ' . esc_html( $r['version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( $global ? 'local' : 'global' ) ) ) . '">' . ( $global ? 'Switch to local overrides' : 'Switch to global editing' ) . '</a></p>';
 			if ( ! $r['mapping'] ) { Queue::sync( (int) $r['id'], get_current_blog_id() ); echo '<p>Local post is queued. Refresh after synchronization.</p></div>'; return; }
@@ -120,7 +120,7 @@ final class Admin {
 		echo '<table class="form-table msc-fields"><tbody>';
 		foreach ( $schema['fields'] as $key => $field ) {
 			if ( ! empty( $field['hidden'] ) ) { continue; }
-			$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : '' );
+			$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : ( Comics::defaults( $type )[ $key ] ?? '' ) );
 			if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
 			echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ) . '</label></th><td>';
 			if ( ! $global ) {

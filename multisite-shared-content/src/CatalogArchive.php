@@ -6,7 +6,7 @@ final class CatalogArchive {
     public const PAGE_SIZE = 20;
     private static ?array $current = null;
     private static array $related = array();
-    private const FIELDS = array( 'title', 'featured_image', 'poster', 'headshot', 'logo', 'release_date', 'premiere_date', 'release_dates', 'runtime', 'content_rating', 'genres', 'platforms', 'platform_ids', 'console_records', 'professions', 'country', 'network', 'streaming_service', 'status', 'release_status', 'number_of_seasons', 'number_of_episodes', 'parent_show', 'season_number', 'episode_number', 'headquarters', 'founded_date', 'manufacturer', 'platform_kind' );
+    private const FIELDS = array( 'title', 'featured_image', 'poster', 'headshot', 'logo', 'release_date', 'premiere_date', 'release_dates', 'runtime', 'content_rating', 'genres', 'platforms', 'platform_ids', 'console_records', 'professions', 'country', 'network', 'streaming_service', 'status', 'release_status', 'number_of_seasons', 'number_of_episodes', 'parent_comic', 'issue_number', 'story_arc', 'arc_position', 'publisher', 'writers', 'artists', 'start_year', 'end_year', 'parent_show', 'season_number', 'episode_number', 'headquarters', 'founded_date', 'manufacturer', 'platform_kind' );
     public static function spec( string $type ): array {
         $base = array( 'type' => $type, 'label' => Schema::get( $type )['label'], 'layout' => 'directory', 'description' => 'Browse profiles, key information and related titles.', 'facet' => 'country', 'facet_label' => 'Country', 'date' => '', 'noun' => 'profiles' );
         $types = array(
@@ -15,6 +15,9 @@ final class CatalogArchive {
             'msc_game' => array( 'layout' => 'games', 'description' => 'Browse video games, platforms and release dates.', 'facet' => 'genres', 'facet_label' => 'Genre', 'date' => 'release_date', 'noun' => 'games' ),
             'msc_person' => array( 'layout' => 'people', 'description' => 'Find actors, directors, writers and other film and TV professionals.', 'facet' => 'professions', 'facet_label' => 'Profession', 'noun' => 'people' ),
             'msc_episode' => array( 'layout' => 'episodes', 'description' => 'Find episodes by title or parent TV show.', 'facet' => 'parent_show', 'facet_label' => 'TV Show', 'date' => 'release_date', 'noun' => 'episodes' ),
+            'msc_comic' => array( 'layout' => 'movies', 'description' => 'Browse comic book series and their published issues.', 'facet' => 'publisher', 'facet_label' => 'Publisher', 'noun' => 'comic books' ),
+            'msc_comic_issue' => array( 'layout' => 'episodes', 'description' => 'Browse individual issues by comic book and release date.', 'facet' => 'parent_comic', 'facet_label' => 'Comic Book', 'date' => 'release_date', 'noun' => 'issues' ),
+            'msc_comic_arc' => array( 'layout' => 'movies', 'description' => 'Browse story arcs and their issue reading order.', 'facet' => 'publisher', 'facet_label' => 'Publisher', 'noun' => 'arcs' ),
             'msc_console' => array( 'layout' => 'hardware', 'description' => 'Browse consoles and platforms, manufacturers and launch dates.', 'facet' => 'platform_kind', 'facet_label' => 'Platform type', 'date' => 'release_date', 'noun' => 'platforms' ),
         ); return array_replace( $base, $types[ $type ] ?? array() );
     }
@@ -51,8 +54,8 @@ final class CatalogArchive {
         $all = self::records( $types, $term ); $facets = array(); $years = array(); $platforms = array(); $filtered = array(); $next = null; $today = wp_date( 'Y-m-d' );
         foreach ( $all as $r ) {
             $values = 'type' === $spec['facet'] ? array( $r['type'] ) : (array) ( $r['data'][ $spec['facet'] ] ?? array() );
-            if ( 'parent_show' === $spec['facet'] ) { $values = array(); $parent = ! empty( $r['data']['parent_show'] ) ? self::related( $r['data']['parent_show'] ) : null; if ( $parent && 'msc_show' === $parent['type'] ) { $values[] = $parent['uuid']; $facets[ $parent['uuid'] ] = $parent['data']['title']; } }
-            foreach ( $values as $value ) { if ( ! is_string( $value ) || '' === $value ) { continue; } if ( 'parent_show' !== $spec['facet'] ) { $facets[ $value ] = 'type' === $spec['facet'] ? Schema::get( $value )['label'] : $value; } }
+            if ( in_array( $spec['facet'], array( 'parent_show', 'parent_comic' ), true ) ) { $values = array(); $parent = ! empty( $r['data'][ $spec['facet'] ] ) ? self::related( $r['data'][ $spec['facet'] ] ) : null; if ( $parent && ( 'parent_comic' === $spec['facet'] ? 'msc_comic' : 'msc_show' ) === $parent['type'] ) { $values[] = $parent['uuid']; $facets[ $parent['uuid'] ] = $parent['data']['title']; } }
+            foreach ( $values as $value ) { if ( ! is_string( $value ) || '' === $value ) { continue; } if ( ! in_array( $spec['facet'], array( 'parent_show', 'parent_comic' ), true ) ) { $facets[ $value ] = 'type' === $spec['facet'] ? Schema::get( $value )['label'] : $value; } }
             $year = $r['catalog_date'] ? substr( $r['catalog_date'], 0, 4 ) : ''; if ( $year ) { $years[ $year ] = $year; }
             foreach ( (array) ( $r['data']['platforms'] ?? array() ) as $platform ) { if ( is_string( $platform ) && $platform ) { $platforms[ $platform ] = $platform; } }
             if ( $r['catalog_date'] >= $today && ( ! $next || array( $r['catalog_date'], $r['data']['title'] ?? '' ) < array( $next['catalog_date'], $next['data']['title'] ?? '' ) ) ) { $next = $r; }

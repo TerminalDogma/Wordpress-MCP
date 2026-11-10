@@ -1,5 +1,13 @@
 # Changelog and release boundaries
 
+## 2.4.0
+
+SuperHeroHype receives Comic Books, Comic Issues and Story Arcs through an additive, one-time enrollment. Series and arc pages provide published issue lists, independent issue/arc numbering, cross-series reading order, AJAX arc filters and paginated issues. Backend grouping, scoped bulk editing, ACF relationships and existing publishing controls are available.
+
+The keyless Grand Comics Database API supplies searchable series and issue metadata, source identities and resumable issue batches. CC BY-SA attribution follows imported fields to the footer. Cover rights remain separate, and the importer keeps cover months distinct from exact on-sale dates. Arc assignments and positions are editorial. Published issue releases include parent Comic Book names on calendars.
+
+Synchronization now preserves each existing local post password, including crash-recovered projections. Shared updates cannot silently remove this local publication protection.
+
 ## 2.3.1
 
 Episode calendar cards now include the published parent Show name above the Episode title in month/week views, respecting local parent titles and public visibility.

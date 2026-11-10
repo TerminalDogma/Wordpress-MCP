@@ -4,7 +4,7 @@ namespace MSC;
 /** Keyless public APIs, bounded responses, shared caches and provider cooldowns. */
 final class OpenClient {
     private static ?int $wait_remaining = null;
-    private const ROOTS = array( 'tvmaze' => 'https://api.tvmaze.com/', 'wikidata' => 'https://www.wikidata.org/w/api.php', 'wikipedia' => 'https://en.wikipedia.org/w/api.php', 'commons' => 'https://commons.wikimedia.org/w/api.php' );
+    private const ROOTS = array( 'gcd' => 'https://www.comics.org/api/', 'tvmaze' => 'https://api.tvmaze.com/', 'wikidata' => 'https://www.wikidata.org/w/api.php', 'wikipedia' => 'https://en.wikipedia.org/w/api.php', 'commons' => 'https://commons.wikimedia.org/w/api.php' );
     /** Compound editor actions can wait briefly for local slots, never for a provider cooldown. */
     public static function paced( callable $callback, int $seconds = 12 ) {
         if ( null !== self::$wait_remaining ) { return $callback(); }
@@ -18,8 +18,9 @@ final class OpenClient {
     }
     public static function get( string $provider, string $path = '', array $params = array(), int $ttl = 3600 ): array {
         if ( ! current_user_can( 'msc_create_global' ) && ! current_user_can( 'msc_edit_global' ) && ! ( 'wikipedia' === $provider && current_user_can( 'msc_override_local' ) ) ) { throw new SourceError( 'Source editing permission is required.', 403 ); }
-        if ( ! isset( self::ROOTS[ $provider ] ) || ! preg_match( '~^[a-zA-Z0-9/]*$~D', $path ) || 'tvmaze' !== $provider && '' !== $path ) { throw new SourceError( 'Unsupported data source.' ); }
-        if ( 'tvmaze' !== $provider ) { $params += array( 'format' => 'json', 'formatversion' => 2, 'maxlag' => 5 ); }
+        if ( ! isset( self::ROOTS[ $provider ] ) || ! ( 'gcd' === $provider ? preg_match( '#^(?:series/(?:[1-9][0-9]{0,9}|name/[A-Za-z0-9%._~-]{1,480}(?:/issue/[A-Za-z0-9%._~-]{1,100})?)|issue/[1-9][0-9]{0,9}|publisher/[1-9][0-9]{0,9})/$#D', $path ) : preg_match( '~^[a-zA-Z0-9/]*$~D', $path ) ) || ! in_array( $provider, array( 'tvmaze', 'gcd' ), true ) && '' !== $path ) { throw new SourceError( 'Unsupported data source.' ); }
+        if ( 'gcd' === $provider ) { $params += array( 'format' => 'json' ); }
+        if ( ! in_array( $provider, array( 'tvmaze', 'gcd' ), true ) ) { $params += array( 'format' => 'json', 'formatversion' => 2, 'maxlag' => 5 ); }
         $url = add_query_arg( $params, self::ROOTS[ $provider ] . $path );
         $key = 'msc_open_' . hash( 'sha256', $url ); $cached = get_site_transient( $key );
         if ( is_array( $cached ) ) { return $cached; }

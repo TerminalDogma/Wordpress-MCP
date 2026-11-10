@@ -149,7 +149,7 @@ final class Acf {
 		self::$editing = $r;
 		echo '<div class="wrap"><h1>' . esc_html( Schema::get( $r['type'] )['label'] ) . ' — ACF Shared Fields</h1><h2>' . esc_html( $r['data']['title'] ?? '' ) . '</h2><p><strong>' . ( self::$global ? 'GLOBAL EDITING — Changes affect every inheriting site.' : 'LOCAL EDITING — Check Override to customize a field; uncheck to reset it.' ) . '</strong></p>';
 		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( self::$global ? 'global' : 'local' ) ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
-		EpisodeAdmin::context( $r, self::$global );
+		EpisodeAdmin::context( $r, self::$global ); ComicAdmin::context( $r );
 		PersonReview::notice( $r );
 		$status = get_post_status_object( get_post_status( (int) $r['mapping']['post_id'] ) );
 		echo '<p class="msc-acf-publication-status"><strong>Publication on this site: ' . esc_html( $status->label ?? 'Unavailable' ) . '</strong>' . ( 'publish' === get_post_status( (int) $r['mapping']['post_id'] ) ? ' · <a href="' . esc_url( get_permalink( (int) $r['mapping']['post_id'] ) ) . '" target="_blank" rel="noopener">View post</a>' : '' ) . '</p>';

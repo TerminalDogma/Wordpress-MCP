@@ -5,7 +5,7 @@ namespace MSC;
 final class OpenSources {
     public static function source( string $provider, string $url ): array {
         $license = 'wikidata' === $provider ? 'CC0 1.0' : 'CC BY-SA 4.0';
-        return array( 'provider' => $provider, 'url' => $url, 'license' => $license, 'license_url' => 'wikidata' === $provider ? 'https://creativecommons.org/publicdomain/zero/1.0/' : 'https://creativecommons.org/licenses/by-sa/4.0/', 'attribution' => array( 'tvmaze' => 'TVmaze contributors', 'wikidata' => 'Wikidata contributors', 'wikipedia' => 'Wikipedia contributors' )[ $provider ], 'changes' => 'Selected, formatted and adapted for this catalog.' );
+        return array( 'provider' => $provider, 'url' => $url, 'license' => $license, 'license_url' => 'wikidata' === $provider ? 'https://creativecommons.org/publicdomain/zero/1.0/' : 'https://creativecommons.org/licenses/by-sa/4.0/', 'attribution' => array( 'gcd' => 'Grand Comics Database contributors', 'tvmaze' => 'TVmaze contributors', 'wikidata' => 'Wikidata contributors', 'wikipedia' => 'Wikipedia contributors' )[ $provider ], 'changes' => 'Selected, formatted and adapted for this catalog.' );
     }
     public static function claims( array $entity, string $property ): array {
         $claims = array_values( array_filter( (array) ( $entity['claims'][ $property ] ?? array() ), static fn( $c ) => 'deprecated' !== ( $c['rank'] ?? '' ) && 'value' === ( $c['mainsnak']['snaktype'] ?? '' ) ) );
@@ -49,7 +49,8 @@ final class OpenSources {
     }
     private static function search_page( string $type, string $query, string $provider, int $offset ): array {
         $query = trim( sanitize_text_field( $query ) );
-        if ( '' === $query || strlen( $query ) > 160 || ! in_array( $type, array( 'msc_movie', 'msc_show', 'msc_person', 'msc_episode', 'msc_game' ), true ) || $offset < 0 || $offset > 200 ) { throw new SourceError( 'Enter a title or person name (up to 160 characters).' ); }
+        if ( '' === $query || strlen( $query ) > 160 || ! in_array( $type, array( 'msc_movie', 'msc_show', 'msc_person', 'msc_episode', 'msc_game', 'msc_comic', 'msc_comic_issue' ), true ) || $offset < 0 || $offset > 200 ) { throw new SourceError( 'Enter a title or person name (up to 160 characters).' ); }
+        if ( in_array( $type, array( 'msc_comic', 'msc_comic_issue' ), true ) ) { return ComicSource::search( $type, $query, $offset ); }
         if ( 'msc_game' === $type ) { return IgdbSource::search( $query, $offset ); }
         if ( in_array( $type, array( 'msc_show', 'msc_episode' ), true ) || 'msc_person' === $type && 'tvmaze' === $provider ) {
             $people = 'msc_person' === $type; $rows = OpenClient::get( 'tvmaze', $people ? 'search/people' : 'search/shows', array( 'q' => $query ) ); $result = array();
@@ -201,6 +202,7 @@ final class OpenSources {
         return array( 'provider' => 'wikidata', 'id' => $id, 'type' => $type, 'fields' => $fields, 'external_ids' => $ids, 'source' => $source, 'field_sources' => $field_sources, 'credits' => $credits, 'image' => $image, 'warnings' => $warnings, 'parent_tvmaze' => '', 'details' => array( 'dates' => $dates, 'description' => sanitize_text_field( $e['descriptions']['en']['value'] ?? '' ) ) );
     }
     public static function details( string $provider, string $id, string $type ): array {
+        if ( 'gcd' === $provider ) { return OpenClient::paced( static fn() => ComicSource::details( $id, $type ) ); }
         if ( 'igdb' === $provider && 'msc_game' === $type ) { return IgdbSource::details( $id ); }
         if ( 'tvmaze' === $provider ) { return self::tv( $id, $type ); }
         if ( 'wikidata' === $provider ) { return self::wiki( $id, $type ); }
