@@ -1,12 +1,14 @@
-# Shared Content 2.4.0 verification
+# Shared Content 2.4.1 verification
 
-## Comic series, issues and arcs
+## Comic series, issue arcs and GCD imports
 
-All 43 focused WordPress/ACF checks passed. Coverage includes initial SuperHeroHype-only enrollment, preserving later type switches, source contracts and cache behavior, duplicate identities, verified parent IDs, distinct cover/on-sale dates, cross-series arc order, field overrides, draft/private/protected visibility, password preservation during synchronization, calendar parent labels, resumable batches and pagination beyond 50 issues. Source network responses use deterministic HTTP fixtures. The live GCD name/year search endpoint was checked separately against Batman (1940).
+All 57 WordPress/ACF comic checks passed. Coverage includes SuperHeroHype-only enrollment, an upgrade from the saved 2.4.0 schema, direct book arc assignments, independent issue numbering and arc positions, source identity/parent validation, cover sideloads and provenance, corrupt-image retention, permissions for native authors, selected-scope parent context, draft/private/protected visibility, calendar context, empty-arc filtering and pagination beyond 50 issues. Provider responses use deterministic HTTP fixtures. GCD's live API was separately verified for its direct cover URL on issue 4513.
 
-Chromium verifies the series/arc/issue templates, both numbering systems, footer attribution, AJAX arc filtering and pagination, mobile overflow, Site A exclusion, ACF parent/arc controls and selectable issue-batch progress.
+Chromium verifies the series/arc/issue templates, downloaded artwork/footer credits, AJAX arc filtering including an empty assigned arc and reset, pagination/history, mobile overflow, Site A exclusion, ACF controls and selectable issue-batch progress.
 
-Existing regressions also passed: 71 source/import checks, 42 Episode administration checks, 35 entity/calendar checks and 34 review/aggregate checks.
+The four-site brand, content-type navigation, IGDB import and dynamic-calendar browser workflow also passed.
+
+Existing regressions passed: 71 source/import checks, 42 Episode administration checks, 35 entity/calendar checks and 34 review/aggregate checks. PHP syntax, JavaScript syntax and package validation also passed. See [the focused audit and suggestions](docs/comic-audit.md).
 
 
 Episode calendar checks additionally cover parent titles in month/week cards, local parent-title overrides and exclusion of private Show names.

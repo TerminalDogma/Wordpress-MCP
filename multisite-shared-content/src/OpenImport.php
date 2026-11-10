@@ -88,7 +88,7 @@ final class OpenImport {
     private static function image( array $image, string $title ): array {
         if ( ! current_user_can( 'upload_files' ) ) { throw new SourceError( 'Media upload permission is required.', 403 ); }
         $p = wp_parse_url( $image['url'] );
-        $allowed = 'upload.wikimedia.org' === ( $p['host'] ?? '' ) || 'images.igdb.com' === ( $p['host'] ?? '' ) && preg_match( '#^/igdb/image/upload/t_cover_big_2x/[A-Za-z0-9_-]+\.jpg$#D', $p['path'] ?? '' );
+        $allowed = ComicSource::cover_url( $image['url'] ) || 'upload.wikimedia.org' === ( $p['host'] ?? '' ) || 'images.igdb.com' === ( $p['host'] ?? '' ) && preg_match( '#^/igdb/image/upload/t_cover_big_2x/[A-Za-z0-9_-]+\.jpg$#D', $p['path'] ?? '' );
         if ( 'https' !== ( $p['scheme'] ?? '' ) || ! $allowed || ! empty( $p['user'] ) || ! empty( $p['port'] ) || ! empty( $p['query'] ) ) { throw new SourceError( 'Unsupported source image URL.' ); }
         require_once ABSPATH . 'wp-admin/includes/file.php'; require_once ABSPATH . 'wp-admin/includes/media.php'; require_once ABSPATH . 'wp-admin/includes/image.php';
         $tmp = wp_tempnam( 'msc-commons' ); if ( ! $tmp ) { throw new SourceError( 'Could not prepare an image download.' ); }
@@ -154,7 +154,7 @@ final class OpenImport {
             Schema::values( $s['type'], $values ); $warnings = $s['warnings']; $media = null; $people = array();
             if ( ! empty( $request['image'] ) ) {
                 $key = 'msc_person' === $s['type'] ? 'headshot' : 'poster';
-                if ( ! $s['image'] || 'media' !== ( Schema::get( $s['type'] )['fields'][ $key ]['type'] ?? '' ) ) { throw new SourceError( 'This preview has no supported licensed image.' ); }
+                if ( ! $s['image'] || 'media' !== ( Schema::get( $s['type'] )['fields'][ $key ]['type'] ?? '' ) ) { throw new SourceError( 'This preview has no supported source image.' ); }
                 try { $media = self::image( $s['image'], $s['fields']['title'] ?? $s['id'] ); $values[ $key ] = $media; }
                 catch ( SourceError $e ) { if ( 403 === $e->status ) { throw $e; } $warnings[] = 'Image download failed. Selected text was saved and the previous image retained. Retry from a fresh preview.'; }
             }

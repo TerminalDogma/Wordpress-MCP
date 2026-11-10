@@ -2,12 +2,13 @@
 namespace MSC;
 
 final class ComicAdmin {
-    public static function url( array $r, bool $source = false ): string { return add_query_arg( array( 'page' => 'msc-comic-issues', 'record' => $r['uuid'], 'source' => $source ? '1' : '' ), admin_url( 'admin.php' ) ); }
+    public static function url( array $r, bool $source = false ): string { return add_query_arg( array( 'page' => 'msc-comic-issues', 'record' => $r['uuid'] ) + ( $source ? array( 'source' => '1' ) : array() ), admin_url( 'admin.php' ) ); }
     public static function native_url( array $r ): string { return add_query_arg( array( 'post_type' => 'msc_comic_issue', 'msc_comic_parent' => $r['uuid'] ), admin_url( 'edit.php' ) ); }
-    public static function context( array $r ): void {
-        if ( ! Comics::is_type( $r['type'] ) ) { return; }
+    public static function context( array $r, bool $global = false ): void {
+        if ( ! Comics::is_type( $r['type'] ) || ! Schema::enabled( 'msc_comic_issue' ) || ! Comics::admin_allowed() ) { return; }
+        if ( $global && isset( $r['global'] ) ) { $r['data'] = $r['global']; }
         if ( 'msc_comic_issue' === $r['type'] ) {
-            $parent = ! empty( $r['data']['parent_comic'] ) ? Plugin::store()->get( $r['data']['parent_comic'] ) : null;
+            $parent = ! empty( $r['data']['parent_comic'] ) ? ( $global ? Plugin::store()->get( $r['data']['parent_comic'] ) : Plugin::store()->resolved( $r['data']['parent_comic'] ) ) : null;
             if ( $parent ) { echo '<p class="msc-comic-context"><strong>Comic Book: ' . esc_html( $parent['data']['title'] ?? '' ) . '</strong> · <a href="' . esc_url( self::url( $parent ) ) . '">Manage sibling issues</a></p>'; }
             return;
         }
@@ -33,23 +34,23 @@ final class ComicAdmin {
         add_filter( 'manage_msc_comic_posts_columns', static function ( $columns ) { $columns['comic_run'] = 'Run / volume'; $columns['comic_publisher'] = 'Publisher'; return $columns; } );
         add_action( 'manage_msc_comic_posts_custom_column', static function ( $column, $id ) { if ( 'comic_run' === $column ) { echo esc_html( implode( ' · ', array_filter( array( get_post_meta( $id, 'msc_start_year', true ), get_post_meta( $id, 'msc_volume', true ) ), 'strlen' ) ) ); } elseif ( 'comic_publisher' === $column ) { echo esc_html( get_post_meta( $id, 'msc_publisher', true ) ); } }, 10, 2 );
         add_action( 'admin_init', array( Comics::class, 'enroll' ) );
-        add_action( 'admin_menu', static function () { if ( Schema::enabled( 'msc_comic' ) && Schema::enabled( 'msc_comic_issue' ) ) { add_submenu_page( 'edit.php?post_type=msc_comic', 'Comic Issues by Comic Book', 'Issues by Comic Book', 'edit_posts', 'msc-comic-issues', array( self::class, 'page' ) ); } } );
-        add_filter( 'post_row_actions', static function ( $actions, $post ) { if ( in_array( $post->post_type, array( 'msc_comic', 'msc_comic_arc' ), true ) && ( $r = Plugin::store()->by_post( $post->ID ) ) ) { $actions['msc_comic_issues'] = '<a href="' . esc_url( self::url( $r ) ) . '">Issues</a>'; } return $actions; }, 10, 2 );
+        add_action( 'admin_menu', static function () { if ( Comics::admin_allowed() && Schema::enabled( 'msc_comic_issue' ) ) { add_submenu_page( Schema::enabled( 'msc_comic' ) ? 'edit.php?post_type=msc_comic' : 'edit.php?post_type=msc_comic_issue', 'Comic Issues by Comic Book', 'Issues by Comic Book', 'edit_posts', 'msc-comic-issues', array( self::class, 'page' ) ); } } );
+        add_filter( 'post_row_actions', static function ( $actions, $post ) { if ( Comics::admin_allowed() && Schema::enabled( 'msc_comic_issue' ) && in_array( $post->post_type, array( 'msc_comic', 'msc_comic_arc' ), true ) && ( $r = Plugin::store()->by_post( $post->ID ) ) ) { $actions['msc_comic_issues'] = '<a href="' . esc_url( self::url( $r ) ) . '">Issues</a>'; } return $actions; }, 10, 2 );
         add_action( 'admin_post_msc_comic_batch', static function () {
             check_admin_referer( 'msc_comic_batch' );
-            try { $token = ComicImport::start( sanitize_text_field( wp_unslash( $_POST['parent'] ?? '' ) ), wp_unslash( $_POST['issues'] ?? array() ), ! empty( $_POST['refresh'] ) ); wp_safe_redirect( add_query_arg( array( 'page' => 'msc-import', 'job' => $token ), admin_url( 'admin.php' ) ) ); exit; }
+            try { $token = ComicImport::start( sanitize_text_field( wp_unslash( $_POST['parent'] ?? '' ) ), wp_unslash( $_POST['issues'] ?? array() ), ! empty( $_POST['refresh'] ), ! empty( $_POST['covers'] ) ); wp_safe_redirect( add_query_arg( array( 'page' => 'msc-import', 'job' => $token ), admin_url( 'admin.php' ) ) ); exit; }
             catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ), 'Comic issue import', array( 'response' => $e instanceof SourceError ? $e->status : 400, 'back_link' => true ) ); }
         } );
         add_action( 'admin_enqueue_scripts', static function () { if ( 'msc-comic-issues' === ( $_GET['page'] ?? '' ) ) { wp_enqueue_script( 'msc-comic-admin', plugins_url( 'assets/comic-admin.js', MSC_FILE ), array(), MSC_VERSION, true ); } } );
     }
     public static function page(): void {
-        if ( ! current_user_can( 'edit_posts' ) || ! Schema::enabled( 'msc_comic_issue' ) ) { wp_die( 'Comic Issues are unavailable on this site.' ); }
+        if ( ! Comics::admin_allowed() || ! Schema::enabled( 'msc_comic_issue' ) ) { wp_die( 'Shared-content editing permission is required and Comic Issues must be enabled on this site.', 'Comic Issues', array( 'response' => 403 ) ); }
         echo '<div class="wrap msc-comic-admin"><h1>Comic Issues by Comic Book</h1>';
         $uuid = isset( $_GET['record'] ) && is_string( $_GET['record'] ) ? sanitize_text_field( wp_unslash( $_GET['record'] ) ) : '';
         if ( ! $uuid ) {
             echo '<p>Select a Comic Book to manage its issues. Story Arcs have their own cross-series reading order.</p><table class="widefat striped"><thead><tr><th>Comic Book</th><th>Actions</th></tr></thead><tbody>';
             $page = max( 1, absint( $_GET['comic_page'] ?? 1 ) );
-            $q = new \WP_Query( array( 'post_type' => 'msc_comic', 'post_status' => array( 'publish', 'draft', 'pending', 'private' ), 'posts_per_page' => 25, 'paged' => $page, 'orderby' => 'title', 'order' => 'ASC' ) );
+            $q = new \WP_Query( array( 'post_type' => array_values( array_filter( array( 'msc_comic', 'msc_comic_arc' ), array( Schema::class, 'enabled' ) ) ), 'post_status' => array( 'publish', 'draft', 'pending', 'private' ), 'posts_per_page' => 25, 'paged' => $page, 'orderby' => 'title', 'order' => 'ASC' ) );
             foreach ( $q->posts as $post ) { $r = Plugin::store()->by_post( $post->ID ); if ( $r && 'active' === $r['state'] ) { echo '<tr><td>' . esc_html( $post->post_title ) . '</td><td><a class="button" href="' . esc_url( self::url( $r ) ) . '">Manage issues</a></td></tr>'; } }
             echo '</tbody></table>'; if ( $page > 1 ) { echo '<a class="button" href="' . esc_url( add_query_arg( 'comic_page', $page - 1 ) ) . '">Previous page</a> '; } if ( $page < $q->max_num_pages ) { echo '<a class="button" href="' . esc_url( add_query_arg( 'comic_page', $page + 1 ) ) . '">Next page</a>'; } echo '</div>'; return;
         }
@@ -77,7 +78,7 @@ final class ComicAdmin {
             $url = add_query_arg( array( 'page' => 'msc-import', 'kind' => 'msc_comic_issue', 'provider' => 'gcd', 'id' => $row['id'], 'parent' => $owner['uuid'] ), admin_url( 'admin.php' ) );
             echo '<tr><td><input type="checkbox" name="issues[]" value="' . esc_attr( $row['id'] ) . '" aria-label="Select issue ' . esc_attr( $row['title'] ) . '"></td><td>' . esc_html( $row['title'] ) . '</td><td><a href="' . esc_url( $url ) . '">Preview selected fields</a></td></tr>';
         }
-        echo '</tbody></table><p><label><input type="checkbox" name="refresh" value="1"> Refresh existing issues as well (local overrides remain in effect)</label></p>'; submit_button( 'Import selected issues' ); echo '</form>';
+        echo '</tbody></table><p><label><input type="checkbox" name="covers" value="1" checked' . disabled( ! current_user_can( 'upload_files' ), true, false ) . '> Import available GCD covers (replaces existing covers when refreshing)</label></p><p><label><input type="checkbox" name="refresh" value="1"> Refresh existing issues as well (local overrides remain in effect)</label></p>'; submit_button( 'Import selected issues' ); echo '</form>';
         foreach ( array( $page - 1 => 'Previous page', $page + 1 => 'Next page' ) as $number => $label ) { if ( $number >= 1 && $number <= (int) ceil( count( $all ) / 50 ) ) { echo '<a class="button" href="' . esc_url( add_query_arg( 'comic_page', $number ) ) . '">' . esc_html( $label ) . '</a> '; } }
     }
 }

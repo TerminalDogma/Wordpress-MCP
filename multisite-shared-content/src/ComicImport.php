@@ -15,8 +15,9 @@ final class ComicImport {
         if ( $existing && ! empty( $existing['data']['parent_comic'] ) && $existing['data']['parent_comic'] !== $owner['uuid'] ) { throw new SourceError( 'This issue belongs to another Comic Book. Review its parent first.', 409 ); }
         $snapshot['fields']['parent_comic'] = $owner['uuid'];
     }
-    public static function start( string $parent, $ids, bool $refresh ): string {
+    public static function start( string $parent, $ids, bool $refresh, bool $covers = false ): string {
         if ( ! Schema::enabled( 'msc_comic_issue' ) || ! OpenImport::allowed() ) { throw new SourceError( 'Comic import permission is required.', 403 ); }
+        if ( $covers && ! current_user_can( 'upload_files' ) ) { throw new SourceError( 'Media upload permission is required to import covers.', 403 ); }
         $r = self::parent( $parent ); $source = (string) ( $r['data']['external_ids']['gcd'] ?? '' );
         if ( ! is_array( $ids ) || ! array_is_list( $ids ) || ! $ids || count( $ids ) > 50 || array_filter( $ids, static fn( $id ) => ! is_string( $id ) ) ) { throw new SourceError( 'Select between 1 and 50 issues from this page.' ); }
         $available = array_column( ComicSource::issues( $source ), null, 'id' ); $items = array();
@@ -29,7 +30,7 @@ final class ComicImport {
             $items[] = array( 'id' => $id, 'title' => $available[ $id ]['title'], 'target' => $matches[0]['uuid'] ?? '', 'version' => (int) ( $matches[0]['version'] ?? 0 ) );
         }
         if ( ! $items ) { throw new SourceError( 'Selected issues are already imported. Enable refreshing existing issues to update them.' ); }
-        $token = wp_generate_uuid4(); $job = array( 'comic' => true, 'owner' => array( get_current_network_id(), get_current_blog_id(), get_current_user_id() ), 'parent' => $parent, 'show_id' => $source, 'items' => $items, 'index' => 0, 'results' => array() ); set_site_transient( 'msc_open_job_' . $token, $job, DAY_IN_SECONDS ); return $token;
+        $token = wp_generate_uuid4(); $job = array( 'comic' => true, 'covers' => $covers, 'owner' => array( get_current_network_id(), get_current_blog_id(), get_current_user_id() ), 'parent' => $parent, 'show_id' => $source, 'items' => $items, 'index' => 0, 'results' => array() ); set_site_transient( 'msc_open_job_' . $token, $job, DAY_IN_SECONDS ); return $token;
     }
     public static function step( string $token ): array {
         return Database::lock( 'open:job:' . $token, static function () use ( $token ) {
@@ -41,7 +42,7 @@ final class ComicImport {
                 $preview = OpenImport::preview( 'gcd', $item['id'], 'msc_comic_issue', $item['target'], $job['parent'] );
                 if ( $item['target'] && $preview['version'] !== $item['version'] ) { throw new SourceError( 'This issue changed during the batch.', 409 ); }
                 if ( ! $item['target'] && $preview['target'] ) { $job['results'][] = array( 'title' => $item['title'], 'status' => 'Skipped: already imported', 'uuid' => $preview['target'] ); }
-                else { $saved = OpenImport::import( array( 'nonce' => wp_create_nonce( 'msc_open_import' ), 'token' => $preview['token'], 'fields' => array_keys( $preview['fields'] ) ) ); $job['results'][] = array( 'title' => $item['title'], 'status' => $item['target'] ? 'Updated' : 'Imported', 'uuid' => $saved['record']['uuid'], 'warnings' => $saved['warnings'] ); }
+                else { $saved = OpenImport::import( array( 'nonce' => wp_create_nonce( 'msc_open_import' ), 'token' => $preview['token'], 'fields' => array_keys( $preview['fields'] ), 'image' => ! empty( $job['covers'] ) && ! empty( $preview['image'] ) ? '1' : '' ) ); $job['results'][] = array( 'title' => $item['title'], 'status' => $item['target'] ? 'Updated' : 'Imported', 'uuid' => $saved['record']['uuid'], 'warnings' => $saved['warnings'] ); }
             } catch ( \Throwable $e ) {
                 if ( $e instanceof SourceError && in_array( $e->status, array( 429, 502, 503 ), true ) ) { throw $e; }
                 $job['results'][] = array( 'title' => $item['title'], 'status' => 'Failed: ' . $e->getMessage() );

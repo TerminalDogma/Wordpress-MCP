@@ -25,6 +25,7 @@ async def main():
             response=await page.goto(url,wait_until='domcontentloaded');assert response.status<400,(url,response.status)
             await page.evaluate('document.fonts.ready')
         await go(info['book'])
+        await expect(page.locator('[aria-label="Assigned story arcs"]')).to_be_visible()
         await expect(page.locator('.comic-issue-list li')).to_have_count(2)
         await page.evaluate('window.comicSessionMarker=123')
         await page.locator('.comic-arc-filters [data-comic-nav]').last.click()
@@ -32,6 +33,12 @@ async def main():
         await expect(page.locator('[data-comic-browser]')).not_to_have_attribute('aria-busy','true')
         assert await page.evaluate('window.comicSessionMarker')==123
         await page.screenshot(path=str(out/'series.png'),full_page=True)
+        await page.locator('.comic-arc-filters a[href*="'+info['empty_arc']+'"]').click()
+        await expect(page.locator('[data-comic-browser]')).to_contain_text('No published issues are assigned')
+        assert await page.evaluate('window.comicSessionMarker')==123
+        await page.locator('.comic-arc-filters a').first.click()
+        await expect(page.locator('.comic-issue-list li')).to_have_count(2)
+        assert await page.evaluate('window.comicSessionMarker')==123
         await go(info['arc'])
         titles=await page.locator('.comic-list-title strong').all_text_contents()
         assert titles[0]=='Signal #2' and titles[1]=='Second Comic #1' and titles[2].endswith('#10'),titles
@@ -39,6 +46,7 @@ async def main():
         await go(info['issue']);await expect(page.locator('.comic-issue-badge')).to_have_text('Issue #10')
         await expect(page.locator('.comic-arc-badge')).to_contain_text('Part 3 of 3')
         await expect(page.locator('.msc-footer-credits')).to_contain_text('Grand Comics Database')
+        await expect(page.locator('.msc-footer-credits')).to_contain_text('copyright holders')
         await page.screenshot(path=str(out/'issue.png'),full_page=True)
         await page.set_viewport_size({'width':390,'height':844})
         assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth+2')
@@ -69,6 +77,8 @@ async def main():
         await go(info['source'])
         await page.locator('[data-comic-check-all]').check()
         await expect(page.locator('input[name="issues[]"]:checked')).to_have_count(2)
+        await expect(page.locator('input[name="covers"]')).to_be_checked()
+        await page.locator('input[name="covers"]').uncheck()
         await page.locator('input[name="refresh"]').check();await page.get_by_role('button',name='Import selected issues',exact=True).click()
         await page.wait_for_url('**job=**');assert await page.locator('#msc-import-job').get_attribute('data-item-label')=='issue'
         await page.get_by_role('button',name='Start / resume',exact=True).click()

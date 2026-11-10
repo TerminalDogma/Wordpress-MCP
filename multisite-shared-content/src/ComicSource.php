@@ -3,6 +3,17 @@ namespace MSC;
 
 /** Public GCD metadata API. Artwork rights are independent of its data licence. */
 final class ComicSource {
+    /** GCD's API returns a direct scan URL; never accept arbitrary image hosts. */
+    public static function cover_url( string $url ): bool {
+        $p = wp_parse_url( $url );
+        return 'https' === ( $p['scheme'] ?? '' ) && (bool) preg_match( '/^files[1-9][0-9]*\.comics\.org$/D', $p['host'] ?? '' ) && (bool) preg_match( '#^/img/gcd/covers(?:_by_id)?/[0-9]+/w400/[1-9][0-9]*\.jpg$#D', $p['path'] ?? '' ) && empty( $p['user'] ) && empty( $p['pass'] ) && ! isset( $p['port'] ) && ! isset( $p['query'] ) && ! isset( $p['fragment'] );
+    }
+    private static function cover( array $issue ): ?array {
+        $url = $issue['cover'] ?? '';
+        if ( ! is_string( $url ) || ! self::cover_url( $url ) ) { return null; }
+        $id = self::id( $issue['api_url'] ?? '', 'issue' );
+        return array( 'url' => $url, 'source' => array( 'provider' => 'gcd', 'url' => 'https://www.comics.org/issue/' . $id . '/', 'attribution' => 'Grand Comics Database', 'license' => 'Cover artwork © respective copyright holders', 'license_url' => 'https://www.comics.org/', 'changes' => 'Downloaded from GCD; WordPress may resize the cover.' ) );
+    }
     public static function id( string $value, string $kind = '' ): string {
         if ( preg_match( '/^[1-9][0-9]{0,9}$/D', $value ) ) { return $value; }
         $p = wp_parse_url( $value );
@@ -62,7 +73,19 @@ final class ComicSource {
             $fields['issue_count'] = count( $d['active_issues'] ?? array() );
         }
         if ( $notes ) { $fields['content'] = wpautop( esc_html( mb_substr( $notes, 0, 20000 ) ) ); $fields['excerpt'] = wp_trim_words( $notes, 55 ); }
+        $image = $issue ? self::cover( $d ) : null;
+        $warnings = array();
+        if ( ! $issue ) {
+            // Series have no cover of their own. Offer the first available issue scan.
+            foreach ( array_slice( $series['active_issues'] ?? array(), 0, 3 ) as $issue_url ) {
+                try { $candidate = self::get( 'issue', self::id( $issue_url, 'issue' ) ); if ( self::id( $candidate['series'] ?? '', 'series' ) === $series_id ) { $image = self::cover( $candidate ); } }
+                catch ( SourceError $e ) { $warnings[] = 'The series cover could not be checked. Text can still be imported; retry the cover later.'; break; }
+                if ( $image ) { break; }
+            }
+            if ( $image ) { $warnings[] = 'This series cover is an issue scan from the beginning of the run. You can replace it in the image editor.'; }
+        }
+        if ( ! $image ) { $warnings[] = 'No available GCD cover was found. The existing image will be retained.'; }
         $source = OpenSources::source( 'gcd', 'https://www.comics.org/' . ( $issue ? 'issue' : 'series' ) . '/' . self::id( $id ) . '/' );
-        return array( 'provider' => 'gcd', 'id' => self::id( $id ), 'type' => $type, 'fields' => $fields, 'external_ids' => array( 'gcd' => self::id( $id ) ), 'source' => $source, 'field_sources' => array(), 'credits' => array(), 'image' => null, 'warnings' => array( 'GCD metadata is CC BY-SA 4.0. Cover-image rights are separate; use the image picker for your cover.', 'Arc membership and reading-order positions are editorial fields; the GCD API does not reliably provide them.' ), 'details' => array( 'parent_gcd' => $series_id ) );
+        return array( 'provider' => 'gcd', 'id' => self::id( $id ), 'type' => $type, 'fields' => $fields, 'external_ids' => array( 'gcd' => self::id( $id ) ), 'source' => $source, 'field_sources' => array(), 'credits' => array(), 'image' => $image, 'warnings' => $warnings, 'details' => array( 'parent_gcd' => $series_id ) );
     }
 }

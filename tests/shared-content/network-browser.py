@@ -32,7 +32,7 @@ async def main():
         await context.route('**/*', route)
         page = await context.new_page(); errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
         colors = []; fonts = []
-        for key, brand, types in [('a','ComingSoon.net',['Movies','TV Shows','People']),('b','SuperHeroHype',['Movies','TV Shows']),('c','GameRevolution',['Video Games']),('d','PlayStation LifeStyle',['Video Games'])]:
+        for key, brand, types in [('a','ComingSoon.net',['Movies','TV Shows','People','Reviews']),('b','SuperHeroHype',['Movies','TV Shows','Comic Books','Story Arcs','Reviews']),('c','GameRevolution',['Video Games','Reviews']),('d','PlayStation LifeStyle',['Video Games','Reviews'])]:
             response = await page.goto(base + '/site-' + key + '/')
             assert response.status == 200
             await page.evaluate('document.fonts.ready')

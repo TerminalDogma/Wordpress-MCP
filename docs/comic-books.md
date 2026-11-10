@@ -1,4 +1,4 @@
-# Comic Books, Issues and Story Arcs (2.4.0)
+# Comic Books, Issues and Story Arcs (2.4.1)
 
 Update the existing checkout, with Docker Desktop running:
 
@@ -15,7 +15,7 @@ Create one **Comic Book** per series/run or volume. Its overall page shows the c
 
 An **Issue** links to its parent Comic Book. Its published issue number is text, allowing identifiers such as `0`, `1/2`, `1.AU` and annuals. Ordinary numeric issues sort numerically. Use **Optional numeric sort order** for fractional identifiers, variants or other special placement.
 
-An Issue can also link to a **Story Arc**, with a separate **Issue position in story arc**. For example, a book's issue #404 can be part 1 of a four-issue arc. Set **Total issues in arc** on the Arc to show “Part 1 of 4.” Positions start at 1 and remain independent of the book's published issue number. An arc can contain issues from multiple Comic Books, supporting crossovers.
+A Comic Book can be assigned multiple **Story arcs** in its ACF editor; published arcs appear on the book page even before their issues are published. Each Issue separately links to its **Story Arc**, with a separate **Issue position in story arc**. For example, a book's issue #404 can be part 1 of a four-issue arc. Set **Total issues in arc** on the Arc to show “Part 1 of 4.” Positions start at 1 and remain independent of the book's published issue number. An arc can contain issues from multiple Comic Books, supporting crossovers.
 
 Arc pages show their published issues in reading order. Issues without a reading-order position follow numbered parts. Series pages can filter their issues by published arc. Lists paginate in groups of 50, hide inaccessible/draft issues, omit excerpts and use AJAX for filters and pagination, with ordinary links as a fallback. Empty public series hide their issue section.
 
@@ -23,7 +23,7 @@ Arc pages show their published issues in reading order. Issues without a reading
 
 1. Open **Shared Content → Comic Books** and create or import the series.
 2. Choose **Add issue** from its shared/ACF editor or **Comic Books → Issues by Comic Book**. The parent is preselected.
-3. Set the published issue number, cover, credits and on-sale date. Choose an existing Story Arc and its position when applicable.
+3. Assign the series to its **Story arcs**. Set each issue’s published issue number, cover, credits and on-sale date. Choose an existing Story Arc and its position when applicable.
 4. Create Story Arcs under **Comic Books → Story Arcs**. Use their **Manage issues** link for a cross-series list.
 5. Save supported fields through ACF, including its existing site/global publish buttons. Global editing, local overrides, reset and synchronization work as with other shared types. New imports follow the configured publication default, initially draft.
 
@@ -36,10 +36,12 @@ Public relationships link only to accessible published destinations. The comic's
 The [Grand Comics Database](https://www.comics.org/) provides the [public API](https://www.comics.org/api/) used here. No API key, subscription or paid intermediary is required.
 
 - In **Shared Content → Import Content**, choose **Comic Books**, search a title, and choose the correct run using its year/language. Preview and select fields before importing.
-- Open that Comic Book and choose **Import issues from GCD**. Select individual issues or all issues on the current page, then **Import selected issues**. The existing progress screen supports pause/resume and processes one issue per request.
+- Open that Comic Book and choose **Import issues from GCD**. Select individual issues or all issues on the current page, choose whether to **Import available GCD covers**, then **Import selected issues**. The existing progress screen supports pause/resume and processes one issue per request.
 - A batch selects up to 50 issues. Next/Previous pages browse the rest of the source series. Already imported identities are skipped unless **Refresh existing issues** is checked.
 - Individual issue search accepts `Batman #404`. Import or connect the matching parent series first. The importer verifies source parent IDs, rather than matching names.
 - Reimports reuse GCD identities and protect stale changes. Existing local overrides remain in effect. Fields absent from the source, including editorial arc assignments, are retained.
+
+Individual previews show the GCD cover and an **Import this image and its credit** checkbox. Comic Book previews offer a cover from the first three issues with scans at the start of the run. Issue previews use that issue’s scan. Covers download into the media library and share across sites as ordinary shared media. Missing or failed scans preserve the current cover. Batch cover imports require media-upload permission.
 
 Imported data includes available publisher/run facts, issue numbers, credits, page count, cover dates, exact on-sale dates and indexed story synopses. Availability depends on the source's indexing. **Arc membership and arc positions are editorial fields** because the current GCD API does not reliably expose them. Create/link arcs and enter reading order in the editor; the importer does not guess them.
 
@@ -47,7 +49,7 @@ The importer keeps **cover date** separate from **on-sale date**. A month-only d
 
 ### Licence and attribution
 
-GCD states that its database content, except where noted otherwise, uses [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), which permits commercial reuse with attribution and ShareAlike conditions. Imported fields retain source/provenance data; the theme collects credits in the footer. The [GCD homepage](https://www.comics.org/) separately reserves cover-image rights to their copyright holders. Its data licence does not grant cover-image rights, so automatic imports leave cover images unchanged. Upload/select a cover or use the existing Google Images/image-URL controls.
+GCD states that its database content, except where noted otherwise, uses [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), which permits commercial reuse with attribution and ShareAlike conditions. Imported fields retain source/provenance data; the theme collects credits in the footer. The [GCD homepage](https://www.comics.org/) separately reserves cover-image rights to their copyright holders. Cover imports keep artwork copyright separate from the metadata licence and retain a GCD issue source link and copyright credit in the footer. Cover availability does not establish reproduction rights. Upload/select a replacement or use the existing Google Images/image-URL controls when needed.
 
 The implementation uses the public series-name, series-detail, issue-detail and publisher-detail endpoints. It validates fixed provider hosts and source identity, caches requests, retains source cooldowns and never fetches source APIs on public page views.
 

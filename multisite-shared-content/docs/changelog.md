@@ -1,5 +1,13 @@
 # Changelog and release boundaries
 
+## 2.4.1
+
+GCD import previews now offer available issue covers and an early-issue cover for a series. Issue batches have an optional cover-download control. Images are stored in WordPress with separate artwork credits in the footer; unavailable or failed images leave existing covers intact.
+
+Comic Books can have multiple assigned Story Arcs through a searchable ACF relationship field. Issues retain their independent arc membership and reading-order positions. The additive schema upgrade preserves existing content and custom schemas.
+
+The audit fixes unauthorized access to grouped draft/private issue data, prefixed numeric issue ordering, incorrect parent context in the global editor, grouped-browser registration when Comic Books are disabled, missing comic-poster footer credits and a cover-artists-only layout omission. The four-site browser test now includes the existing Reviews and new comic navigation.
+
 ## 2.4.0
 
 SuperHeroHype receives Comic Books, Comic Issues and Story Arcs through an additive, one-time enrollment. Series and arc pages provide published issue lists, independent issue/arc numbering, cross-series reading order, AJAX arc filters and paginated issues. Backend grouping, scoped bulk editing, ACF relationships and existing publishing controls are available.

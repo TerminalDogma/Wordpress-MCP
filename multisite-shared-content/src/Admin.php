@@ -110,7 +110,7 @@ final class Admin {
 		if ( ! $r ) { EpisodeAdmin::new_context( $type ); }
 		if ( $r ) {
 			PersonReview::notice( $r );
-			EpisodeAdmin::context( $r, $global ); ComicAdmin::context( $r );
+			EpisodeAdmin::context( $r, $global ); ComicAdmin::context( $r, $global );
 			if ( function_exists( 'acf_form' ) ) { echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( $global ? 'global' : 'local' ) ) ) . '">Edit supported fields with ACF</a></p>'; }
 			echo '<p><code>' . esc_html( $r['uuid'] ) . '</code> · Global revision ' . esc_html( $r['version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( $global ? 'local' : 'global' ) ) ) . '">' . ( $global ? 'Switch to local overrides' : 'Switch to global editing' ) . '</a></p>';
 			if ( ! $r['mapping'] ) { Queue::sync( (int) $r['id'], get_current_blog_id() ); echo '<p>Local post is queued. Refresh after synchronization.</p></div>'; return; }

@@ -75,7 +75,7 @@ jobs:
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.4.0
+          name: multisite-shared-content-2.4.1
           path: dist/
       - name: Stop services
         if: always()

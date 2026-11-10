@@ -11,7 +11,7 @@ case "${1:-setup}" in
     if ! wp site list --field=path | grep -Fxq /site-d/; then wp site create --slug=site-d --title="Test Site D" --private; fi
     wp plugin activate multisite-shared-content --network
     wp --user=1 msc sites
-    wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Queue did not drain");}echo "Shared content ready on Sites A, B and C.\n";'
+    wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Queue did not drain");}echo "Shared content ready on Sites A, B, C and D.\n";'
     wp --user=1 msc reconcile
     wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Site A catch-up queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Site A catch-up is incomplete");}'
     wp eval-file /msc-examples/network-demo.php

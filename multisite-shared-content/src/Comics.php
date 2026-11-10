@@ -16,6 +16,7 @@ final class Comics {
             'official_website' => array( 'type' => 'url' ), 'external_ids' => array( 'type' => 'json' ),
         );
         $series = $shared + array(
+            'story_arcs' => array( 'type' => 'relationship_list', 'target' => 'msc_comic_arc', 'label' => 'Story arcs', 'instructions' => 'Assign arcs to this comic run. Assign each issue to its arc separately and enter its reading-order position.' ),
             'start_year' => array( 'type' => 'integer', 'min' => 0 ), 'end_year' => array( 'type' => 'integer', 'min' => 0 ),
             'volume' => array( 'type' => 'text', 'label' => 'Run / volume' ),
             'publication_format' => array( 'type' => 'text', 'label' => 'Publication format' ),
@@ -65,11 +66,21 @@ final class Comics {
     public static function add_url( array $record ): string {
         return add_query_arg( array( 'page' => 'msc', 'type' => 'msc_comic_issue', 'new' => 1, 'msc_comic' === $record['type'] ? 'parent_comic' : 'story_arc' => $record['uuid'] ), admin_url( 'admin.php' ) );
     }
+    public static function admin_allowed(): bool { return current_user_can( 'msc_override_local' ) || current_user_can( 'msc_edit_global' ) || current_user_can( 'msc_create_global' ); }
+    /** Explicit book assignments also work before any issues have been published. */
+    public static function assigned_arcs( array $book, bool $admin = false ): array {
+        $out = array();
+        foreach ( $book['data']['story_arcs'] ?? array() as $uuid ) {
+            $arc = $admin ? Plugin::store()->resolved( $uuid ) : Presentation::record( $uuid );
+            if ( $arc && 'msc_comic_arc' === $arc['type'] && 'active' === $arc['state'] && Schema::enabled( 'msc_comic_arc' ) ) { $out[ $uuid ] = $arc; }
+        }
+        return $out;
+    }
     /** Query only the selected parent's projections; drafts/private targets never enter public lists. */
     public static function issue_page( array $owner, array $input = array(), bool $admin = false ): array {
         global $wpdb;
         $empty = array( 'issues' => array(), 'total' => 0, 'page' => 1, 'pages' => 1, 'arc' => '', 'arcs' => array() );
-        if ( ! Schema::enabled( 'msc_comic_issue' ) || ! in_array( $owner['type'], array( 'msc_comic', 'msc_comic_arc' ), true ) ) { return $empty; }
+        if ( $admin && ! self::admin_allowed() || ! Schema::enabled( 'msc_comic_issue' ) || ! in_array( $owner['type'], array( 'msc_comic', 'msc_comic_arc' ), true ) ) { return $empty; }
         $key = 'msc_comic' === $owner['type'] ? 'msc_parent_comic' : 'msc_story_arc';
         $maps = Database::table( 'maps' ); $records = Database::table( 'records' );
         $from = "$wpdb->posts p INNER JOIN $maps m ON m.post_id=p.ID AND m.site_id=" . (int) get_current_blog_id() . " INNER JOIN $records r ON r.id=m.record_id INNER JOIN $wpdb->postmeta parent ON parent.post_id=p.ID AND parent.meta_key='$key' LEFT JOIN $wpdb->postmeta arc ON arc.post_id=p.ID AND arc.meta_key='msc_story_arc'";
@@ -77,9 +88,10 @@ final class Comics {
         $where .= $admin ? " AND p.post_status NOT IN ('trash','auto-draft')" : " AND p.post_status='publish' AND p.post_password='' AND m.status='publish'";
         $arcs = array();
         if ( 'msc_comic' === $owner['type'] ) {
+            foreach ( self::assigned_arcs( $owner, $admin ) as $uuid => $arc ) { $arcs[ $uuid ] = $arc['data']['title'] ?? ''; }
             foreach ( $wpdb->get_col( "SELECT DISTINCT arc.meta_value FROM $from WHERE $where AND arc.meta_value<>'' LIMIT 500" ) as $uuid ) {
                 $arc = $admin ? Plugin::store()->resolved( $uuid ) : Presentation::record( $uuid );
-                if ( $arc && 'msc_comic_arc' === $arc['type'] && 'active' === $arc['state'] ) { $arcs[ $uuid ] = $arc['data']['title'] ?? ''; }
+                if ( $arc && Schema::enabled( 'msc_comic_arc' ) && 'msc_comic_arc' === $arc['type'] && 'active' === $arc['state'] ) { $arcs[ $uuid ] = $arc['data']['title'] ?? ''; }
             }
         }
         natcasesort( $arcs ); $selected = isset( $input['comic_arc'] ) && is_string( $input['comic_arc'] ) && isset( $arcs[ $input['comic_arc'] ] ) ? $input['comic_arc'] : '';
@@ -88,7 +100,8 @@ final class Comics {
         $page = isset( $input['comic_page'] ) && is_scalar( $input['comic_page'] ) ? max( 1, min( $pages, absint( $input['comic_page'] ) ) ) : 1;
         $order_key = 'msc_comic_arc' === $owner['type'] || $selected ? 'msc_arc_position' : 'msc_issue_order';
         $from .= " LEFT JOIN $wpdb->postmeta ord ON ord.post_id=p.ID AND ord.meta_key='$order_key' LEFT JOIN $wpdb->postmeta num ON num.post_id=p.ID AND num.meta_key='msc_issue_number'";
-        $fallback = 'msc_comic_arc' === $owner['type'] || $selected ? '' : " WHEN num.meta_value REGEXP '^-?[0-9]+([.][0-9]+)?$' THEN CAST(num.meta_value AS DECIMAL(14,4))";
+        $issue_number = "TRIM(LEADING '#' FROM TRIM(num.meta_value))";
+        $fallback = 'msc_comic_arc' === $owner['type'] || $selected ? '' : " WHEN $issue_number REGEXP '^-?[0-9]+([.][0-9]+)?$' THEN CAST($issue_number AS DECIMAL(14,4))";
         $number = "CASE WHEN ord.meta_value REGEXP '^-?[0-9]+([.][0-9]+)?$' THEN CAST(ord.meta_value AS DECIMAL(14,4))" . $fallback . ' ELSE NULL END';
         $ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT r.id,$number AS issue_order,num.meta_value AS issue_number FROM $from WHERE $where ORDER BY issue_order IS NULL,issue_order,issue_number,r.id LIMIT 50 OFFSET %d", ( $page - 1 ) * 50 ) );
         $items = array(); foreach ( $ids as $id ) { $r = $admin ? Plugin::store()->resolved( (int) $id ) : Presentation::record( (int) $id ); if ( $r ) { $items[] = $r; } }
