@@ -10,14 +10,18 @@ final class CLI {
 	 * : Maximum jobs; runtime is capped at 20 seconds.
 	 */
 	public function queue( $args, $assoc ): void { \WP_CLI::log( wp_json_encode( Queue::run( (int) ( $assoc['limit'] ?? 100 ) ) ) ); }
-    /** Import the bundled 250 Movies and 250 TV Shows as drafts. */
-    public function training(): void {
-        $token = TrainingCatalog::start();
-        do { $job = TrainingCatalog::step( $token ); \WP_CLI::log( $job['index'] . ' / 500 processed' ); } while ( $job['index'] < 500 );
-        $counts = array_count_values( array_column( $job['results'], 'status' ) );
-        \WP_CLI::log( wp_json_encode( $counts ) );
-        foreach ( $job['results'] as $result ) { if ( str_starts_with( $result['status'], 'Needs review:' ) ) { \WP_CLI::warning( $result['title'] . ': ' . $result['status'] ); } }
-        \WP_CLI::success( 'Training catalog processed. Publish reviewed records from the Movies and TV Shows post lists.' );
+    /** Rebuild complete training drafts, replacing untouched old stubs. ## OPTIONS
+     * [--resume=<token>]
+     * : Resume an interrupted import token printed by this command.
+     */
+    public function training( $args, $assoc ): void {
+        $token = $assoc['resume'] ?? TrainingCatalog::start(); TrainingCatalog::job( $token );
+        \WP_CLI::log( 'Import token: ' . $token . ' (resume with wp --user=1 msc training --resume=' . $token . ')' );
+        do { $job = TrainingCatalog::step( $token ); \WP_CLI::log( $job['index'] . ' / 500 processed' ); if ( ! empty( $job['retry_after'] ) ) { \WP_CLI::log( 'Waiting for the source request window.' ); sleep( min( 60, (int) $job['retry_after'] ) ); } } while ( $job['index'] < 500 );
+        $counts = array_count_values( array_column( $job['results'], 'status' ) ); \WP_CLI::log( wp_json_encode( $counts ) ); $failures = 0;
+        foreach ( $job['results'] as $result ) { if ( str_starts_with( $result['status'], 'Needs review:' ) ) { ++$failures; \WP_CLI::warning( $result['title'] . ': ' . $result['status'] ); } }
+        if ( $failures ) { \WP_CLI::error( $failures . ' titles remain incomplete. Run the command again to retry; completed and editorial records will be retained.' ); }
+        \WP_CLI::success( 'Complete training records are ready for editorial review. Publish from the Movies and TV Shows post lists.' );
     }
 
 	/** Print queue totals. */

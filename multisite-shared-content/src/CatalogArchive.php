@@ -10,6 +10,7 @@ final class CatalogArchive {
     public static function spec( string $type ): array {
         $base = array( 'type' => $type, 'label' => Schema::get( $type )['label'], 'layout' => 'directory', 'description' => 'Browse profiles, key information and related titles.', 'facet' => 'country', 'facet_label' => 'Country', 'date' => '', 'noun' => 'profiles' );
         $types = array(
+            'msc_franchise' => array( 'layout' => 'movies', 'description' => 'Explore movie and TV franchises, with titles in release order.', 'facet' => 'genres', 'facet_label' => 'Genre', 'noun' => 'franchises' ),
             'msc_movie' => array( 'layout' => 'movies', 'description' => 'Browse movies by title, genre and release year.', 'facet' => 'genres', 'facet_label' => 'Genre', 'date' => 'release_date', 'noun' => 'movies' ),
             'msc_show' => array( 'layout' => 'shows', 'description' => 'Find TV shows, series information and episode guides.', 'facet' => 'genres', 'facet_label' => 'Genre', 'date' => 'premiere_date', 'noun' => 'shows' ),
             'msc_game' => array( 'layout' => 'games', 'description' => 'Browse video games, platforms and release dates.', 'facet' => 'genres', 'facet_label' => 'Genre', 'date' => 'release_date', 'noun' => 'games' ),

@@ -19,7 +19,7 @@ case "${1:-setup}" in
     ;;
   wp) shift; wp "$@" ;;
   queue) wp msc queue --limit=1000 ;;
-  training) wp --user=1 msc training ;;
+  training) shift; wp --user=1 msc training "$@" ;;
   demo) wp eval-file /msc-examples/network-demo.php ;;
   legacy-demo) wp eval-file /msc-examples/style-demo.php; wp eval-file /msc-examples/create-demo.php ;;
   style) wp eval-file /msc-examples/style-demo.php ;;

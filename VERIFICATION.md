@@ -1,4 +1,16 @@
-# Shared Content 2.6.0 verification
+# Shared Content 2.7.0 verification
+
+## Complete training replacement and Franchise pages
+
+The replacement importer was checked in a disposable WordPress multisite network using explicitly synthetic HTTP/cache fixtures. The full 500-title workflow resolved all selected identities and passed 19 bulk-publication/editorial workflow checks, including a 250-Movie global publish. These fixtures test behavior and do not establish that 500 live source records have been enriched.
+
+The focused replacement/Franchise suite passed 24 checks: ownership and change detection, safe legacy retirement, no partial replacement on artwork failure, stable global UUIDs, description/cast/crew/company relationships, real WordPress media attachments, draft copies across sites, repeat imports, unpublished People reuse, source completeness, mixed release chronology, hidden drafts/password-protected titles, reverse links, opt-out preservation, and retained movie/TV aggregate-score metadata. Chromium passed desktop/mobile Franchise layouts, real local image loading, title links and relationship-editor controls, plus the revised training UI and existing bulk-publication workflow.
+
+The managed cloud environment blocks the live OMDb, Wikimedia, TVmaze and artwork hosts. The actual 500-title metadata/artwork rebuild therefore remains a local command to run on the Mac; no live-fetch completion is claimed. New source failures are reported and incomplete entries remain archived rather than being presented as complete. A source poster may be assigned to both image fields when no separate background exists.
+
+The four-site browser suite also passed brand navigation, calendar, site type controls and IGDB/editor regressions. Regression suites passed: 71 source/import checks, 11 unpublished-credit checks, 35 entity/calendar checks and 18 ACF publication checks.
+
+## Earlier 2.6.0 verification (historical)
 
 ## Training catalog, bulk publication and reviewed release posts
 

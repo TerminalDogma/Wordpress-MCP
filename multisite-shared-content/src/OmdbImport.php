@@ -42,7 +42,7 @@ final class OmdbImport {
         if ( 'json' === ( $schema['fields']['additional_metadata']['type'] ?? '' ) ) { $data['additional_metadata'] = array( 'omdb_credit_source' => $imdb ); }
         return Schema::values( 'msc_person', $data );
     }
-    private static function map( array $data, string $type ): array {
+    public static function map( array $data, string $type ): array {
         $values = array( 'title' => self::text( $data, 'Title' ) ); $plot = self::text( $data, 'Plot' );
         if ( $plot ) { $values['content'] = '<p>' . esc_html( $plot ) . '</p>'; $values['excerpt'] = wp_trim_words( $plot, 55 ); }
         foreach ( array( 'Genre' => 'genres', 'Country' => 'country', 'Language' => 'language' ) as $source => $field ) {

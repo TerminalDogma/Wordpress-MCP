@@ -105,8 +105,11 @@ final class OpenImport {
         } finally { if ( is_file( $tmp ) ) { wp_delete_file( $tmp ); } }
     }
     private static function person( array $credit, string $choice ): array {
+        return self::locked( PersonIdentity::credit_ids( $credit ), static fn() => self::credit( $credit, $choice ) );
+    }
+    /** Caller must hold PersonIdentity::locked, as the ordinary importer does. */
+    public static function credit( array $credit, string $choice ): array {
         $ids = PersonIdentity::credit_ids( $credit );
-        return self::locked( $ids, static function () use ( $credit, $choice, $ids ) {
             $existing = PersonIdentity::resolve( $credit['name'], $ids, $credit['fields']['birth_date'] ?? '', $choice );
             if ( $existing ) {
                 self::compatible( $existing, $ids ); $values = array();
@@ -124,7 +127,6 @@ final class OpenImport {
             if ( 'multiselect' === ( $schema['fields']['professions']['type'] ?? '' ) ) { $values['professions'] = array_values( array_unique( $professions ) ); }
             $values['external_ids'] = $ids; $values['additional_metadata'] = self::provenance( array(), $values, $credit + array( 'field_sources' => array() ) );
             return PersonIdentity::remember( Plugin::store()->create( 'msc_person', $values ) );
-        } );
     }
     public static function import( array $request ): array {
         if ( ! is_string( $request['nonce'] ?? null ) || ! wp_verify_nonce( $request['nonce'], 'msc_open_import' ) ) { throw new SourceError( 'The import security token expired. Open a fresh preview.', 403 ); }

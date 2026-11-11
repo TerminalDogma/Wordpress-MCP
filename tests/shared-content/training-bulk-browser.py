@@ -37,7 +37,7 @@ async def main():
   await expect(g.locator('body')).not_to_contain_text('Fictional presentation feature')
   await page.goto(info['release_admin']);await expect(page.get_by_role('heading',name='Release Posts',exact=True)).to_be_visible();await expect(page.get_by_role('button',name='Generate release posts for review',exact=True)).to_be_visible()
   await page.screenshot(path=str(out/'release-post-review-generator.png'))
-  await page.goto(info['training']);await page.get_by_role('button',name='Import 250 Movies and 250 TV Shows',exact=True).click();await page.wait_for_url('**job=**');await page.get_by_role('button',name='Start / resume import',exact=True).click()
+  await page.goto(info['training']);await page.get_by_role('button',name='Rebuild complete training catalog',exact=True).click();await page.wait_for_url('**job=**');await page.get_by_role('button',name='Start / resume import',exact=True).click()
   await page.wait_for_function('Number(document.querySelector("#msc-training-import progress").value)>=10',timeout=60000)
   await page.get_by_role('button',name='Pause',exact=True).click();await expect(page.get_by_role('button',name='Start / resume import',exact=True)).to_be_enabled(timeout=60000)
   assert int(await page.locator('#msc-training-import progress').get_attribute('value'))<500

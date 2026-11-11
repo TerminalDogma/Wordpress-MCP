@@ -3,3 +3,5 @@ get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array(
 \MSC\Trailers::render( $r ); \MSC\Presentation::credits( $r ); get_template_part( 'parts/gallery', null, $args );
 
 \MSC\ReviewScores::render( $r );
+
+\MSC\Franchises::links( $r );

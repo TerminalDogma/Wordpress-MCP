@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 11;
+	public const BUILTIN_VERSION = 12;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -90,7 +90,7 @@ final class Schema {
 			'msc_movie' => array( 'label' => 'Movies', 'slug' => 'movies', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $movie ),
 			'msc_person' => array( 'label' => 'People', 'slug' => 'people', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $person ),
 			'msc_game' => array( 'label' => 'Video Games', 'slug' => 'games', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $game ),
-		) + EntityCatalog::schemas( $common ) + Comics::schemas( $common );
+		) + EntityCatalog::schemas( $common ) + Comics::schemas( $common ) + Franchises::schemas( $common );
 	}
 	/** Add new built-ins and missing fields once, retaining saved schema choices. */
 	public static function upgrade_defaults(): void {
@@ -105,11 +105,11 @@ final class Schema {
 			if ( false !== $saved && ! is_array( $saved ) ) { throw new \RuntimeException( 'Stored shared schemas are invalid; repair them before upgrading.' ); }
 			$schemas = false === $saved ? self::defaults() : $saved;
 			foreach ( self::defaults() as $type => $default ) {
-				if ( ! isset( $schemas[ $type ] ) ) { if ( Comics::is_type( $type ) && $previous_version < 10 || 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 || 'msc_game' === $type && $previous_version < 5 || isset( EntityCatalog::definitions()[ $type ] ) && $previous_version < 6 ) { $schemas[ $type ] = $default; } continue; }
+				if ( ! isset( $schemas[ $type ] ) ) { if ( 'msc_franchise' === $type && $previous_version < 12 || Comics::is_type( $type ) && $previous_version < 10 || 'msc_movie' === $type && $previous_version < 2 || 'msc_person' === $type && $previous_version < 3 || 'msc_game' === $type && $previous_version < 5 || isset( EntityCatalog::definitions()[ $type ] ) && $previous_version < 6 ) { $schemas[ $type ] = $default; } continue; }
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( ! ( $previous_version < 11 && 'msc_comic' === $type && 'story_arcs' === $key ) && $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
+					if ( ! ( $previous_version < 12 && 'msc_franchise' === $type ) && ! ( $previous_version < 11 && 'msc_comic' === $type && 'story_arcs' === $key ) && $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }

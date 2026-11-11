@@ -30,7 +30,7 @@ final class Attribution {
         return $sources ? '<div class="msc-attribution"><small>Sources: ' . implode( '<br>', array_map( array( self::class, 'source_html' ), array_values( $sources ) ) ) . '</small></div>' : '';
     }
     public static function image_html( array $record ): string {
-        $key = array( 'msc_person' => 'headshot', 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_game' => 'poster', 'msc_comic' => 'poster', 'msc_comic_issue' => 'poster', 'msc_comic_arc' => 'poster' )[ $record['type'] ] ?? ( isset( EntityCatalog::definitions()[ $record['type'] ] ) ? 'logo' : 'featured_image' );
+        $key = array( 'msc_person' => 'headshot', 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_game' => 'poster', 'msc_franchise' => 'poster', 'msc_comic' => 'poster', 'msc_comic_issue' => 'poster', 'msc_comic_arc' => 'poster' )[ $record['type'] ] ?? ( isset( EntityCatalog::definitions()[ $record['type'] ] ) ? 'logo' : 'featured_image' );
         $ref = $record['data'][ $key ] ?? array(); if ( ! Media::url( (array) $ref ) ) { $ref = $record['data']['featured_image'] ?? array(); }
         return self::media_html( (array) $ref );
     }

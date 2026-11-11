@@ -80,13 +80,13 @@ final class Plugin {
 		foreach ( Schema::all() as $type => $schema ) {
 			if ( ! Schema::enabled( $type ) || post_type_exists( $type ) ) { continue; }
 			register_post_type( $type, array(
-				'label' => $schema['label'], 'labels' => array_filter( array( 'singular_name' => array( 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_game' => 'Video Game' )[ $type ] ?? ( EntityCatalog::definitions()[ $type ][1] ?? ( Comics::singular( $type ) ?: $schema['label'] ) ), 'all_items' => 'msc_episode' === $type ? 'All Episodes' : null ) ), 'public' => true, 'show_in_rest' => true,
+				'label' => $schema['label'], 'labels' => array_filter( array( 'singular_name' => array( 'msc_franchise' => 'Franchise', 'msc_person' => 'Person', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_game' => 'Video Game' )[ $type ] ?? ( EntityCatalog::definitions()[ $type ][1] ?? ( Comics::singular( $type ) ?: $schema['label'] ) ), 'all_items' => 'msc_episode' === $type ? 'All Episodes' : null ) ), 'public' => true, 'show_in_rest' => true,
 				'show_in_menu' => in_array( $type, array( 'msc_comic_issue', 'msc_comic_arc' ), true ) && Schema::enabled( 'msc_comic' ) ? 'edit.php?post_type=msc_comic' : ( 'msc_episode' === $type && Schema::enabled( 'msc_show' ) ? ( get_option( 'msc_episodes_as_children' ) ? 'edit.php?post_type=msc_show' : 'msc-episodes' ) : true ),
 				'has_archive' => (bool) ( $schema['archive'] ?? true ), 'rewrite' => array( 'slug' => $schema['slug'] ),
 				'supports' => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'custom-fields' ),
 				'capability_type' => 'post', 'map_meta_cap' => true,
 				'capabilities' => array( 'create_posts' => 'msc_create_global', 'publish_posts' => 'msc_publish_local' ),
-				'menu_icon' => array( 'msc_person' => 'dashicons-admin-users', 'msc_movie' => 'dashicons-video-alt2', 'msc_show' => 'dashicons-desktop', 'msc_episode' => 'dashicons-playlist-video', 'msc_game' => 'dashicons-games', 'msc_comic' => 'dashicons-book', 'msc_comic_issue' => 'dashicons-media-document', 'msc_comic_arc' => 'dashicons-editor-ol' )[ $type ] ?? 'dashicons-networking',
+				'menu_icon' => array( 'msc_franchise' => 'dashicons-screenoptions', 'msc_person' => 'dashicons-admin-users', 'msc_movie' => 'dashicons-video-alt2', 'msc_show' => 'dashicons-desktop', 'msc_episode' => 'dashicons-playlist-video', 'msc_game' => 'dashicons-games', 'msc_comic' => 'dashicons-book', 'msc_comic_issue' => 'dashicons-media-document', 'msc_comic_arc' => 'dashicons-editor-ol' )[ $type ] ?? 'dashicons-networking',
 			) );
 		}
 		Taxonomies::register();

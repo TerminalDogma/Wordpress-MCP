@@ -1,5 +1,11 @@
 # Changelog and release boundaries
 
+## 2.7.0
+
+Training imports now require live description, genres, linked cast and crew, and downloaded poster/featured artwork. Untouched version-one seeds are archived and rebuilt with stable global identities; manual and edited records are retained. Failed source/image imports cannot produce partial replacements. Browser requests handle one title, source pauses retry the current title, CLI jobs support resume tokens and return failure when entries remain incomplete. Existing unpublished People and companies are reused. Source posters can fill both image fields when no separate background is supplied.
+
+Franchises are a shared custom post type enabled once on movie/TV sites, with movie and TV relationship collections, poster, hero artwork and optional accent color. Public pages combine available members in release order, exclude drafts/private/password-protected content, inherit each site's visual identity, and link back from title pages. Administrators retain per-site type control. Franchise cards have no excerpts.
+
 ## 2.6.0
 
 A bundled Wikidata CC0 training catalog provides 250 distinct Movies and 250 distinct TV Shows, ranked by Wikipedia-language coverage within a documented candidate sample. The repeatable import creates drafts on enabled sites, reuses source identities and matching title/year records, preserves editorial fields and local overrides, and reports conflicts. Both a resumable admin importer and `wp msc training` / `sh bin/shared-content.sh training` are included. Native title lists have a Training catalog filter.

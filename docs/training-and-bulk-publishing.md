@@ -1,4 +1,4 @@
-# Training catalog, bulk publishing and release-post review (2.6.0)
+# Training catalog, bulk publishing and release-post review (2.7.0)
 
 With Docker Desktop running, update the existing Mac checkout:
 
@@ -9,11 +9,15 @@ sh bin/shared-content.sh setup
 sh bin/shared-content.sh training
 ```
 
-The training command imports a bundled dataset of **250 Movies and 250 TV Shows**. It does not need a source API key or make 500 live API requests. Alternatively, open **Shared Content → Training Catalog**, choose **Import 250 Movies and 250 TV Shows**, and start the resumable import. Pause/resume is supported for the same user/site for 24 hours.
+The command rebuilds **250 Movies and 250 TV Shows** using their exact source IDs. It downloads descriptions, genres, dates, linked cast and crew, available company records, and real artwork from Wikidata/Wikipedia, TVmaze and the configured OMDb key. Internet access is required. The bundled JSON selects the titles; its basic facts are no longer imported as stand-alone entries.
 
-New title records and their participating-site copies are **drafts**, including on sites whose usual default is publish. Movie/TV data is available on the enabled entertainment sites; gaming-only sites retain their content-type restrictions. Existing matching records keep their fields, overrides and publication states. Missing source IDs can be filled; conflicting IDs, ambiguous title/year matches and archived records are reported for review rather than overwritten.
+Alternatively, open **Shared Content → Training Catalog**, choose **Rebuild complete training catalog**, and start the import. Browser requests process one title at a time, pause/resume is supported for 24 hours, and source throttling delays the current title rather than skipping it. The CLI prints a token; resume an interrupted run with `sh bin/shared-content.sh training --resume=TOKEN`.
 
-The dataset includes actual source IDs, descriptions, genres, dates and available original-language/country/director/runtime/TV episode-count facts. It does not invent plots, posters, critic scores or cast relationships. Existing image/source-import tools can enrich individual records.
+Starting a rebuild archives only untouched version-one training stubs. Complete replacements reuse their global UUIDs and become **drafts on participating sites**, even if a site's usual default is publish. Your manually created entries and training entries you edited are retained, with their fields, local overrides and publication states. Ambiguous duplicates and conflicting IDs are reported for review.
+
+A replacement must have a substantial description, genres, linked cast, linked crew, a downloaded poster and a featured-image reference. Failed artwork or missing required metadata leaves the old stub archived and creates no partial replacement. Repeating the command retries failed titles and keeps completed entries. The CLI exits with an error if any titles remain incomplete, rather than claiming all 500 succeeded.
+
+Artwork becomes ordinary WordPress attachments with portable ownership and footer credits. A separate TV background is used when available; otherwise the real source poster fills both image fields. Images are never generated or replaced by an unrelated placeholder. Credits reuse existing unpublished People, merge professional roles, and appear as names until their pages are published. Metadata and image credits retain their actual sources; the bundled CC0 facts are distinct from downloaded article prose and artwork.
 
 ## What “popular” means
 

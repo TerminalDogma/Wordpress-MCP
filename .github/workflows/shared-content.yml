@@ -80,10 +80,14 @@ jobs:
         run: |
           MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh wp --url=http://localhost:8080/site-a/ eval-file /msc-tests/training-bulk.php > /tmp/msc-training-fixtures.log
           MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/training-bulk-browser.py /tmp/msc-training-fixtures.log
+      - name: Complete training rebuild and Franchise browser
+        run: |
+          MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh wp --url=http://localhost:8080/site-a/ eval-file /msc-tests/training-franchises.php > /tmp/msc-franchise-fixtures.log
+          MSC_DISPOSABLE_TESTS=1 /tmp/msc-browser-env/bin/python tests/shared-content/franchises-browser.py /tmp/msc-franchise-fixtures.log
       - name: Upload plugin and source packages
         uses: actions/upload-artifact@v4
         with:
-          name: multisite-shared-content-2.6.0
+          name: multisite-shared-content-2.7.0
           path: dist/
       - name: Stop services
         if: always()
