@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.7.4
+
+Film and other catalog overviews now give visible spacing to legacy/editor line breaks even when import metadata is absent or no longer matches. Consecutive breaks are grouped, inline formatting is retained, and code/quotes/lists/tables keep their explicit breaks. Paragraphs nested in editor wrappers also receive spacing. OMDb plot sanitization retains newlines for future imports. Stored text and provenance are unchanged.
+
 ## 2.7.3
 
 Paragraph spacing now uses a sitewide prose/description rule rather than a biography/story-only selector. Movies, shows, episodes, people, games, companies, platforms, services, comics, issues, arcs, franchises and review text receive paragraph gaps. Comic and franchise descriptions now use the shared description wrapper; their separate spacing overrides are removed.

@@ -67,7 +67,7 @@ final class OmdbClient {
 		// Whitelist and sanitize upstream data before caching or showing it.
 		$clean = array();
 		foreach ( array( 'Title', 'Year', 'Rated', 'Released', 'Runtime', 'Genre', 'Director', 'Writer', 'Actors', 'Plot', 'Language', 'Country', 'Awards', 'imdbRating', 'imdbVotes', 'imdbID', 'Type', 'DVD', 'BoxOffice', 'Production', 'Website', 'totalSeasons', 'Season', 'Episode', 'seriesID', 'Metascore', 'totalResults' ) as $field ) {
-			if ( isset( $data[ $field ] ) && is_scalar( $data[ $field ] ) ) { $clean[ $field ] = sanitize_text_field( $data[ $field ] ); }
+			if ( isset( $data[ $field ] ) && is_scalar( $data[ $field ] ) ) { $clean[ $field ] = 'Plot' === $field ? sanitize_textarea_field( $data[ $field ] ) : sanitize_text_field( $data[ $field ] ); }
 		}
 		$clean['Poster'] = self::poster_url( $data['Poster'] ?? '' );
 		if ( isset( $data['Search'] ) && is_array( $data['Search'] ) ) {

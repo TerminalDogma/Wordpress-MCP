@@ -1,4 +1,10 @@
-# Shared Content 2.7.3 verification
+# Shared Content 2.7.4 verification
+
+Film-specific fixtures cover Avengers: Doomsday-style text with edited/unmarked `<br>` separators, plain newlines, nested editor wrappers and ordinary paragraphs. Chromium measured equal 23.5px gaps between text blocks in all four layouts at 1440px and 390px, with inline emphasis intact and no horizontal overflow. These are local reproductions; the user's Mac page was not directly accessible.
+
+All 13 paragraph checks passed, covering legacy/source-aware formatting, unmarked and edited content, collapsed repeated breaks, preserved code/quotation/list/table breaks, retained emphasis, unchanged stored content/provenance, safe escaping, and newline-preserving OMDb sanitization. No reimport or data rewrite is required for existing overview line breaks.
+
+## Earlier 2.7.3 verification
 
 Chromium measured paragraph gaps on 18 published pages covering all 17 custom post types and all four site identities, at 1440px and 390px widths. Every overview/biography/description and review body retained three paragraphs with at least a one-em gap and no horizontal overflow. Comic and franchise descriptions now share the same spacing rule as other catalog descriptions; review and other prose blocks also receive it.
 

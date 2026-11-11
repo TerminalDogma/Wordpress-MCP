@@ -3,7 +3,7 @@ require_once __DIR__ . '/inc/catalog-archive.php';
 add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_franchise', 'msc_movie', 'msc_show' ) ) ) { wp_enqueue_style( 'msc-franchises', get_template_directory_uri() . '/assets/franchises.css', array( 'network-presentation' ), MSC_VERSION ); } }, 30 );
 add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( \MSC\Comics::TYPES ) ) { wp_enqueue_style( 'msc-comics', get_template_directory_uri() . '/assets/comics.css', array( 'network-presentation' ), MSC_VERSION ); wp_enqueue_script( 'msc-comics', get_template_directory_uri() . '/assets/comics.js', array(), MSC_VERSION, true ); } }, 30 );
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.7.3' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.7.3' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.7.3', true ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.7.4' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.7.4' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.7.4', true ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
 function msc_screen_chips( array $r ): void {
@@ -47,6 +47,23 @@ function msc_news_card( WP_Post $post, string $class = '', bool $score = false )
     echo '<p class="news-byline">Network demo editorial · ' . esc_html( get_the_date( 'M j', $post ) ) . '</p></div></a></article>';
 }
 
+/** Legacy overviews can contain line breaks without any source metadata. */
+function msc_screen_overview_breaks( string $html ): string {
+    $output = ''; $protected = 0; $previous_break = false;
+    foreach ( wp_html_split( $html ) as $token ) {
+        if ( preg_match( '~^<(\/?)(?:pre|code|textarea|script|style|table|ul|ol|blockquote)\b~i', $token, $match ) ) {
+            $protected = max( 0, $protected + ( '/' === $match[1] ? -1 : 1 ) );
+            $output .= $token; $previous_break = false; continue;
+        }
+        if ( ! $protected && preg_match( '~^<br\b[^>]*>$~i', $token ) ) {
+            if ( ! $previous_break ) { $output .= '<span class="catalog-paragraph-break" aria-hidden="true"></span>' . "\n"; }
+            $previous_break = true; continue;
+        }
+        if ( ! $protected && $previous_break && '' === trim( $token ) ) { continue; }
+        $output .= $token; $previous_break = false;
+    }
+    return $output;
+}
 function msc_screen_overview( array $record ): string {
     $data = $record['data']; $content = trim( (string) ( $data['content'] ?? '' ) );
     $field = '' !== $content ? 'content' : 'excerpt'; $value = (string) ( $data[ $field ] ?? '' );
@@ -55,11 +72,11 @@ function msc_screen_overview( array $record ): string {
         // Older imports wrapped Wikipedia's paragraph newlines in one <p> with <br>s.
         $value = preg_replace( '~<br\s*/?>\s*~i', "</p>\n<p>", $value );
     }
-    return wp_kses_post( apply_filters( 'the_content', $value ) );
+    return wp_kses_post( msc_screen_overview_breaks( apply_filters( 'the_content', $value ) ) );
 }
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.7.3', true ); } } );
-add_action( 'wp_enqueue_scripts', static function () { if ( \MSC\CatalogArchive::current() ) { wp_enqueue_style( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.css', array( 'network-presentation' ), '2.7.3' ); wp_enqueue_script( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.js', array(), '2.7.3', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.7.4', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( \MSC\CatalogArchive::current() ) { wp_enqueue_style( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.css', array( 'network-presentation' ), '2.7.4' ); wp_enqueue_script( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.js', array(), '2.7.4', true ); } } );
 
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_movie', 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), '2.7.3', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_movie', 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), '2.7.4', true ); } } );
 
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'msc-reviews', get_template_directory_uri() . '/assets/reviews.css', array( 'network-presentation' ), '2.7.3' ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'msc-reviews', get_template_directory_uri() . '/assets/reviews.css', array( 'network-presentation' ), '2.7.4' ); } );
