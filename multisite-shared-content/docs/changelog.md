@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.7.2
+
+Wikipedia single-newline paragraph boundaries now import as separate paragraphs. Existing unedited Wikipedia biographies and overviews receive the same display correction without changing stored content or provenance. Paragraphs have a one-em gap; editorial hard breaks retain their formatting. The stylesheet version is updated to refresh browser caches.
+
 ## 2.7.1
 
 Cast/crew and company credits decode HTML5 character references before HTML escaping. Existing names such as `Lillian O&apos;Malley` display correctly without reimporting or rewriting shared data. The sidebar, full cast sections and company-name deduplication use the same decoded text while keeping markup escaped.

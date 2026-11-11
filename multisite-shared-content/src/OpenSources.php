@@ -3,6 +3,8 @@ namespace MSC;
 
 /** Provider adapters return facts and provenance, never studio-image licence guesses. */
 final class OpenSources {
+    /** Wikipedia plaintext uses a single newline between paragraphs. */
+    public static function wikipedia_paragraphs( string $text ): string { return wpautop( esc_html( preg_replace( '/\R+/u', "\n\n", trim( $text ) ) ) ); }
     public static function source( string $provider, string $url ): array {
         $license = 'wikidata' === $provider ? 'CC0 1.0' : 'CC BY-SA 4.0';
         return array( 'provider' => $provider, 'url' => $url, 'license' => $license, 'license_url' => 'wikidata' === $provider ? 'https://creativecommons.org/publicdomain/zero/1.0/' : 'https://creativecommons.org/licenses/by-sa/4.0/', 'attribution' => array( 'gcd' => 'Grand Comics Database contributors', 'tvmaze' => 'TVmaze contributors', 'wikidata' => 'Wikidata contributors', 'wikipedia' => 'Wikipedia contributors' )[ $provider ], 'changes' => 'Selected, formatted and adapted for this catalog.' );
@@ -189,7 +191,7 @@ final class OpenSources {
             $response = OpenClient::get( 'wikipedia', '', array( 'action' => 'query', 'titles' => $article, 'prop' => 'extracts|info', 'exintro' => 1, 'explaintext' => 1, 'inprop' => 'url' ), DAY_IN_SECONDS );
             $pages = array_values( $response['query']['pages'] ?? array() ); $page = $pages[0] ?? array(); $text = trim( wp_strip_all_tags( $page['extract'] ?? '' ) );
             if ( ! empty( $page['pageid'] ) && '' !== $text && ! isset( $page['missing'] ) ) {
-                $text = mb_substr( $text, 0, 20000 ); $fields['content'] = wpautop( esc_html( $text ) ); $fields['excerpt'] = wp_trim_words( $text, 55 );
+                $text = mb_substr( $text, 0, 20000 ); $fields['content'] = self::wikipedia_paragraphs( $text ); $fields['excerpt'] = wp_trim_words( $text, 55 );
                 $field_sources['content'] = $field_sources['excerpt'] = self::source( 'wikipedia', 'https://en.wikipedia.org/?curid=' . (int) $page['pageid'] );
             }
         } catch ( SourceError $error ) { $warnings[] = 'Wikipedia biography/description is unavailable. Facts can still be imported; retry later for text.'; } }

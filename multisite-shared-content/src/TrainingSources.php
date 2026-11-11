@@ -18,7 +18,7 @@ final class TrainingSources {
             if ( $article ) {
                 $wiki = OpenClient::get( 'wikipedia', '', array( 'action' => 'query', 'titles' => $article, 'prop' => 'extracts|pageimages', 'exintro' => 1, 'explaintext' => 1, 'piprop' => 'original', 'pilicense' => 'any', 'redirects' => 1 ) );
                 $page = array_values( $wiki['query']['pages'] ?? array() )[0] ?? array(); $text = trim( $page['extract'] ?? '' );
-                if ( $text ) { $fields['content'] = wpautop( esc_html( $text ) ); $fields['excerpt'] = wp_trim_words( $text, 45 ); }
+                if ( $text ) { $fields['content'] = OpenSources::wikipedia_paragraphs( $text ); $fields['excerpt'] = wp_trim_words( $text, 45 ); }
                 $poster = $page['original']['source'] ?? ''; $image_credit = 'Wikipedia article artwork';
                 if ( ! empty( $page['pageid'] ) ) { $sources['content'] = $sources['excerpt'] = OpenSources::source( 'wikipedia', 'https://en.wikipedia.org/?curid=' . (int) $page['pageid'] ); }
             }

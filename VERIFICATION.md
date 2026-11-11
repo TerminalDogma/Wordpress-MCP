@@ -1,4 +1,8 @@
-# Shared Content 2.7.1 verification
+# Shared Content 2.7.2 verification
+
+All six focused paragraph checks passed: Wikipedia newline conversion, Windows/Unix separators, legacy biography repair, unchanged stored content/source hashes, preserved editorial hard breaks, and safe plaintext escaping. Chromium verified three real paragraph elements with 15px gaps at both 1440px and 390px viewport widths, without horizontal overflow.
+
+## Earlier 2.7.1 verification
 
 All 20 focused credit checks passed, covering existing stored apostrophe entities in sidebar/full cast names, numeric and named references, company deduplication, draft/public linking, and escaping of encoded markup. No source reimport or database migration is required.
 
