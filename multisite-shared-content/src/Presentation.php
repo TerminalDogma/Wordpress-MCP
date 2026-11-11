@@ -3,6 +3,8 @@ namespace MSC;
 
 /** Public presentation helpers always enforce this site's publication state. */
 final class Presentation {
+	/** Decode source text before the output context applies HTML escaping. */
+	public static function text( string $value ): string { return html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 	public static function identities(): array {
 		return NetworkSites::profiles();
 	}
@@ -31,7 +33,7 @@ final class Presentation {
 		if ( ! $r || 'active' !== $r['state'] || ( $target && $target !== $r['type'] ) || ! GamePolicy::accepts( $r ) || '' === trim( $r['data']['title'] ?? '' ) ) { return null; }
 		$public = self::record( $uuid );
 		if ( ! $public && 'msc_person' !== $r['type'] && ! isset( EntityCatalog::definitions()[ $r['type'] ] ) ) { return null; }
-		return array( 'title' => $r['data']['title'], 'uuid' => $r['uuid'], 'url' => $public ? self::url( $public ) : '', 'public' => $public );
+		return array( 'title' => self::text( $r['data']['title'] ), 'uuid' => $r['uuid'], 'url' => $public ? self::url( $public ) : '', 'public' => $public );
 	}
 	/** Only published, accessible local Episodes contribute seasons or rows. */
 	public static function season_page( string $show, $requested = null, $requested_page = null ): array {

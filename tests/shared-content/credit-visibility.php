@@ -28,6 +28,19 @@ try {
         cv_at( $b, static function () use ( $person, $movie ) { $html = EntityCatalog::sidebar( Plugin::store()->resolved( $movie['uuid'] ) ); cv_check( str_contains( $html, $person['data']['title'] ) && ! str_contains( $html, '<a ' ), 'A site without Person pages still displays inherited credit names' ); } );
         $r = $s->resolved( $movie['uuid'] ); $s->local( $movie['uuid'], array( 'actors' => array() ), array(), (int) $r['mapping']['local_version'] ); $rows = EntityCatalog::rows( $s->resolved( $movie['uuid'] ) ); cv_check( ! isset( $rows['actors'] ) && isset( $rows['directors'] ), 'Explicit empty local credit overrides remain respected' );
         cv_check( $movie['data'] === $s->get( $movie['uuid'] )['data'], 'Publication changes do not require rewriting the title record or its relationships' );
+        foreach ( array( 'Lillian O&apos;Malley' => "Lillian O'Malley", 'O&#39;Malley' => "O'Malley", 'O&#x27;Malley' => "O'Malley", 'O’Malley &amp; Sons' => 'O’Malley & Sons', '&quot;Harry&quot;' => '"Harry"' ) as $encoded => $expected ) {
+            cv_check( Presentation::text( $encoded ) === $expected, 'Named/numeric entities decode as text: ' . $encoded );
+        }
+        $encoded_person = $s->create( 'msc_person', array( 'title' => 'Lillian O&apos;Malley ' . $tag ) );
+        $encoded_company = $s->create( 'msc_studio', array( 'title' => 'O&apos;Malley &amp; Sons ' . $tag ) );
+        $encoded_movie = $s->create( 'msc_movie', array( 'title' => 'Encoded credit fixture ' . $tag, 'actors' => array( $encoded_person['uuid'] ), 'production_company_records' => array( $encoded_company['uuid'] ), 'production_companies' => "O'Malley & Sons " . $tag ) );
+        foreach ( array( $encoded_person, $encoded_company, $encoded_movie ) as $r ) { Plugin::materializer()->sync( (int) $r['id'], $a ); }
+        $encoded_record = $s->resolved( $encoded_movie['uuid'] ); $sidebar = EntityCatalog::sidebar( $encoded_record );
+        cv_check( str_contains( html_entity_decode( $sidebar, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), "Lillian O'Malley" ) && ! str_contains( $sidebar, '&amp;apos;' ), 'Existing encoded actor names render apostrophes correctly without reimporting' );
+        $rows = EntityCatalog::rows( $encoded_record ); cv_check( 1 === count( $rows['production_company_records']['items'] ) && "O'Malley & Sons " . $tag === $rows['production_company_records']['items'][0]['title'], 'Encoded company names display correctly and still deduplicate legacy credits' );
+        ob_start(); Presentation::credits( $encoded_record ); $cast = ob_get_clean(); cv_check( str_contains( html_entity_decode( $cast, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), "Lillian O'Malley" ), 'The full cast section decodes the same names as the sidebar' );
+        $unsafe = $s->update( $encoded_person['id'], array( 'title' => '&lt;img src=x onerror=alert(1)&gt; O&apos;Malley' ), (int) $encoded_person['version'] );
+        $sidebar = EntityCatalog::sidebar( $encoded_record ); cv_check( ! str_contains( $sidebar, '<img' ) && str_contains( $sidebar, '&lt;img' ), 'Decoded source text remains escaped and cannot introduce markup' );
     } );
 } finally { Schema::participate( $a, $old_a ); Schema::participate( $b, $old_b ); }
 WP_CLI::success( $GLOBALS['cv_checks'] . ' draft credit-name and automatic profile-link checks passed.' );

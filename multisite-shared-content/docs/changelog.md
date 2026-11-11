@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.7.1
+
+Cast/crew and company credits decode HTML5 character references before HTML escaping. Existing names such as `Lillian O&apos;Malley` display correctly without reimporting or rewriting shared data. The sidebar, full cast sections and company-name deduplication use the same decoded text while keeping markup escaped.
+
 ## 2.7.0
 
 Training imports now require live description, genres, linked cast and crew, and downloaded poster/featured artwork. Untouched version-one seeds are archived and rebuilt with stable global identities; manual and edited records are retained. Failed source/image imports cannot produce partial replacements. Browser requests handle one title, source pauses retry the current title, CLI jobs support resume tokens and return failure when entries remain incomplete. Existing unpublished People and companies are reused. Source posters can fill both image fields when no separate background is supplied.

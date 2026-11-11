@@ -1,4 +1,8 @@
-# Shared Content 2.7.0 verification
+# Shared Content 2.7.1 verification
+
+All 20 focused credit checks passed, covering existing stored apostrophe entities in sidebar/full cast names, numeric and named references, company deduplication, draft/public linking, and escaping of encoded markup. No source reimport or database migration is required.
+
+## Earlier 2.7.0 verification
 
 ## Complete training replacement and Franchise pages
 

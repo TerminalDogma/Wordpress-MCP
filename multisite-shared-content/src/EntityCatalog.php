@@ -38,7 +38,7 @@ final class EntityCatalog {
     public static function legacy_fields( string $type ): array {
         $keys = array(); $schema = Schema::get( $type ); foreach ( self::definitions() as $d ) { if ( isset( $schema['fields'][ $d[3] ] ) && in_array( $type, $d[5], true ) ) { $keys[] = $d[4]; } } return $keys;
     }
-    private static function name( string $value ): string { return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ) ) ) ); }
+    private static function name( string $value ): string { return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', Presentation::text( $value ) ) ) ); }
     /** Ambiguous names stay text; an explicit UUID can resolve a namesake. */
     private static function named( string $type, string $name ): ?array {
         if ( ! Schema::enabled( $type ) ) { return null; } global $wpdb;
@@ -60,6 +60,7 @@ final class EntityCatalog {
             foreach ( (array) $legacy as $value ) {
                 if ( ! is_string( $value ) || '' === trim( $value ) ) { continue; }
                 $match = self::named( $field['target'], $value );
+                $value = Presentation::text( $value );
                 $names = $match || is_array( $legacy ) || ! in_array( $d[4], array( 'production_companies', 'distributor' ), true ) ? array( $value ) : preg_split( '/\s*[,;]\s*/u', $value );
                 foreach ( $names as $name ) {
                     if ( '' === trim( $name ) || isset( $seen[ self::name( $name ) ] ) ) { continue; } $seen[ self::name( $name ) ] = true;
