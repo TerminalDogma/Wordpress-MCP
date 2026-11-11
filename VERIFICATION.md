@@ -1,4 +1,8 @@
-# Shared Content 2.7.2 verification
+# Shared Content 2.7.3 verification
+
+Chromium measured paragraph gaps on 18 published pages covering all 17 custom post types and all four site identities, at 1440px and 390px widths. Every overview/biography/description and review body retained three paragraphs with at least a one-em gap and no horizontal overflow. Comic and franchise descriptions now share the same spacing rule as other catalog descriptions; review and other prose blocks also receive it.
+
+## Earlier 2.7.2 verification
 
 All six focused paragraph checks passed: Wikipedia newline conversion, Windows/Unix separators, legacy biography repair, unchanged stored content/source hashes, preserved editorial hard breaks, and safe plaintext escaping. Chromium verified three real paragraph elements with 15px gaps at both 1440px and 390px viewport widths, without horizontal overflow.
 

@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.7.3
+
+Paragraph spacing now uses a sitewide prose/description rule rather than a biography/story-only selector. Movies, shows, episodes, people, games, companies, platforms, services, comics, issues, arcs, franchises and review text receive paragraph gaps. Comic and franchise descriptions now use the shared description wrapper; their separate spacing overrides are removed.
+
 ## 2.7.2
 
 Wikipedia single-newline paragraph boundaries now import as separate paragraphs. Existing unedited Wikipedia biographies and overviews receive the same display correction without changing stored content or provenance. Paragraphs have a one-em gap; editorial hard breaks retain their formatting. The stylesheet version is updated to refresh browser caches.
