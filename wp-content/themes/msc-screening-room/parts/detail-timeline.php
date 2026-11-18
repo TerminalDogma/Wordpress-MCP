@@ -73,7 +73,7 @@ foreach ( $entries as $entry ) {
                         $era = $eras[ $entry['era'] ] ?? null;
                         $linked = $entry['item'] ? Presentation::record( $entry['item'] ) : null;
                         $ref = $entry['image'] ?: ( $linked['data']['poster'] ?? array() ) ?: ( $linked['data']['featured_image'] ?? array() );
-                        $image = Media::url( $ref, 'thumbnail' );
+                        $image = Media::url( $ref, 'medium' );
                         $date = $entry['date'] ?: 'Date unknown';
                         $initial = mb_substr( $entry['title'], 0, 1 );
                         ?>
@@ -83,7 +83,7 @@ foreach ( $entries as $entry ) {
                                 <?php if ( $entry['date'] && 'exact' !== $entry['precision'] ) { ?><small><?php echo esc_html( Timelines::DATES[ $entry['precision'] ] ); ?></small><?php } ?>
                             </div>
                             <article class="timeline-bubble">
-                                <div class="timeline-art">
+                                <div class="timeline-art<?php echo $image ? '' : ' timeline-art-placeholder'; ?>">
                                     <?php if ( $image ) { ?><img src="<?php echo esc_url( $image ); ?>" alt="" loading="lazy" decoding="async"><?php Attribution::collect_media( $ref, $entry['title'] ); ?>
                                     <?php } else { ?><span aria-hidden="true"><?php echo esc_html( $initial ); ?></span><?php } ?>
                                 </div>

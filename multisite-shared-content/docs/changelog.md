@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.8.1
+
+Timeline cards use proportional artwork and adapt to portrait, landscape and square images.
+
 ## 2.8.0
 
 Added shared Timelines with Movies and TV Shows columns, a story-date spine, editable sections and era colors. The Shared Content builder supports title search, artwork, exact or approximate dates, relative dates and manual ordering. Timelines can be linked from a franchise page. The bundled MCU example is installed once on the participating sites.
