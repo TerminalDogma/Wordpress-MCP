@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.8.2
+
+Restored the original compact artwork slot on timeline cards and kept the full image visible within it. Widened the era color stripe for easier scanning.
+
 ## 2.8.1
 
 Timeline cards use proportional artwork and adapt to portrait, landscape and square images.
