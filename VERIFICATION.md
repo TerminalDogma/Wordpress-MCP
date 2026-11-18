@@ -1,4 +1,8 @@
-# Shared Content 2.8.0 verification
+# Shared Content 2.9.0 verification
+
+WordPress integration checks passed for older timeline data, custom columns and sections, inherited artwork, publication-aware backlinks and MCU franchise seeding. The 71 source-import regression checks passed. Chromium verified the MCU example on both entertainment sites, a custom three-column timeline on desktop and mobile, linked artwork, a backlink to the matching timeline card, a movie character credit, and saving a new timeline with a named column and section.
+
+## Earlier 2.8.0 verification
 
 The 56-entry MCU demo was installed and served on both entertainment sites. Twelve WordPress checks covered validation, relative dates, ordering, site participation, publication, and repeat installation. Twenty-one existing archive checks passed. Chromium verified both site layouts at 1440px and 390px, phase and format filters, and the editor flow from a blank timeline through catalog search, choosing artwork, direct reordering and saving.
 

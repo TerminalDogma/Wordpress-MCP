@@ -6,10 +6,11 @@
     const config = JSON.parse(editor.dataset.config);
     const saved = JSON.parse(data.value);
     const state = {
+        columns: saved.columns,
+        sections: saved.sections,
         eras: Array.isArray(saved.eras) ? saved.eras : [],
         entries: Array.isArray(saved.entries) ? saved.entries : []
     };
-    const tracks = {movie: 'Movie', show: 'TV show'};
     const colors = ['#a13450', '#2a64ab', '#6a4ab3', '#007b78', '#a55c13', '#506dc7'];
     const sync = () => { data.value = JSON.stringify(state); };
 
@@ -29,6 +30,7 @@
 
     function field(caption, input) {
         const label = element('label', '', 'msc-timeline-field');
+        input.setAttribute('aria-label', caption);
         label.append(element('span', caption), input);
         return label;
     }
@@ -48,6 +50,8 @@
     }
 
     const eraList = element('div', '', 'msc-timeline-eras');
+    const columnList = element('div');
+    const sectionList = element('div');
     const entryList = element('div', '', 'msc-timeline-entries');
     const entryViews = [];
     const warning = element('p', '', 'notice notice-error inline');
@@ -60,6 +64,67 @@
         const choices = {'': 'No era'};
         state.eras.forEach(era => { choices[era.id] = era.label || 'Unnamed era'; });
         entryViews.forEach(({eraSelect, entry}) => options(eraSelect, choices, entry.era));
+    }
+
+    function refreshChoices() {
+        const columns = Object.fromEntries(state.columns.map(row => [row.id, row.label || 'Unnamed column']));
+        const sections = Object.fromEntries([['', 'No section'], ...state.sections.map(row => [row.id, row.label || 'Unnamed section'])]);
+        entryViews.forEach(view => {
+            options(view.columnSelect, columns, view.entry.column);
+            options(view.sectionSelect, sections, view.entry.section);
+            view.summarize();
+        });
+    }
+
+    function choiceEditor(key, list, fieldKey, label, limit) {
+        const rows = state[key];
+        const add = button('Add ' + label.toLowerCase(), () => {
+            if (rows.length >= limit) { status.textContent = 'Maximum ' + limit + ' ' + key + '.'; return; }
+            let number = 1;
+            while (rows.some(row => row.id === fieldKey + '-' + number)) number++;
+            const row = {id: fieldKey + '-' + number, label: ''};
+            rows.push(row);
+            draw(row).focus();
+            refreshChoices();
+            sync();
+        });
+        function draw(row) {
+            const box = element('div', '', 'msc-timeline-era');
+            const name = input(row.label, 100);
+            name.addEventListener('input', () => { row.label = name.value; refreshChoices(); sync(); });
+            box.append(field(label + ' name', name));
+            if (key === 'columns') {
+                const reorder = delta => {
+                    const index = rows.indexOf(row);
+                    const next = rows[index + delta];
+                    if (!next) return;
+                    [rows[index], rows[index + delta]] = [next, row];
+                    if (delta < 0) box.previousElementSibling.before(box);
+                    else box.nextElementSibling.after(box);
+                    refreshChoices();
+                    name.focus();
+                    sync();
+                };
+                box.append(button('Move left', () => reorder(-1)), button('Move right', () => reorder(1)));
+            }
+            box.append(button('Remove ' + label.toLowerCase(), () => {
+                if ((key === 'columns' && rows.length === 1) || state.entries.some(entry => entry[fieldKey] === row.id)) {
+                    warning.textContent = 'Keep at least one column and reassign any entries before removing a column or section.';
+                    warning.hidden = false;
+                    name.focus();
+                    return;
+                }
+                rows.splice(rows.indexOf(row), 1);
+                box.remove();
+                refreshChoices();
+                sync();
+                add.focus();
+            }));
+            list.append(box);
+            return name;
+        }
+        rows.forEach(draw);
+        return add;
     }
 
     function addEra(era) {
@@ -111,11 +176,14 @@
         const summary = element('summary');
         const grid = element('div', '', 'msc-timeline-entry-fields');
         const eraSelect = element('select');
-        const view = {details, summary, eraSelect, entry};
+        const columnSelect = element('select');
+        const sectionSelect = element('select');
+        const view = {details, summary, eraSelect, columnSelect, sectionSelect, entry};
         entryViews.push(view);
         const summarize = () => {
-            summary.textContent = [entry.title || 'New entry', tracks[entry.kind], entry.date].filter(Boolean).join(' · ');
+            summary.textContent = [entry.title || 'New entry', state.columns.find(row => row.id === entry.column)?.label, entry.date].filter(Boolean).join(' · ');
         };
+        view.summarize = summarize;
         const set = (key, value) => { entry[key] = value; summarize(); sync(); };
         const textField = (key, label, limit, hint = '') => {
             const node = input(entry[key], limit, hint);
@@ -124,9 +192,8 @@
             return node;
         };
         const title = textField('title', 'Title', 200);
-        const kind = element('select');
-        options(kind, tracks, entry.kind);
-        grid.append(field('Column', kind));
+        columnSelect.addEventListener('change', () => set('column', columnSelect.value));
+        grid.append(field('Column', columnSelect));
         const date = textField('date', 'Story date or interval', 140, '1943–1945, c. 2016, five years after the Snap…');
         view.title = title;
         view.date = date;
@@ -136,7 +203,8 @@
         grid.append(field('Date type', precision));
         eraSelect.addEventListener('change', () => set('era', eraSelect.value));
         grid.append(field('Era or phase', eraSelect));
-        textField('section', 'Section heading', 100, 'Repeat a heading for consecutive entries in the same section');
+        sectionSelect.addEventListener('change', () => set('section', sectionSelect.value));
+        grid.append(field('Section', sectionSelect));
         textField('note', 'Context note', 300, 'Optional relationship to another event');
 
         const link = element('div', '', 'msc-timeline-entry-tool');
@@ -144,27 +212,30 @@
         const lookup = input('', 150, 'Search by title', 'search');
         const choices = element('div', '', 'msc-timeline-title-results');
         choices.setAttribute('aria-live', 'polite');
-        const clear = button('Remove link', () => { set('item', ''); showLink(); });
+        const clear = button('Remove link', () => { set('item', ''); showLink(); showImage(); });
         function showLink() {
-            linked.textContent = entry.item ? 'Linked title: ' + (config.titles[entry.item] || 'Unavailable title') : 'Optional catalog link';
+            linked.textContent = entry.item ? 'Linked title: ' + (config.titles[entry.item]?.title || 'Unavailable title') : 'Optional catalog link';
             clear.hidden = !entry.item;
         }
         let searchNumber = 0;
+        const type = element('select');
+        options(type, {'': 'All catalog types', ...config.types}, '');
         const search = button('Find catalog title', async () => {
             if (lookup.value.trim().length < 2) { choices.textContent = 'Enter at least two characters.'; lookup.focus(); return; }
             const request = ++searchNumber;
-            const params = new URLSearchParams({action: 'msc_timeline_titles', nonce: config.nonce, kind: kind.value, q: lookup.value});
+            const params = new URLSearchParams({action: 'msc_timeline_titles', nonce: config.nonce, type: type.value, q: lookup.value});
             choices.textContent = 'Searching…';
             try {
                 const response = await fetch(config.search + '?' + params.toString(), {credentials: 'same-origin'});
                 const result = await response.json();
                 if (request !== searchNumber) return;
                 if (!response.ok || !result.success) throw new Error();
-                choices.replaceChildren(...result.data.map(row => button(row.title + ' (#' + row.id_label + ')', () => {
-                    config.titles[row.id] = row.title;
+                choices.replaceChildren(...result.data.map(row => button(row.title + ' · ' + row.type + ' (#' + row.id_label + ')', () => {
+                    config.titles[row.id] = row;
                     set('item', row.id);
                     if (!title.value.trim()) { title.value = row.title; set('title', title.value); }
                     showLink();
+                    showImage();
                     choices.replaceChildren();
                     lookup.focus();
                 })));
@@ -174,8 +245,8 @@
             }
         });
         lookup.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); search.click(); } });
-        kind.addEventListener('change', () => { searchNumber++; set('kind', kind.value); set('item', ''); showLink(); choices.replaceChildren(); });
-        link.append(linked, field('Catalog title', lookup), search, clear, choices);
+        type.addEventListener('change', () => { searchNumber++; choices.replaceChildren(); });
+        link.append(linked, field('Catalog type', type), field('Catalog title', lookup), search, clear, choices);
         showLink();
 
         const artwork = element('div', '', 'msc-timeline-entry-tool');
@@ -185,12 +256,14 @@
         const removeImage = button('Remove image', () => { set('image', []); showImage(); });
         function showImage() {
             const ref = entry.image || {};
-            const url = config.previews[ref.site_id + ':' + ref.attachment_id];
+            const custom = config.previews[ref.site_id + ':' + ref.attachment_id];
+            const inherited = config.titles[entry.item]?.image;
+            const url = custom || inherited;
             preview.hidden = !url;
             if (url) preview.src = url;
             else preview.removeAttribute('src');
             removeImage.hidden = !ref.attachment_id;
-            imageStatus.textContent = ref.attachment_id ? 'Custom artwork' : 'Artwork is optional. Linked public titles can supply their poster.';
+            imageStatus.textContent = ref.attachment_id ? 'Custom artwork' : (inherited ? 'Artwork inherited from the linked catalog entry' : 'Artwork is optional. Linking a catalog entry uses its available artwork.');
         }
         artwork.append(preview, imageStatus);
         if (window.wp?.media) {
@@ -199,7 +272,7 @@
                 frame.on('select', () => {
                     const image = frame.state().get('selection').first().toJSON();
                     const ref = {site_id: config.site, attachment_id: image.id};
-                    config.previews[ref.site_id + ':' + ref.attachment_id] = image.sizes?.thumbnail?.url || image.url;
+                    config.previews[ref.site_id + ':' + ref.attachment_id] = image.sizes?.medium?.url || image.url;
                     set('image', ref);
                     showImage();
                 });
@@ -254,28 +327,36 @@
     const newEntry = button('Add entry', () => {
         if (state.entries.length >= 300) { status.textContent = 'This timeline has reached 300 entries.'; return; }
         const last = state.entries.at(-1);
-        const entry = {title: '', kind: 'movie', date: '', precision: 'approximate', era: '', section: last?.section || '', note: '', image: [], item: ''};
+        const entry = {title: '', column: state.columns[0].id, date: '', precision: 'approximate', era: '', section: last?.section || '', note: '', image: [], item: ''};
         state.entries.push(entry);
         addEntry(entry, true).focus();
         refreshEras();
+        refreshChoices();
         updateOrder();
         sync();
     }, 'button button-secondary');
 
+    const addColumn = choiceEditor('columns', columnList, 'column', 'Column', 6);
+    const addSection = choiceEditor('sections', sectionList, 'section', 'Section', 300);
     state.eras.forEach(addEra);
     state.entries.forEach(entry => addEntry(entry));
     refreshEras();
+    refreshChoices();
     updateOrder();
     data.form.addEventListener('submit', event => {
         const localOverride = data.form.querySelector('input[name="override[chronology]"]');
         if (localOverride && !localOverride.checked) return;
         warning.hidden = true;
+        const unnamed = [...columnList.children, ...sectionList.children].find(row => !row.querySelector('input').value.trim());
         const eraIndex = state.eras.findIndex(era => !era.label.trim());
         const incomplete = entryViews.find(({entry}) => !entry.title.trim() || (entry.precision !== 'undated' && !entry.date.trim()));
-        if (eraIndex < 0 && !incomplete) return;
+        if (!unnamed && eraIndex < 0 && !incomplete) return;
         event.preventDefault();
         warning.hidden = false;
-        if (eraIndex >= 0) {
+        if (unnamed) {
+            warning.textContent = 'Enter a name for each column and section.';
+            unnamed.querySelector('input').focus();
+        } else if (eraIndex >= 0) {
             warning.textContent = 'Enter a name for each era.';
             eraList.children[eraIndex].querySelector('input').focus();
         } else {
@@ -286,6 +367,8 @@
     });
     controls.append(
         warning,
+        element('h3', 'Columns'), columnList, addColumn,
+        element('h3', 'Sections'), sectionList, addSection,
         element('h3', 'Phases and eras'), eraList, newEra,
         element('h3', 'Entries in story order'),
         element('p', 'Move entries to change their order. Story dates can be exact, approximate, relative or undated.', 'description'),

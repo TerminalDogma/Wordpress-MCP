@@ -25,3 +25,11 @@ body[data-identity=c]{--heading:Play,sans-serif}
 .prose p,.catalog-description p{margin-block:0 1em}.prose p:last-child,.catalog-description p:last-child{margin-bottom:1em}.prose>p:last-child,.catalog-description>p:last-child{margin-bottom:0}.catalog-description .catalog-paragraph-break{display:block;height:1em}
 
 body.single-msc_streaming .detail-hero{grid-template-columns:minmax(180px,300px) 1fr;align-items:center}body.single-msc_streaming .detail-art{aspect-ratio:16/9;background:#fff}body.single-msc_streaming .detail-art img{object-fit:contain;background:#fff}@media(max-width:700px){body.single-msc_streaming .detail-hero{grid-template-columns:1fr}body.single-msc_streaming .hero-art{max-width:300px}}
+
+.entry-timelines { border-block: 1px solid var(--line); background: var(--surface); padding: 1.25rem clamp(1rem, 3vw, 2rem); margin-block: 2rem; }
+.entry-timelines h2 { margin: 0 0 .75rem; font-size: 1.35rem; }
+.entry-timelines ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .6rem; }
+.entry-timelines a { display: inline-flex; gap: .6rem; align-items: baseline; border: 1px solid var(--line); padding: .5rem .75rem; background: var(--bg); font-weight: 700; }
+.entry-timelines a:hover { text-decoration: underline; }
+.person-card .person-card-name { display: block; }
+.person-card .person-card-character { display: block; color: var(--muted); font-size: .9em; font-weight: 400; margin-top: .2rem; }

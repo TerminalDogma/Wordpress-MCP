@@ -1,5 +1,11 @@
 # Changelog and release boundaries
 
+## 2.9.0
+
+Timelines support one to six named columns and separately managed section headings. Entries select both from dropdowns and can link to any shared catalog type. Cards inherit the linked entry’s artwork and support a local Media Library selection. Published linked entries display a Story timelines section. The MCU example now includes a populated franchise and links to available catalog records, with six starter titles available when missing.
+
+Movie cast cards display characters beneath actor names. The shared Cast characters field supports local overrides. Wikidata imports fill it when the source supplies character names or identifiers.
+
 ## 2.8.2
 
 Restored the original compact artwork slot on timeline cards and kept the full image visible within it. Widened the era color stripe for easier scanning.

@@ -1,5 +1,5 @@
 <?php
-use MSC\{NetworkSites, Plugin, Presentation, Schema, TimelineDemo, Timelines};
+use MSC\{CastRoles, NetworkSites, PersonIdentity, Plugin, Presentation, Schema, TimelineDemo, Timelines};
 
 if ( ! defined( 'WP_CLI' ) || 'local' !== wp_get_environment_type() || '1' !== getenv( 'MSC_DISPOSABLE_TESTS' ) ) {
     throw new RuntimeException( 'Use a disposable local network.' );
@@ -42,12 +42,15 @@ foreach ( array( 'a', 'b' ) as $key ) {
 $model = array(
     'eras' => array( array( 'id' => 'era-one', 'label' => 'Era One', 'color' => '#113399' ) ),
     'entries' => array(
-        array( 'title' => 'Prequel', 'kind' => 'show', 'date' => 'Centuries before the war', 'precision' => 'relative', 'era' => 'era-one' ),
+        array( 'title' => 'Prequel', 'kind' => 'show', 'section' => 'Early years', 'date' => 'Centuries before the war', 'precision' => 'relative', 'era' => 'era-one' ),
         array( 'title' => 'Main story', 'kind' => 'movie', 'date' => '2220-03-14', 'precision' => 'exact', 'era' => 'era-one' ),
     ),
 );
 $checked = Schema::values( Timelines::TYPE, array( 'chronology' => $model ) )['chronology'];
 $check( array( 'Prequel', 'Main story' ) === array_column( $checked['entries'], 'title' ), 'Editorial order is independent of date formats' );
+$check( 'TV Shows' === $checked['columns'][1]['label'] && 'Early years' === $checked['sections'][0]['label'] && $checked['sections'][0]['id'] === $checked['entries'][0]['section'], 'Older headings and movie/TV lanes become named section and column choices' );
+$franchise = $store->get( $seed['data']['franchise'] ?? '' );
+$check( $franchise && 'msc_franchise' === $franchise['type'] && ! empty( $franchise['data']['movies'] ) && ! empty( $franchise['data']['shows'] ), 'The MCU example links a populated franchise' );
 $invalid = $model; $invalid['eras'][0]['color'] = '#112233; display:none';
 $reject( $invalid, 'Era colors cannot include arbitrary CSS' );
 $invalid = $model; $invalid['entries'][0]['era'] = 'unknown';
@@ -55,14 +58,45 @@ $reject( $invalid, 'Entries cannot reference a missing era' );
 $invalid = $model; $invalid['entries'][0]['date'] = '';
 $reject( $invalid, 'Missing date labels are rejected unless explicitly undated' );
 $invalid = $model; $invalid['entries'][0]['item'] = $seed['uuid'];
-$reject( $invalid, 'Links must reference the correct catalog type' );
+$reject( $invalid, 'A catalog link cannot target the timeline itself' );
 $invalid = $model; $invalid['entries'][0]['image'] = array( 'url' => 'https://example.com/image.jpg' );
 $reject( $invalid, 'Artwork belongs to the WordPress media library' );
 
 switch_to_blog( $sites['a'] );
 try {
-    $timeline = $store->create( Timelines::TYPE, array( 'title' => 'Timeline draft fixture ' . wp_generate_uuid4(), 'chronology' => $model ) );
-    Plugin::materializer()->sync( (int) $timeline['id'], $sites['a'] );
-    $check( ! Presentation::record( $timeline['id'] ), 'New timelines require publication before public viewing' );
+    require_once '/msc-examples/demo-art.php';
+    $tag = substr( wp_generate_uuid4(), 0, 8 );
+    $name = 'Timeline artist ' . $tag;
+    $person = $store->create( 'msc_person', array( 'title' => $name, 'headshot' => msc_demo_art( 'actor' ) ) );
+    $movie = $store->create( 'msc_movie', array( 'title' => 'Timeline screen credit ' . $tag, 'actors' => array( $person['uuid'] ), 'cast_roles' => $name . ' | Pilot' ) );
+    $model = array(
+        'columns' => array( array( 'id' => 'team', 'label' => 'Crew' ), array( 'id' => 'feature', 'label' => 'Features' ), array( 'id' => 'series', 'label' => 'Series' ) ),
+        'sections' => array( array( 'id' => 'launch', 'label' => 'Before the launch' ) ),
+        'entries' => array( array( 'title' => $name, 'column' => 'team', 'section' => 'launch', 'item' => $person['uuid'], 'precision' => 'undated' ) ),
+    );
+    $timeline = $store->create( Timelines::TYPE, array( 'title' => 'Custom timeline ' . $tag, 'chronology' => $model ) );
+    $publish = static function ( array $record ) use ( $store, $sites ): int {
+        $id = (int) $record['id'];
+        Plugin::materializer()->sync( $id, $sites['a'] );
+        $map = $store->mapping( $id );
+        $store->local( $id, array(), array(), (int) $map['local_version'], 'publish' );
+        Plugin::materializer()->sync( $id, $sites['a'] );
+        return (int) $map['post_id'];
+    };
+    $person_post = $publish( $person );
+    $movie_post = $publish( $movie );
+    $check( ! Timelines::related( Presentation::record( $person['id'] ) ), 'Draft timelines are absent from entry backlinks' );
+    $timeline_post = $publish( $timeline );
+    $linked = Presentation::record( $person['id'] );
+    $related = Timelines::related( $linked );
+    $check( $timeline['uuid'] === $related[0]['uuid'] && array( 0 ) === $related[0]['timeline_matches'], 'Published timelines link back from any linked catalog type and identify the entry' );
+    $art = Presentation::artwork( $linked, 'medium' );
+    $check( ! empty( $art['url'] ) && $person['data']['headshot'] === $art['reference'], 'Timeline artwork uses the linked record’s native artwork field' );
+    $map = $store->mapping( (int) $timeline['id'] );
+    switch_to_blog( $sites['b'] );
+    try { $check( ! Timelines::related( $person ), 'Publication on Site A does not expose a timeline link on Site B' ); }
+    finally { restore_current_blog(); }
+    $check( 'Pilot' === CastRoles::by_actor( $movie['data']['cast_roles'] )[ PersonIdentity::name( $name ) ], 'Character credits are connected to the cast member by normalized name' );
+    echo 'TIMELINE_FLEX_JSON:' . wp_json_encode( array( 'timeline' => get_permalink( $timeline_post ), 'person' => get_permalink( $person_post ), 'movie' => get_permalink( $movie_post ), 'name' => $name, 'art' => $art['url'] ) ) . "\n";
 } finally { restore_current_blog(); }
 WP_CLI::success( 'Timeline validation, publication and seeding checks passed.' );

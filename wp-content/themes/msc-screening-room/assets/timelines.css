@@ -2,13 +2,14 @@
     --timeline-dark: #16222e;
     --timeline-divider: #cbd5df;
     --era-color: #64748b;
-    --timeline-columns: minmax(0, 1fr) minmax(7rem, 9.5rem) minmax(0, 1fr);
+    --timeline-date-width: clamp(6rem, 12vw, 9.5rem);
     margin-bottom: 4rem;
 }
 .story-timeline [hidden] { display: none !important; }
 .timeline-header {
-    display: flex;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
     justify-content: space-between;
     gap: 2rem;
     padding: clamp(1.25rem, 3vw, 2.65rem);
@@ -20,7 +21,7 @@
 .timeline-header h1 { font-size: clamp(2.15rem, 4.7vw, 3.8rem); margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
 .timeline-intro { max-width: 42rem; margin-top: 1rem; color: #e0e9f3; }
 .timeline-intro a { color: #fff; text-decoration: underline; }
-.timeline-counts { display: flex; gap: 1rem; flex-shrink: 0; margin: 0; }
+.timeline-counts { display: flex; flex-wrap: wrap; gap: .65rem 1rem; margin: 0; }
 .timeline-counts div { min-width: 5rem; border-top: 1px solid #8494a5; padding-top: .4rem; }
 .timeline-counts dt { color: #dbe7f3; font-size: .75rem; }
 .timeline-counts dd { font-size: 1.7rem; font-weight: 700; margin: 0; }
@@ -41,9 +42,10 @@
     padding: .65rem 0;
     border-radius: .45rem;
 }
-.timeline-lanes span:nth-child(2) { color: #d8e4ef; }
+.timeline-lanes span { grid-row: 1; overflow-wrap: anywhere; padding-inline: .25rem; }
+.timeline-date-heading { grid-column: var(--timeline-date-column); color: #d8e4ef; }
 .timeline-section { position: relative; padding: 1rem 0; }
-.timeline-section::before { content: ""; position: absolute; inset: 0 auto 0 50%; width: 2px; background: var(--timeline-divider); transform: translateX(-50%); }
+.timeline-section::before { content: ""; position: absolute; inset-block: 0; left: calc((100% - var(--timeline-date-width)) * var(--timeline-date-fraction) + var(--timeline-date-width) / 2); width: 2px; background: var(--timeline-divider); transform: translateX(-50%); }
 .timeline-section-label {
     position: relative;
     border: 1px solid var(--line);
@@ -59,10 +61,11 @@
     overflow-wrap: anywhere;
 }
 .timeline-entries { list-style: none; margin: 0; padding: 0; }
-.timeline-entry { position: relative; margin-bottom: .55rem; }
+.timeline-entry { position: relative; margin-bottom: .55rem; scroll-margin-top: 1rem; }
+.timeline-entry:target .timeline-bubble { outline: 2px solid var(--era-color); outline-offset: 3px; }
 .timeline-entry:last-child { margin-bottom: 0; }
 .timeline-date {
-    grid-column: 2;
+    grid-column: var(--timeline-date-column);
     grid-row: 1;
     position: relative;
     z-index: 1;
@@ -94,17 +97,16 @@
     border-radius: .8rem;
     background: var(--surface);
 }
-.lane-movie .timeline-bubble { grid-column: 1; }
-.lane-show .timeline-bubble { grid-column: 3; }
+.timeline-bubble { grid-column: var(--timeline-card-column); }
 .timeline-bubble::before {
     content: "";
     position: absolute;
     top: 50%;
-    width: 4rem;
+    width: .9rem;
     border-top: 1px solid var(--era-color);
 }
-.lane-movie .timeline-bubble::before { left: 100%; }
-.lane-show .timeline-bubble::before { right: 100%; }
+.timeline-before-date .timeline-bubble::before { left: 100%; }
+.timeline-after-date .timeline-bubble::before { right: 100%; }
 .timeline-art {
     display: grid;
     place-items: center;
@@ -147,4 +149,15 @@
     .timeline-date small { display: inline; margin-left: .35rem; }
     .timeline-entry .timeline-bubble { grid-row: 2; grid-column: 1; }
     .timeline-bubble::before { display: none; }
+}
+
+@media (min-width: 701px) and (max-width: 1050px) {
+    .timeline-many-columns .timeline-lanes { display: none; }
+    .timeline-many-columns .timeline-section::before { left: .45rem; }
+    .timeline-many-columns .timeline-section-label { margin-left: 1.15rem; }
+    .timeline-many-columns .timeline-entry { grid-template-columns: minmax(0, 1fr); gap: .3rem; margin: 0 0 1rem 1.15rem; }
+    .timeline-many-columns .timeline-date { grid-row: 1; grid-column: 1; justify-self: start; text-align: left; }
+    .timeline-many-columns .timeline-date small { display: inline; margin-left: .35rem; }
+    .timeline-many-columns .timeline-entry .timeline-bubble { grid-row: 2; grid-column: 1; }
+    .timeline-many-columns .timeline-bubble::before { display: none; }
 }

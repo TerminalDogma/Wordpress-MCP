@@ -51,10 +51,19 @@ final class Presentation {
 		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT r.id,$number AS number_value FROM $from WHERE $where ORDER BY number_value IS NULL ASC,number_value ASC,r.id ASC LIMIT 50 OFFSET %d", ( $page - 1 ) * 50 ) );
 		return array( 'seasons' => $seasons, 'season' => $selected, 'episodes' => array_values( array_filter( array_map( array( self::class, 'record' ), $ids ) ) ), 'total' => $total, 'page' => $page, 'pages' => $pages );
 	}
-	public static function image( array $r, string $class = '', string $size = 'large' ): string {
+	/** Resolve the catalog art type and fall back to the featured image. */
+	public static function artwork( array $r, string $size = 'large', array $preferred = array() ): array {
 		$d = $r['data']; $keys = array( 'msc_movie' => 'poster', 'msc_show' => 'poster', 'msc_episode' => 'episode_image', 'msc_person' => 'headshot', 'msc_game' => 'poster', 'msc_franchise' => 'poster', 'msc_comic' => 'poster', 'msc_comic_issue' => 'poster', 'msc_comic_arc' => 'poster' );
-		$url = Media::url( (array) ( $d[ $keys[ $r['type'] ] ?? ( isset( EntityCatalog::definitions()[ $r['type'] ] ) ? 'logo' : 'featured_image' ) ] ?? array() ), $size );
-		if ( ! $url ) { $url = Media::url( (array) ( $d['featured_image'] ?? array() ), $size ); }
+		$field = $keys[ $r['type'] ] ?? ( isset( EntityCatalog::definitions()[ $r['type'] ] ) ? 'logo' : 'featured_image' );
+		foreach ( array( $preferred, $d[ $field ] ?? array(), $d['featured_image'] ?? array() ) as $reference ) {
+			if ( ! $reference ) { continue; }
+			$url = Media::url( (array) $reference, $size );
+			if ( $url ) { return array( 'reference' => $reference, 'url' => $url ); }
+		}
+		return array();
+	}
+	public static function image( array $r, string $class = '', string $size = 'large' ): string {
+		$d = $r['data']; $url = self::artwork( $r, $size )['url'] ?? Media::url( array(), $size );
 		return $url ? '<img class="' . esc_attr( $class ) . '" src="' . esc_url( $url ) . '" alt="' . esc_attr( $d['title'] ?? '' ) . '" loading="lazy" decoding="async">' : '<div class="art-placeholder ' . esc_attr( $class ) . '" aria-label="No image available"><span>' . esc_html( mb_substr( $d['title'] ?? '?', 0, 1 ) ) . '</span></div>';
 	}
 	public static function card( array $r ): void {
@@ -62,6 +71,7 @@ final class Presentation {
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . '<span class="catalog-card-media">' . self::image( $r, 'card-art', 'medium_large' ) . ReviewScores::badge( $r ) . '</span><div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::collect( $r, array( 'title', 'excerpt' ) ) . Attribution::collect_image( $r ) . '</article>';
 	}
 	public static function credits( array $r ): void {
+		$characters = CastRoles::by_actor( $r['data']['cast_roles'] ?? '' );
 		$groups = array( 'actors' => 'Cast', 'directors' => 'Directors', 'screenwriters' => 'Writers', 'producers' => 'Producers', 'creators' => 'Creators' );
 		foreach ( $groups as $key => $label ) {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
@@ -69,8 +79,11 @@ final class Presentation {
 			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
 			foreach ( $people as $person ) {
 				echo '<div class="person-credit">';
-				if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . '<span>' . esc_html( $person['title'] ) . '</span></a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }
-				else { echo '<span class="person-card person-credit-name">' . esc_html( $person['title'] ) . '</span>'; }
+				$character = 'actors' === $key ? ( $characters[ PersonIdentity::name( $person['title'] ) ] ?? '' ) : '';
+				$name = '<span class="person-card-name">' . esc_html( $person['title'] ) . '</span>';
+				if ( $character ) { $name .= '<span class="person-card-character">' . esc_html( $character ) . '</span>'; }
+				if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . $name . '</a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }
+				else { echo '<span class="person-card person-credit-name">' . $name . '</span>'; }
 				echo '</div>';
 			}
 			echo '</div></section>';

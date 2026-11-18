@@ -165,6 +165,9 @@ final class OpenSources {
         $related = array(); foreach ( array_keys( $properties ) as $property ) { $related = array_merge( $related, self::ids( $e, $property ) ); }
         $roles = 'msc_movie' === $type ? array( 'P161' => 'actors', 'P57' => 'directors', 'P58' => 'screenwriters', 'P162' => 'producers' ) : array();
         foreach ( $roles as $property => $role ) { $related = array_merge( $related, array_slice( self::ids( $e, $property ), 0, 30 ) ); }
+        $characters = 'msc_movie' === $type ? CastRoles::wiki_characters( $e ) : array();
+        foreach ( $characters as $row ) { $related = array_merge( $related, $row['ids'] ?? array() ); }
+        $cast_names = array();
         $entities = OpenClient::entities( array_slice( array_values( array_unique( $related ) ), 0, 200 ) );
         foreach ( $properties as $property => $field ) {
             $labels = array(); foreach ( self::ids( $e, $property ) as $other ) { $label = self::label( $entities[ $other ] ?? array() ); if ( '' !== $label ) { $labels[] = $label; } }
@@ -182,10 +185,13 @@ final class OpenSources {
         }
         foreach ( $roles as $property => $role ) { foreach ( array_slice( self::ids( $e, $property ), 0, 30 ) as $other ) {
             $person = $entities[ $other ] ?? array(); $name = self::label( $person ); if ( '' === $name || ! in_array( 'Q5', self::ids( $person, 'P31' ), true ) ) { continue; }
+            if ( 'actors' === $role ) { $cast_names[ $other ] = $name; }
             $person_ids = array( 'wikidata' => $other ); $person_imdb = self::claims( $person, 'P345' )[0] ?? ''; if ( is_string( $person_imdb ) && preg_match( '/^nm[0-9]{7,12}$/D', $person_imdb ) ) { $person_ids['imdb'] = $person_imdb; }
             $person_fields = array( 'title' => $name ); $born = self::claims( $person, 'P569' )[0] ?? null; if ( is_array( $born ) && ( $date = self::wiki_date( $born ) ) ) { $person_fields['birth_date'] = $date; }
             $key = 'wikidata:' . $other; $credits[ $key ] = array( 'provider' => 'wikidata', 'id' => $other, 'external_ids' => $person_ids, 'name' => $name, 'fields' => $person_fields, 'source' => self::source( 'wikidata', 'https://www.wikidata.org/wiki/' . $other ), 'roles' => array_values( array_unique( array_merge( $credits[ $key ]['roles'] ?? array(), array( $role ) ) ) ) );
         } }
+        $cast_lines = CastRoles::wiki_lines( $characters, $entities, $cast_names );
+        if ( $cast_lines ) { $fields['cast_roles'] = $cast_lines; }
         $article = $e['sitelinks']['enwiki']['title'] ?? '';
         if ( '' !== $article ) { try {
             $response = OpenClient::get( 'wikipedia', '', array( 'action' => 'query', 'titles' => $article, 'prop' => 'extracts|info', 'exintro' => 1, 'explaintext' => 1, 'inprop' => 'url' ), DAY_IN_SECONDS );

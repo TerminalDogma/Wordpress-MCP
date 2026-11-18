@@ -1,0 +1,52 @@
+{
+  "Captain America: The First Avenger": {
+    "release_date": "2011-07-22",
+    "runtime": 124,
+    "external_ids": {"imdb": "tt0458339"},
+    "genres": ["Action", "Adventure", "Science Fiction"],
+    "content": "<p>During World War II, Steve Rogers volunteers for an experiment that turns him into Captain America. When an old friend is captured behind enemy lines, Steve sets out with a rescue team and discovers that HYDRA is developing weapons with the Tesseract.</p><p>The wartime story introduces the Tesseract and Peggy Carter. It also explains why Steve is able to meet the other Avengers decades later.</p>",
+    "credits": {"Chris Evans": "Steve Rogers / Captain America", "Hayley Atwell": "Peggy Carter", "Sebastian Stan": "Bucky Barnes"}
+  },
+  "Iron Man": {
+    "release_date": "2008-05-02",
+    "runtime": 126,
+    "external_ids": {"imdb": "tt0371746"},
+    "genres": ["Action", "Adventure", "Science Fiction"],
+    "content": "<p>Weapons manufacturer Tony Stark is taken captive after a demonstration in Afghanistan. He and fellow prisoner Ho Yinsen build a powered suit that lets Tony escape. Back home, Tony develops the design and turns against his company’s weapons business.</p><p>Tony’s decision puts him at odds with his business partner Obadiah Stane. The film introduces Pepper Potts and James Rhodes, and its credits scene introduces the Avengers Initiative.</p>",
+    "credits": {"Robert Downey Jr.": "Tony Stark / Iron Man", "Gwyneth Paltrow": "Pepper Potts", "Jeff Bridges": "Obadiah Stane"}
+  },
+  "The Avengers": {
+    "release_date": "2012-05-04",
+    "runtime": 143,
+    "external_ids": {"imdb": "tt0848228"},
+    "genres": ["Action", "Adventure", "Science Fiction"],
+    "content": "<p>When Loki steals the Tesseract, Nick Fury brings together a team that includes Iron Man, Captain America, Thor and the Hulk. Black Widow and Hawkeye join the fight as Loki opens a portal over New York City.</p><p>The Battle of New York is a turning point in the shared story. It establishes the Avengers and becomes a reference point for later films and series.</p>",
+    "credits": {"Robert Downey Jr.": "Tony Stark / Iron Man", "Chris Evans": "Steve Rogers / Captain America", "Scarlett Johansson": "Natasha Romanoff / Black Widow", "Tom Hiddleston": "Loki"}
+  },
+  "Avengers: Endgame": {
+    "release_date": "2019-04-26",
+    "runtime": 181,
+    "external_ids": {"imdb": "tt4154796"},
+    "genres": ["Action", "Adventure", "Science Fiction"],
+    "content": "<p>Five years after Thanos’s Snap, the surviving Avengers discover a way to revisit earlier moments in their history. They split up to retrieve the Infinity Stones and attempt to restore the people who vanished.</p><p>The aftermath sets up WandaVision and The Falcon and the Winter Soldier. One trip back to the Battle of New York also creates the branch explored in Loki.</p>",
+    "credits": {"Robert Downey Jr.": "Tony Stark / Iron Man", "Chris Evans": "Steve Rogers / Captain America", "Scarlett Johansson": "Natasha Romanoff / Black Widow"}
+  },
+  "WandaVision": {
+    "premiere_date": "2021-01-15",
+    "network": "Disney+",
+    "number_of_seasons": 1,
+    "number_of_episodes": 9,
+    "external_ids": {"imdb": "tt9140560"},
+    "genres": ["Drama", "Fantasy", "Mystery"],
+    "content": "<p>Wanda Maximoff and Vision live in a suburb that changes to resemble sitcoms from different decades. As neighbors and visitors disrupt the routine, the pair begin to question how their seemingly ordinary life came to be.</p><p>The main story takes place weeks after Endgame. It follows Wanda’s response to those events and introduces characters who return in later MCU productions.</p>"
+  },
+  "Loki": {
+    "premiere_date": "2021-06-09",
+    "network": "Disney+",
+    "number_of_seasons": 2,
+    "number_of_episodes": 12,
+    "external_ids": {"imdb": "tt9140554"},
+    "genres": ["Adventure", "Fantasy", "Science Fiction"],
+    "content": "<p>A Loki variant escapes with the Tesseract during the Avengers’ visit to 2012. The Time Variance Authority arrests him and recruits him to investigate disturbances across branching realities.</p><p>The story follows the variant and the TVA outside a single ordinary Earth date. The two seasons have separate entries on the chronology because their events follow one another on the branch timeline.</p>"
+  }
+}

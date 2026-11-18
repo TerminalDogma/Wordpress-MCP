@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 13;
+	public const BUILTIN_VERSION = 14;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -45,6 +45,7 @@ final class Schema {
 		$movie = $common;
 		foreach ( array( 'original_title', 'country', 'language', 'director', 'writers', 'distributor', 'production_companies', 'content_rating', 'release_status', 'streaming_service' ) as $field ) { $movie[ $field ] = array( 'type' => 'text' ); }
 		$movie['cast'] = array( 'type' => 'richtext', 'label' => 'Cast and roles' );
+		$movie['cast_roles'] = array( 'type' => 'text', 'format' => 'cast_roles', 'multiline' => true, 'label' => 'Cast characters', 'instructions' => 'Enter one linked actor and character per line, for example: Robert Downey Jr. | Iron Man.' );
 		foreach ( array( 'release_date' => 'Theatrical release date', 'digital_release_date' => 'Digital release date', 'streaming_release_date' => 'Streaming release date', 'physical_release_date' => 'DVD / Blu-ray release date' ) as $field => $label ) { $movie[ $field ] = array( 'type' => 'date', 'label' => $label, 'indexed' => true ); }
 		$movie['runtime'] = array( 'type' => 'number', 'min' => 0, 'label' => 'Runtime (minutes)' );
 		$movie['genres'] = array( 'type' => 'multiselect' );
@@ -109,7 +110,7 @@ final class Schema {
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					if ( ! ( $previous_version < 12 && 'msc_franchise' === $type ) && ! ( $previous_version < 11 && 'msc_comic' === $type && 'story_arcs' === $key ) && $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
+					if ( ! ( $previous_version < 14 && 'msc_movie' === $type && 'cast_roles' === $key ) && ! ( $previous_version < 12 && 'msc_franchise' === $type ) && ! ( $previous_version < 11 && 'msc_comic' === $type && 'story_arcs' === $key ) && $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
 						if ( isset( $field['taxonomy'] ) && ! array_key_exists( 'taxonomy', $existing ) && $existing['type'] === $field['type'] ) { $existing['taxonomy'] = $field['taxonomy']; }
@@ -179,6 +180,7 @@ final class Schema {
 			if ( ! $url ) { throw new \InvalidArgumentException( 'Enter an HTTPS title page URL on the selected score provider’s website.' ); } return $url;
 		}
 		if ( 'wikipedia_title' === ( $field['format'] ?? '' ) ) { return WikipediaScores::title( $value ); }
+		if ( 'cast_roles' === ( $field['format'] ?? '' ) ) { return CastRoles::sanitize( $value ); }
 		if ( 'chronology' === ( $field['format'] ?? '' ) ) { return Timelines::sanitize( $value ); }
 		if ( 'trailers' === ( $field['format'] ?? '' ) ) { return Trailers::sanitize( $value ); }
 		if ( isset( self::$types[ $type ] ) ) { return ( self::$types[ $type ] )( $value, $field ); }
