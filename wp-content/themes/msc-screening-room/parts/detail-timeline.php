@@ -43,12 +43,18 @@ foreach ( $entries as $index => $entry ) {
 <article class="story-timeline<?php echo $column_count > 3 ? ' timeline-many-columns' : ''; ?>" style="<?php echo esc_attr( $layout ); ?>" data-story-timeline>
     <nav class="breadcrumbs" aria-label="Breadcrumb">
         <?php if ( $archive ) { ?><a href="<?php echo esc_url( $archive ); ?>">Timelines</a><?php } ?>
-        <?php if ( $franchise ) { ?><a href="<?php echo esc_url( Presentation::url( $franchise ) ); ?>"><?php echo esc_html( $franchise['data']['title'] ); ?></a><?php } ?>
         <span><?php echo esc_html( $data['title'] ); ?></span>
     </nav>
     <header class="timeline-header">
         <div>
-            <p class="eyebrow">In-universe chronology</p>
+            <div class="timeline-title-bar">
+                <p class="eyebrow">In-universe chronology</p>
+                <?php if ( $franchise ) { ?>
+                    <a class="timeline-franchise" href="<?php echo esc_url( Presentation::url( $franchise ) ); ?>">
+                        <span>Franchise</span> <?php echo esc_html( $franchise['data']['title'] ); ?> <span aria-hidden="true">→</span>
+                    </a>
+                <?php } ?>
+            </div>
             <h1><?php echo esc_html( $data['title'] ); ?></h1>
             <?php if ( trim( $intro ) ) { ?><div class="catalog-description timeline-intro"><?php echo $intro; ?></div><?php } ?>
         </div>

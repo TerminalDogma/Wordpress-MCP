@@ -1,13 +1,15 @@
 <?php
 use MSC\{Plugin, Presentation, Schema, Timelines};
 
-if ( ! is_singular() || ! Schema::enabled( Timelines::TYPE ) ) { return; }
-$post = get_queried_object();
-if ( ! $post instanceof WP_Post || $post->post_password || $post->post_type === Timelines::TYPE || ! Schema::enabled( $post->post_type ) ) { return; }
-$global = Plugin::store()->by_post( $post->ID );
-$item = $global ? Presentation::record( $global['id'] ) : null;
-if ( ! $item ) { return; }
-$timelines = Timelines::related( $item );
+$timelines = $args['timelines'] ?? null;
+if ( null === $timelines ) {
+    if ( ! is_singular() || ! Schema::enabled( Timelines::TYPE ) ) { return; }
+    $post = get_queried_object();
+    if ( ! $post instanceof WP_Post || $post->post_password || in_array( $post->post_type, array( Timelines::TYPE, 'msc_movie', 'msc_show' ), true ) || ! Schema::enabled( $post->post_type ) ) { return; }
+    $global = Plugin::store()->by_post( $post->ID );
+    $item = $global ? Presentation::record( $global['id'] ) : null;
+    $timelines = $item ? Timelines::related( $item ) : array();
+}
 if ( ! $timelines ) { return; }
 ?>
 <section class="entry-timelines" aria-labelledby="entry-timelines-heading">

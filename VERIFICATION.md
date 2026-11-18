@@ -1,4 +1,8 @@
-# Shared Content 2.9.0 verification
+# Shared Content 2.9.1 verification
+
+Chromium verified the movie and TV layouts and the linked franchise in the MCU timeline header on both entertainment sites at desktop and mobile widths. The season browser suite passed in-place switching, paging, browser history and direct links. The review suite passed editorial badge placement, medal colors, aggregate score placement and mobile layout. The trailer suite passed responsive carousel sizing, cast links and YouTube picker behavior in both editors. Plugin and theme PHP syntax checks passed.
+
+## Earlier 2.9.0 verification
 
 WordPress integration checks passed for older timeline data, custom columns and sections, inherited artwork, publication-aware backlinks and MCU franchise seeding. The 71 source-import regression checks passed. Chromium verified the MCU example on both entertainment sites, a custom three-column timeline on desktop and mobile, linked artwork, a backlink to the matching timeline card, a movie character credit, and saving a new timeline with a named column and section.
 

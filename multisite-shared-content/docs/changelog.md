@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.9.1
+
+Movies and TV shows now use a compact poster header, section navigation and a details sidebar with franchise and story timeline links. Cast cards display character names alongside a compact crew list. Timeline headers link directly to their published franchise. The YouTube picker is scoped to the Trailers field in the Shared Content editor.
+
 ## 2.9.0
 
 Timelines support one to six named columns and separately managed section headings. Entries select both from dropdowns and can link to any shared catalog type. Cards inherit the linked entry’s artwork and support a local Media Library selection. Published linked entries display a Story timelines section. The MCU example now includes a populated franchise and links to available catalog records, with six starter titles available when missing.

@@ -71,8 +71,8 @@ final class EntityCatalog {
             if ( $items ) { $rows[ $key ] = array( 'label' => $d && $d[3] === $key ? $d[0] : ( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ), 'items' => $items ); }
         } return $rows;
     }
-    public static function sidebar( array $record ): string {
-        $html = ''; foreach ( self::rows( $record ) as $key => $row ) {
+    public static function sidebar( array $record, ?array $rows = null ): string {
+        $html = ''; foreach ( ( $rows ?? self::rows( $record ) ) as $key => $row ) {
             $credits = 'actors' === $key ? array_slice( $row['items'], 0, 5 ) : $row['items'];
             $items = array(); foreach ( $credits as $item ) { $items[] = $item['url'] ? '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['title'] ) . '</a>' : esc_html( $item['title'] ); }
             $more = 'actors' === $key && count( $row['items'] ) > 5 ? '<a class="sidebar-full-cast" href="#cast">View full cast</a>' : '';

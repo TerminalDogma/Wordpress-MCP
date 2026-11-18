@@ -69,7 +69,8 @@ final class Admin {
 			if ( $multiple ) { echo '<p class="description">Select multiple with Command (Mac) or Ctrl. Use ACF for searchable, ordered record links.</p>'; }
 			if ( ! empty( $field['taxonomy'] ) ) { echo '<p class="description">Reusable category. Network administrators can add choices under Shared Content Network → Categories.</p>'; }
 		} elseif ( ! empty( $field['multiline'] ) ) {
-			echo '<textarea data-msc-trailers class="large-text" rows="4" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( (string) $value ) . '</textarea><p class="description">' . esc_html( $field['instructions'] ?? '' ) . '</p>';
+			$trailer_picker = 'trailers' === $key ? ' data-msc-trailers' : '';
+			echo '<textarea' . $trailer_picker . ' class="large-text" rows="4" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( (string) $value ) . '</textarea><p class="description">' . esc_html( $field['instructions'] ?? '' ) . '</p>';
 		} elseif ( in_array( $type, array( 'richtext', 'json', 'multiselect' ), true ) ) {
 			echo '<textarea class="large-text" rows="' . ( 'richtext' === $type ? 5 : 3 ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( self::text( $value ) ) . '</textarea>';
 			if ( 'richtext' !== $type ) { echo '<p class="description">JSON array or object.</p>'; }

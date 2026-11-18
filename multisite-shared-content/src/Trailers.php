@@ -61,7 +61,7 @@ final class Trailers {
         $videos = array();
         foreach ( preg_split( '/\R/u', (string) ( $record['data']['trailers'] ?? '' ) ) as $line ) { $v = self::video( trim( $line ) ); if ( $v ) { $videos[ $v['url'] ] = $v; } if ( count( $videos ) >= 12 ) { break; } }
         if ( ! $videos ) { return; } $total = count( $videos );
-        echo '<section class="trailer-section" data-trailer-carousel role="region" aria-roledescription="carousel" aria-label="Trailers"><h2>Trailers</h2><div class="trailer-stage">';
+        echo '<section class="trailer-section" id="trailers" data-trailer-carousel role="region" aria-roledescription="carousel" aria-label="Trailers"><h2>Trailers</h2><div class="trailer-stage">';
         foreach ( array_values( $videos ) as $index => $video ) {
             $number = $index + 1;
             echo '<div class="trailer-slide" role="group" aria-roledescription="slide" aria-label="' . esc_attr( $number . ' of ' . $total ) . '"' . ( $index ? ' hidden' : '' ) . '><iframe ' . ( $index ? '' : 'src="' . esc_url( $video['embed'] ) . '" ' ) . 'data-src="' . esc_url( $video['embed'] ) . '" title="' . esc_attr( ( $record['data']['title'] ?? '' ) . ' — Trailer ' . $number ) . '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';

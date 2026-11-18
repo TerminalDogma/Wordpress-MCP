@@ -1,0 +1,188 @@
+.screen-title { margin-bottom: 3.5rem; }
+
+.screen-title-hero {
+    display: grid;
+    grid-template-columns: clamp(7rem, 17vw, 12rem) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(1rem, 4vw, 3.25rem);
+    padding: clamp(1rem, 3.5vw, 2.5rem);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--accent);
+    border-radius: .6rem;
+    background-color: var(--surface);
+    background-image: radial-gradient(ellipse at 75% 10%, color-mix(in srgb, var(--accent) 9%, var(--surface)), transparent 72%);
+}
+
+.screen-title-hero .hero-art {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    min-width: 0;
+    align-self: start;
+}
+.screen-title-poster {
+    width: 100%;
+    display: block;
+    aspect-ratio: 2 / 3;
+    object-fit: contain;
+    background-color: var(--surface2);
+    border-radius: .35rem;
+}
+.screen-title-poster.art-placeholder { display: grid; }
+.screen-title-poster.art-placeholder span { font-size: clamp(2.8rem, 8vw, 5.5rem); }
+.screen-title-hero .item-score-badge { right: .45rem; bottom: .45rem; padding: .55rem .6rem; max-width: calc(100% - .9rem); }
+.screen-title-hero .item-score-badge strong { font-size: clamp(1.4rem, 2.75vw, 2rem); }
+.screen-title-hero .score-source, .screen-title-hero .score-award { overflow-wrap: anywhere; }
+.screen-title-hero .hero-copy .eyebrow { margin: 0 0 .55rem; }
+.screen-title-hero .hero-copy h1 {
+    font-size: clamp(2.1rem, 5vw, 4rem);
+    margin: 0;
+    line-height: 1.04;
+    overflow-wrap: anywhere;
+}
+.screen-title-hero .original-title { margin: .6rem 0 0; color: var(--muted); font-size: .9rem; }
+.screen-title-hero .chips { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin: .85rem 0 0; }
+.screen-title-hero .facts {
+    margin-top: 1rem;
+    gap: .5rem 1.35rem;
+}
+.screen-title-hero .facts > div { min-width: 0; }
+.screen-title-hero .facts dt { margin-bottom: .1rem; }
+.screen-title-hero .facts dd { font-weight: 650; }
+
+.screen-title-nav {
+    display: flex;
+    gap: .3rem .55rem;
+    flex-wrap: wrap;
+    margin-top: .8rem;
+    padding: .6rem 0;
+    border-bottom: 1px solid var(--line);
+}
+.screen-title-nav a {
+    padding: .35rem .7rem;
+    border-radius: .3rem;
+    font-size: .85rem;
+    font-weight: 700;
+}
+.screen-title-nav a:hover, .screen-title-nav a:focus-visible { background: var(--surface); }
+
+.screen-title-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.75rem clamp(1.25rem, 3vw, 2.75rem);
+    margin-top: clamp(1.5rem, 3vw, 2.3rem);
+}
+.screen-title-layout.has-details { grid-template-columns: minmax(0, 1fr) minmax(13.5rem, 24%); }
+.screen-title-overview, .screen-title-sections { grid-column: 1; min-width: 0; }
+.screen-title-overview { max-width: none; }
+.screen-title-overview .catalog-description { max-width: 74ch; font-size: 1rem; }
+.screen-title-details {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    border: 1px solid var(--line);
+    border-radius: .55rem;
+    background: var(--surface);
+    padding: clamp(1rem, 2vw, 1.35rem);
+}
+.screen-title-detail-group + .screen-title-detail-group { margin-top: 1.25rem; padding-top: 1.15rem; border-top: 1px solid var(--line); }
+.screen-title-detail-group h2 { font-size: 1.1rem; margin: 0 0 .7rem; }
+.screen-title-details .facts { gap: .75rem; }
+.screen-title-details .facts + .facts { margin-top: 24px; padding-top: 24px; }
+.screen-title-details .facts dt { margin-bottom: .1rem; }
+.screen-title-details .facts dd { font-size: .875rem; }
+.screen-title-website { display: inline-block; margin-top: .85rem; text-decoration: underline; font-size: .85rem; }
+.screen-title-related ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.screen-title-related a {
+    overflow-wrap: anywhere;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .4rem;
+    font-size: .875rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: .15em;
+}
+.screen-title-related a span { color: var(--accent); }
+.screen-title-related .entry-timelines { border: 0; padding: 0; margin: 0; background: transparent; }
+.screen-title-related ul + .entry-timelines { padding-top: .8rem; margin-top: .85rem; border-top: 1px solid var(--line); }
+.screen-title-related .entry-timelines a { padding: 0; border: 0; background: transparent; }
+
+.screen-title-overview > h2,
+.screen-title-sections > section > h2,
+.screen-title-sections > section > .section-heading > h2 {
+    font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+    margin: 0 0 .8rem;
+}
+.screen-title-overview, .screen-title-sections > section { scroll-margin-top: 1rem; }
+.screen-title-sections > section {
+    padding: 1.25rem 0;
+    margin: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+}
+.screen-title-sections > section > .section-heading { margin: 0; }
+.screen-title-sections > section :is(.season-heading, .credit-section h3, .title-crew h3, .title-legacy-credit h3) {
+    font-size: 1.05rem;
+    margin: 0 0 .65rem;
+}
+.screen-title-sections .episode-list li > a { gap: .65rem; padding-block: .75rem; }
+.screen-title-sections .episode-list strong { font-size: 1rem; line-height: 1.35; }
+.screen-title-sections .trailer-stage { gap: .7rem; }
+.screen-title-sections .review-score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .65rem; }
+.screen-title-sections .review-score-card { min-width: 0; overflow-wrap: anywhere; padding: 1rem; }
+.screen-title-sections .review-score-value { font-size: clamp(1.8rem, 3.5vw, 2.6rem); }
+.screen-title-sections .image-gallery { gap: .65rem; }
+.screen-title .credit-section { padding: 0; margin: 0; border: 0; }
+.screen-title .people-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    gap: .55rem;
+}
+.screen-title .person-card {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    align-content: center;
+    gap: .05rem .55rem;
+    min-height: 4rem;
+    height: 100%;
+    padding: .45rem;
+    border: 1px solid var(--line);
+    border-radius: .35rem;
+    background-color: var(--surface);
+    overflow-wrap: anywhere;
+}
+.screen-title a.person-card:hover { border-color: var(--accent); }
+.screen-title .person-card :is(img, .art-placeholder) {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin: 0;
+    filter: none;
+}
+.screen-title .person-card .art-placeholder span { font-size: 1.15rem; }
+.screen-title .person-card :is(.person-card-name, .person-card-character) { grid-column: 2; margin: 0; }
+.screen-title .person-card-name { align-self: end; }
+.screen-title .person-card-character { align-self: start; }
+.screen-title .person-credit-name { display: flex; flex-direction: column; justify-content: center; padding-inline: .65rem; }
+.screen-title .person-credit-name .person-card-name { align-self: auto; }
+.screen-title .title-crew, .screen-title .title-legacy-credit { margin-top: 1.05rem; }
+.screen-title .title-crew dl { display: grid; gap: .55rem 1.15rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); margin: 0; }
+.screen-title .title-crew dt { color: var(--muted); font-size: .75rem; }
+.screen-title .title-crew dd { margin: 0; font-size: .875rem; }
+.screen-title .title-crew a { text-decoration: underline; text-underline-offset: .15em; }
+
+@media (max-width: 760px) {
+    .screen-title-layout.has-details { grid-template-columns: minmax(0, 1fr); }
+    .screen-title-details { grid-column: 1; grid-row: auto; }
+    .screen-title-layout { gap: 1.2rem; }
+    .screen-title-hero { grid-template-columns: clamp(5.35rem, 26vw, 8rem) minmax(0, 1fr); gap: .75rem; }
+    .screen-title-hero .hero-copy h1 { font-size: clamp(1.45rem, 6vw, 2.35rem); }
+    .screen-title-hero .facts { gap: .4rem .8rem; }
+    .screen-title-hero .facts dd { font-size: .8rem; }
+    .screen-title-hero .chips .chip { padding: .2rem .35rem; font-size: .65rem; }
+    .screen-title-hero .item-score-badge { padding: .3rem .35rem; right: .25rem; bottom: .25rem; max-width: calc(100% - .5rem); }
+    .screen-title-hero .item-score-badge .score-award { font-size: .55rem; }
+    .screen-title-hero .item-score-badge .score-source { font-size: .6rem; }
+    .screen-title-hero .item-score-badge small { font-size: .65rem; }
+}

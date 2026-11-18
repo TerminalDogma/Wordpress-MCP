@@ -161,3 +161,9 @@
     .timeline-many-columns .timeline-entry .timeline-bubble { grid-row: 2; grid-column: 1; }
     .timeline-many-columns .timeline-bubble::before { display: none; }
 }
+
+.timeline-title-bar { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .85rem; margin-bottom: .75rem; }
+.timeline-title-bar .eyebrow { margin: 0; }
+.timeline-franchise { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: .2rem .5rem; border: 1px solid #8da1b6; border-radius: .35rem; padding: .3rem .55rem; color: #fff; font-size: .84rem; font-weight: 700; overflow-wrap: anywhere; }
+.timeline-franchise span { color: #c6d6e7; font-size: .75rem; }
+.timeline-franchise:hover, .timeline-franchise:focus-visible { color: #fff; text-decoration: underline; }

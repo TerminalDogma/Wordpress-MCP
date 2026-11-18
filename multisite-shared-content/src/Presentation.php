@@ -70,13 +70,19 @@ final class Presentation {
 		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person', 'msc_game' => 'Video Game' )[ $r['type'] ] ?? ( EntityCatalog::definitions()[ $r['type'] ][1] ?? ( Comics::singular( $r['type'] ) ?: 'Content' ) );
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . '<span class="catalog-card-media">' . self::image( $r, 'card-art', 'medium_large' ) . ReviewScores::badge( $r ) . '</span><div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::collect( $r, array( 'title', 'excerpt' ) ) . Attribution::collect_image( $r ) . '</article>';
 	}
-	public static function credits( array $r ): void {
+	public static function credits( array $r, bool $compact = false ): void {
+		$crew = array();
 		$characters = CastRoles::by_actor( $r['data']['cast_roles'] ?? '' );
 		$groups = array( 'actors' => 'Cast', 'directors' => 'Directors', 'screenwriters' => 'Writers', 'producers' => 'Producers', 'creators' => 'Creators' );
 		foreach ( $groups as $key => $label ) {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
-			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><h2>' . esc_html( $label ) . '</h2><div class="people-grid">';
+			if ( $compact && 'actors' !== $key ) {
+				$crew[ $label ] = array_map( array( self::class, 'credit_link' ), $people );
+				continue;
+			}
+			$heading = $compact ? 'h3' : 'h2';
+			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><' . $heading . '>' . esc_html( $label ) . '</' . $heading . '><div class="people-grid">';
 			foreach ( $people as $person ) {
 				echo '<div class="person-credit">';
 				$character = 'actors' === $key ? ( $characters[ PersonIdentity::name( $person['title'] ) ] ?? '' ) : '';
@@ -88,6 +94,17 @@ final class Presentation {
 			}
 			echo '</div></section>';
 		}
+		if ( $crew ) {
+			echo '<div class="title-crew"><h3>Crew</h3><dl>';
+			foreach ( $crew as $label => $names ) {
+				echo '<div><dt>' . esc_html( $label ) . '</dt><dd>' . implode( ', ', $names ) . '</dd></div>';
+			}
+			echo '</dl></div>';
+		}
+	}
+	private static function credit_link( array $person ): string {
+		$name = esc_html( $person['title'] );
+		return $person['url'] ? '<a href="' . esc_url( $person['url'] ) . '">' . $name . '</a>' : $name;
 	}
 	public static function filmography( string $person ): array {
 		$meta = array( 'relation' => 'OR' ); foreach ( array( 'actors', 'directors', 'screenwriters', 'producers', 'creators' ) as $field ) { $meta[] = array( 'key' => 'msc_' . $field, 'value' => $person, 'compare' => 'LIKE' ); }
