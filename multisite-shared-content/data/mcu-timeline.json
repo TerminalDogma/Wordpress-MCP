@@ -1,0 +1,601 @@
+{
+  "eras": [
+    {
+      "id": "phase-1",
+      "label": "Phase One",
+      "color": "#b3374f"
+    },
+    {
+      "id": "phase-2",
+      "label": "Phase Two",
+      "color": "#2265ae"
+    },
+    {
+      "id": "phase-3",
+      "label": "Phase Three",
+      "color": "#7150b5"
+    },
+    {
+      "id": "phase-4",
+      "label": "Phase Four",
+      "color": "#147763"
+    },
+    {
+      "id": "phase-5",
+      "label": "Phase Five",
+      "color": "#a9610e"
+    },
+    {
+      "id": "phase-6",
+      "label": "Phase Six",
+      "color": "#4a59bd"
+    },
+    {
+      "id": "marvel-tv",
+      "label": "Marvel Television",
+      "color": "#526779"
+    }
+  ],
+  "entries": [
+    {
+      "kind": "show",
+      "title": "Eyes of Wakanda",
+      "date": "Across Wakandan history",
+      "precision": "undated",
+      "era": "phase-6",
+      "section": "Before the Avengers",
+      "note": "The anthology spans centuries. Its earliest stories precede the modern MCU.",
+      "catalog_title": "Eyes of Wakanda"
+    },
+    {
+      "kind": "movie",
+      "title": "Captain America: The First Avenger",
+      "date": "1943–1945",
+      "precision": "approximate",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "Steve Rogers’s wartime story. The framing scenes occur decades later.",
+      "catalog_title": "Captain America: The First Avenger"
+    },
+    {
+      "kind": "movie",
+      "title": "Captain Marvel",
+      "date": "1995",
+      "precision": "exact",
+      "era": "phase-3",
+      "section": "Before the Avengers",
+      "note": "Carol Danvers returns to Earth and meets Nick Fury.",
+      "catalog_title": "Captain Marvel"
+    },
+    {
+      "kind": "movie",
+      "title": "Iron Man",
+      "date": "Around 2010",
+      "precision": "approximate",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "",
+      "catalog_title": "Iron Man"
+    },
+    {
+      "kind": "movie",
+      "title": "Iron Man 2",
+      "date": "Around 2011",
+      "precision": "approximate",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "Part of the period sometimes called Fury’s Big Week.",
+      "catalog_title": "Iron Man 2"
+    },
+    {
+      "kind": "movie",
+      "title": "The Incredible Hulk",
+      "date": "Around 2011",
+      "precision": "approximate",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "Overlaps the period of Iron Man 2 and Thor.",
+      "catalog_title": "The Incredible Hulk"
+    },
+    {
+      "kind": "movie",
+      "title": "Thor",
+      "date": "Around 2011",
+      "precision": "approximate",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "",
+      "catalog_title": "Thor"
+    },
+    {
+      "kind": "movie",
+      "title": "The Avengers",
+      "date": "2012",
+      "precision": "exact",
+      "era": "phase-1",
+      "section": "Before the Avengers",
+      "note": "The Battle of New York becomes a reference point for later stories.",
+      "catalog_title": "The Avengers"
+    },
+    {
+      "kind": "movie",
+      "title": "Thor: The Dark World",
+      "date": "Around 2013",
+      "precision": "approximate",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Thor: The Dark World"
+    },
+    {
+      "kind": "movie",
+      "title": "Iron Man 3",
+      "date": "Christmas, around 2013",
+      "precision": "approximate",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Iron Man 3"
+    },
+    {
+      "kind": "movie",
+      "title": "Captain America: The Winter Soldier",
+      "date": "2014",
+      "precision": "exact",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Captain America: The Winter Soldier"
+    },
+    {
+      "kind": "movie",
+      "title": "Guardians of the Galaxy",
+      "date": "2014",
+      "precision": "exact",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Guardians of the Galaxy"
+    },
+    {
+      "kind": "movie",
+      "title": "Guardians of the Galaxy Vol. 2",
+      "date": "Months after Guardians of the Galaxy",
+      "precision": "relative",
+      "era": "phase-3",
+      "section": "After the Battle of New York",
+      "note": "This Phase Three movie sits alongside the Phase Two events in story order.",
+      "catalog_title": "Guardians of the Galaxy Vol. 2"
+    },
+    {
+      "kind": "show",
+      "title": "I Am Groot · Season 1",
+      "date": "Around the Guardians’ early adventures",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "After the Battle of New York",
+      "note": "Baby Groot’s shorts span the period around Vol. 2.",
+      "catalog_title": "I Am Groot"
+    },
+    {
+      "kind": "show",
+      "title": "Daredevil · Season 1",
+      "date": "After the Battle of New York",
+      "precision": "relative",
+      "era": "marvel-tv",
+      "section": "After the Battle of New York",
+      "note": "The rebuilding of Hell’s Kitchen connects the series to The Avengers.",
+      "catalog_title": "Daredevil"
+    },
+    {
+      "kind": "show",
+      "title": "Jessica Jones · Season 1",
+      "date": "Mid-2010s",
+      "precision": "approximate",
+      "era": "marvel-tv",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Jessica Jones"
+    },
+    {
+      "kind": "movie",
+      "title": "Avengers: Age of Ultron",
+      "date": "2015",
+      "precision": "exact",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "The Battle of Sokovia sets up the political conflict in Civil War.",
+      "catalog_title": "Avengers: Age of Ultron"
+    },
+    {
+      "kind": "movie",
+      "title": "Ant-Man",
+      "date": "2015",
+      "precision": "exact",
+      "era": "phase-2",
+      "section": "After the Battle of New York",
+      "note": "",
+      "catalog_title": "Ant-Man"
+    },
+    {
+      "kind": "movie",
+      "title": "Captain America: Civil War",
+      "date": "2016",
+      "precision": "exact",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "The Sokovia Accords divide the Avengers.",
+      "catalog_title": "Captain America: Civil War"
+    },
+    {
+      "kind": "movie",
+      "title": "Black Widow",
+      "date": "After Civil War",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Civil War to the Snap",
+      "note": "Natasha’s main story falls here. The credits scene is after Endgame.",
+      "catalog_title": "Black Widow"
+    },
+    {
+      "kind": "movie",
+      "title": "Black Panther",
+      "date": "Shortly after Civil War",
+      "precision": "relative",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "T’Challa returns to Wakanda after the events of Civil War.",
+      "catalog_title": "Black Panther"
+    },
+    {
+      "kind": "movie",
+      "title": "Spider-Man: Homecoming",
+      "date": "Months after Civil War",
+      "precision": "relative",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "Peter returns to Queens after joining the airport battle.",
+      "catalog_title": "Spider-Man: Homecoming"
+    },
+    {
+      "kind": "movie",
+      "title": "Doctor Strange",
+      "date": "Around 2016–2017",
+      "precision": "approximate",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "",
+      "catalog_title": "Doctor Strange"
+    },
+    {
+      "kind": "movie",
+      "title": "Thor: Ragnarok",
+      "date": "Around 2017",
+      "precision": "approximate",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "The survivors’ journey leads into Infinity War.",
+      "catalog_title": "Thor: Ragnarok"
+    },
+    {
+      "kind": "movie",
+      "title": "Ant-Man and the Wasp",
+      "date": "Around 2018",
+      "precision": "approximate",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "The credits scene overlaps the Snap.",
+      "catalog_title": "Ant-Man and the Wasp"
+    },
+    {
+      "kind": "movie",
+      "title": "Avengers: Infinity War",
+      "date": "2018",
+      "precision": "exact",
+      "era": "phase-3",
+      "section": "Civil War to the Snap",
+      "note": "Thanos’s Snap begins the five-year Blip.",
+      "catalog_title": "Avengers: Infinity War"
+    },
+    {
+      "kind": "movie",
+      "title": "Avengers: Endgame",
+      "date": "Five years after the Snap",
+      "precision": "relative",
+      "era": "phase-3",
+      "section": "The Blip and its aftermath",
+      "note": "The main story is in 2023. The time heist revisits several earlier dates.",
+      "catalog_title": "Avengers: Endgame"
+    },
+    {
+      "kind": "show",
+      "title": "WandaVision",
+      "date": "Weeks after Endgame",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "Wanda’s story continues in Multiverse of Madness.",
+      "catalog_title": "WandaVision"
+    },
+    {
+      "kind": "movie",
+      "title": "Shang-Chi and the Legend of the Ten Rings",
+      "date": "Around 2024",
+      "precision": "approximate",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "",
+      "catalog_title": "Shang-Chi and the Legend of the Ten Rings"
+    },
+    {
+      "kind": "show",
+      "title": "The Falcon and the Winter Soldier",
+      "date": "About six months after Endgame",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "Sam Wilson’s story continues in Brave New World.",
+      "catalog_title": "The Falcon and the Winter Soldier"
+    },
+    {
+      "kind": "movie",
+      "title": "Spider-Man: Far From Home",
+      "date": "About eight months after Endgame",
+      "precision": "relative",
+      "era": "phase-3",
+      "section": "The Blip and its aftermath",
+      "note": "",
+      "catalog_title": "Spider-Man: Far From Home"
+    },
+    {
+      "kind": "movie",
+      "title": "Eternals",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "The present-day story follows the return of Earth’s population. Flashbacks span millennia.",
+      "catalog_title": "Eternals"
+    },
+    {
+      "kind": "movie",
+      "title": "Spider-Man: No Way Home",
+      "date": "After Far From Home",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "Begins immediately after Far From Home and continues into the holiday season.",
+      "catalog_title": "Spider-Man: No Way Home"
+    },
+    {
+      "kind": "movie",
+      "title": "Doctor Strange in the Multiverse of Madness",
+      "date": "After WandaVision and No Way Home",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "",
+      "catalog_title": "Doctor Strange in the Multiverse of Madness"
+    },
+    {
+      "kind": "show",
+      "title": "Hawkeye",
+      "date": "Christmas, around 2024",
+      "precision": "approximate",
+      "era": "phase-4",
+      "section": "The Blip and its aftermath",
+      "note": "Kate Bishop and Clint Barton meet. Maya Lopez’s story continues in Echo.",
+      "catalog_title": "Hawkeye"
+    },
+    {
+      "kind": "show",
+      "title": "Moon Knight",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Moon Knight"
+    },
+    {
+      "kind": "movie",
+      "title": "Black Panther: Wakanda Forever",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "Shuri and Riri Williams meet in this story.",
+      "catalog_title": "Black Panther: Wakanda Forever"
+    },
+    {
+      "kind": "show",
+      "title": "Echo",
+      "date": "After Hawkeye",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Echo"
+    },
+    {
+      "kind": "show",
+      "title": "She-Hulk: Attorney at Law",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "She-Hulk: Attorney at Law"
+    },
+    {
+      "kind": "show",
+      "title": "Ms. Marvel",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "Kamala Khan returns in The Marvels.",
+      "catalog_title": "Ms. Marvel"
+    },
+    {
+      "kind": "movie",
+      "title": "Thor: Love and Thunder",
+      "date": "After Endgame",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Thor: Love and Thunder"
+    },
+    {
+      "kind": "show",
+      "title": "Ironheart",
+      "date": "After Wakanda Forever",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Ironheart"
+    },
+    {
+      "kind": "show",
+      "title": "The Guardians of the Galaxy Holiday Special",
+      "date": "Christmas before Guardians Vol. 3",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "The Guardians of the Galaxy Holiday Special"
+    },
+    {
+      "kind": "movie",
+      "title": "Ant-Man and the Wasp: Quantumania",
+      "date": "After Endgame",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Ant-Man and the Wasp: Quantumania"
+    },
+    {
+      "kind": "movie",
+      "title": "Guardians of the Galaxy Vol. 3",
+      "date": "After the Holiday Special",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Guardians of the Galaxy Vol. 3"
+    },
+    {
+      "kind": "show",
+      "title": "Secret Invasion",
+      "date": "After the Blip",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Secret Invasion"
+    },
+    {
+      "kind": "movie",
+      "title": "The Marvels",
+      "date": "After Ms. Marvel",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "The Marvels"
+    },
+    {
+      "kind": "show",
+      "title": "Agatha All Along",
+      "date": "About three years after WandaVision",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Agatha All Along"
+    },
+    {
+      "kind": "show",
+      "title": "Daredevil: Born Again · Season 1",
+      "date": "Years after the original Daredevil series",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Daredevil: Born Again"
+    },
+    {
+      "kind": "movie",
+      "title": "Captain America: Brave New World",
+      "date": "After The Falcon and the Winter Soldier",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "",
+      "catalog_title": "Captain America: Brave New World"
+    },
+    {
+      "kind": "movie",
+      "title": "Thunderbolts*",
+      "date": "After Brave New World",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Post-Blip heroes",
+      "note": "Listed here in Marvel’s official timeline order.",
+      "catalog_title": "Thunderbolts*"
+    },
+    {
+      "kind": "show",
+      "title": "Loki · Season 1",
+      "date": "After Loki escapes in the 2012 branch",
+      "precision": "relative",
+      "era": "phase-4",
+      "section": "Branch timelines and the TVA",
+      "note": "The escape branches from Endgame’s revisit to 2012. The TVA has no ordinary Earth calendar.",
+      "catalog_title": "Loki"
+    },
+    {
+      "kind": "show",
+      "title": "Loki · Season 2",
+      "date": "Immediately after Loki Season 1",
+      "precision": "relative",
+      "era": "phase-5",
+      "section": "Branch timelines and the TVA",
+      "note": "The TVA events do not have a single Earth date.",
+      "catalog_title": "Loki"
+    },
+    {
+      "kind": "show",
+      "title": "What If…? · Season 1",
+      "date": "Multiple alternate histories",
+      "precision": "undated",
+      "era": "phase-4",
+      "section": "Branch timelines and the TVA",
+      "note": "Each episode explores a different branch reality.",
+      "catalog_title": "What If...?"
+    },
+    {
+      "kind": "movie",
+      "title": "Deadpool & Wolverine",
+      "date": "Earth-10005 and the TVA",
+      "precision": "undated",
+      "era": "phase-5",
+      "section": "Branch timelines and the TVA",
+      "note": "Changes worlds and time periods. It does not have a single main-timeline date.",
+      "catalog_title": "Deadpool & Wolverine"
+    },
+    {
+      "kind": "movie",
+      "title": "The Fantastic Four: First Steps",
+      "date": "1960s-inspired · Earth-828",
+      "precision": "approximate",
+      "era": "phase-6",
+      "section": "Branch timelines and the TVA",
+      "note": "A retro-futurist alternate Earth with its own chronology.",
+      "catalog_title": "The Fantastic Four: First Steps"
+    }
+  ]
+}

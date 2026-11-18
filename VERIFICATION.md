@@ -1,4 +1,8 @@
-# Shared Content 2.7.4 verification
+# Shared Content 2.8.0 verification
+
+The 56-entry MCU demo was installed and served on both entertainment sites. Twelve WordPress checks covered validation, relative dates, ordering, site participation, publication, and repeat installation. Twenty-one existing archive checks passed. Chromium verified both site layouts at 1440px and 390px, phase and format filters, and the editor flow from a blank timeline through catalog search, choosing artwork, direct reordering and saving.
+
+## Earlier 2.7.4 verification
 
 Film-specific fixtures cover Avengers: Doomsday-style text with edited/unmarked `<br>` separators, plain newlines, nested editor wrappers and ordinary paragraphs. Chromium measured equal 23.5px gaps between text blocks in all four layouts at 1440px and 390px, with inline emphasis intact and no horizontal overflow. These are local reproductions; the user's Mac page was not directly accessible.
 

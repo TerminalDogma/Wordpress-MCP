@@ -5,6 +5,7 @@ final class Admin {
 		add_action( 'admin_menu', array( self::class, 'menu' ) );
 		add_action( 'network_admin_menu', array( self::class, 'network_menu' ) );
 		add_action( 'admin_post_msc_save', array( self::class, 'save' ) );
+		add_action( 'wp_ajax_msc_timeline_titles', array( Timelines::class, 'search' ) );
 		add_action( 'admin_notices', array( self::class, 'notices' ) );
 		add_action( 'network_admin_notices', array( self::class, 'notices' ) );
 		add_action( 'add_meta_boxes', array( self::class, 'metaboxes' ) );
@@ -50,6 +51,7 @@ final class Admin {
 	private static function text( $value ): string { return is_array( $value ) || is_bool( $value ) ? wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) : (string) $value; }
 	private static function input( string $key, array $field, $value ): void {
 		$name = 'fields[' . $key . ']'; $type = $field['type']; $id = 'msc-' . $key;
+		if ( 'chronology' === ( $field['format'] ?? '' ) ) { Timelines::control( $name, $id, (array) $value ); return; }
 		if ( 'release_dates' === $key && 'json' === $type ) { GameFields::control( (array) $value ); return; }
 		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
 			Media::control( $name, $id, $value, 'media_list' === $type, $key );

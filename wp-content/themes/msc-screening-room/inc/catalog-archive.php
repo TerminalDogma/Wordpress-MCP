@@ -14,7 +14,7 @@ function msc_archive_meta( array $r ): array {
     if ( 'msc_person' === $r['type'] ) { $kicker = implode( ' · ', array_slice( (array) ( $d['professions'] ?? array() ), 0, 2 ) ); $facts = array_filter( array( $d['country'] ?? '' ) ); }
     if ( 'msc_episode' === $r['type'] ) { $parent = ! empty( $d['parent_show'] ) ? \MSC\CatalogArchive::related( $d['parent_show'] ) : null; $kicker = $parent['data']['title'] ?? 'Episode'; if ( isset( $d['season_number'] ) && '' !== $d['season_number'] ) { $tags[] = 'Season ' . $d['season_number']; } if ( isset( $d['episode_number'] ) && '' !== $d['episode_number'] ) { $tags[] = 'Episode ' . $d['episode_number']; } }
     if ( isset( \MSC\EntityCatalog::definitions()[ $r['type'] ] ) ) { $kicker = \MSC\EntityCatalog::definitions()[ $r['type'] ][1]; $facts = array_filter( array( $date ? msc_archive_date( $date ) : '', ( $d['headquarters'] ?? '' ) ?: ( $d['country'] ?? '' ), ! empty( $d['founded_date'] ) ? 'Founded ' . substr( $d['founded_date'], 0, 4 ) : '', $d['manufacturer'] ?? '' ) ); $tags = array_filter( array( $d['platform_kind'] ?? '' ) ); }
-    if ( ! $kicker ) { $kicker = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_game' => 'Video Game', 'msc_person' => 'Person' )[ $r['type'] ] ?? ( \MSC\Comics::singular( $r['type'] ) ?: 'Profile' ); }
+    if ( ! $kicker ) { $kicker = array( 'msc_timeline' => 'Timeline', 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_game' => 'Video Game', 'msc_person' => 'Person' )[ $r['type'] ] ?? ( \MSC\Comics::singular( $r['type'] ) ?: 'Profile' ); }
     return array( 'kicker' => $kicker, 'facts' => array_values( $facts ), 'tags' => array_values( array_unique( $tags ) ), 'date' => $date );
 }
 function msc_archive_card( array $r ): void {

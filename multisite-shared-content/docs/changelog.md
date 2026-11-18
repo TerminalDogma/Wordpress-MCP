@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.8.0
+
+Added shared Timelines with Movies and TV Shows columns, a story-date spine, editable sections and era colors. The Shared Content builder supports title search, artwork, exact or approximate dates, relative dates and manual ordering. Timelines can be linked from a franchise page. The bundled MCU example is installed once on the participating sites.
+
 ## 2.7.4
 
 Film and other catalog overviews now give visible spacing to legacy/editor line breaks even when import metadata is absent or no longer matches. Consecutive breaks are grouped, inline formatting is retained, and code/quotes/lists/tables keep their explicit breaks. Paragraphs nested in editor wrappers also receive spacing. OMDb plot sanitization retains newlines for future imports. Stored text and provenance are unchanged.

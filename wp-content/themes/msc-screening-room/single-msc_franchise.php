@@ -10,6 +10,11 @@ $counts = array_count_values( array_column( $members, 'type' ) ); $backdrop = \M
     <div class="franchise-poster"><?php echo \MSC\Presentation::image( $r ); \MSC\Attribution::collect_image( $r ); \MSC\Attribution::collect_media( (array) ( $d['featured_image'] ?? array() ), $d['title'] ); ?></div>
 </header>
 <?php if ( trim( wp_strip_all_tags( $d['content'] ?? '' ) ) ) { ?><section class="franchise-overview reading-width"><h2>About this franchise</h2><div class="catalog-description"><?php echo msc_screen_overview( $r ); ?></div></section><?php } ?>
+<?php $timelines = \MSC\Timelines::related( $r ); if ( $timelines ) { ?>
+<nav class="franchise-links" aria-label="Franchise timelines"><strong>Story timelines</strong>
+    <?php foreach ( $timelines as $timeline ) { ?><a class="chip" href="<?php echo esc_url( \MSC\Presentation::url( $timeline ) ); ?>"><?php echo esc_html( $timeline['data']['title'] ); ?></a><?php } ?>
+</nav>
+<?php } ?>
 <section class="franchise-titles" aria-labelledby="franchise-titles-heading"><div class="section-heading"><h2 id="franchise-titles-heading">Movies and TV Shows</h2><span>Release order</span></div>
 <?php if ( ! $members ) { ?><p>Titles will appear here when published.</p><?php } else { ?><ol class="franchise-grid"><?php foreach ( $members as $index => $member ) { $date = $member['franchise_date']; ?>
 <li><article class="franchise-title"><a class="franchise-title-art" href="<?php echo esc_url( \MSC\Presentation::url( $member ) ); ?>"><?php echo \MSC\Presentation::image( $member, '', 'medium_large' ); echo \MSC\ReviewScores::badge( $member ); ?><span class="franchise-position" aria-label="Position <?php echo (int) $index + 1; ?>"><?php echo esc_html( str_pad( $index + 1, 2, '0', STR_PAD_LEFT ) ); ?></span></a><div class="franchise-title-copy"><p class="eyebrow"><?php echo 'msc_movie' === $member['type'] ? 'Movie' : 'TV Show'; ?><?php if ( $date ) { ?> · <time datetime="<?php echo esc_attr( $date ); ?>"><?php echo esc_html( substr( $date, 0, 4 ) ); ?></time><?php } ?></p><h3><a href="<?php echo esc_url( \MSC\Presentation::url( $member ) ); ?>"><?php echo esc_html( $member['data']['title'] ); ?></a></h3></div></article></li>

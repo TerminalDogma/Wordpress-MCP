@@ -32,7 +32,7 @@ async def main():
         await context.route('**/*', route)
         page = await context.new_page(); errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
         colors = []; fonts = []
-        for key, brand, types in [('a','ComingSoon.net',['Movies','TV Shows','People','Franchises','Reviews']),('b','SuperHeroHype',['Movies','TV Shows','Franchises','Comic Books','Story Arcs','Reviews']),('c','GameRevolution',['Video Games','Reviews']),('d','PlayStation LifeStyle',['Video Games','Reviews'])]:
+        for key, brand, types in [('a','ComingSoon.net',['Movies','TV Shows','People','Franchises','Timelines','Reviews']),('b','SuperHeroHype',['Movies','TV Shows','Franchises','Timelines','Comic Books','Story Arcs','Reviews']),('c','GameRevolution',['Video Games','Reviews']),('d','PlayStation LifeStyle',['Video Games','Reviews'])]:
             response = await page.goto(base + '/site-' + key + '/')
             assert response.status == 200
             await page.evaluate('document.fonts.ready')
@@ -99,6 +99,18 @@ async def main():
         await page.goto(base + '/wp-admin/network/admin.php?page=msc-sites')
         await page.locator('.msc-site-matrix tbody tr').filter(has_text='PlayStation LifeStyle').locator('input[value=msc_game]').check()
         await page.get_by_role('button', name='Save site content types', exact=True).click(); await page.wait_for_url('**saved=1')
+        await page.goto(base + '/site-a/timelines/mcu-in-universe/')
+        assert await page.locator('.timeline-entry').count() == 56
+        assert await page.get_by_text('Five years after the Snap', exact=True).count() == 1
+        await page.locator('.timeline-filter select[name=track]').select_option('show')
+        assert await page.locator('.lane-movie:visible').count() == 0
+        assert await page.locator('.lane-show:visible').count() > 0
+        await page.goto(base + '/site-a/wp-admin/admin.php?page=msc&type=msc_timeline&new=1')
+        await page.get_by_role('button', name='Add entry', exact=True).click()
+        await page.get_by_label('Title', exact=True).last.fill('A story before the war')
+        await page.get_by_label('Date type', exact=True).select_option('relative')
+        await page.get_by_label('Story date or interval').fill('Years before the war')
+        assert 'Years before the war' in await page.locator('#msc-chronology').input_value()
         await page.goto(base + '/site-a/wp-admin/edit.php?post_type=msc_show')
         assert await page.locator('#menu-posts-msc_show a[href*="page=msc-episodes"]').count() == 1
         assert await page.locator('#toplevel_page_msc-episodes').count() == 0

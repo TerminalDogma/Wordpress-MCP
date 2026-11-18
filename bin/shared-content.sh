@@ -15,11 +15,13 @@ case "${1:-setup}" in
     wp --user=1 msc reconcile
     wp eval 'for($i=0;$i<100 && \MSC\Queue::status()["pending"];$i++){$r=\MSC\Queue::run(1000);if($r["errors"]||!$r["processed"]){throw new RuntimeException("Site A catch-up queue needs recovery");}}if(array_sum(\MSC\Queue::status())){throw new RuntimeException("Site A catch-up is incomplete");}'
     wp eval-file /msc-examples/network-demo.php
+    wp --user=1 msc timeline
     docker compose up -d shared-worker
     ;;
   wp) shift; wp "$@" ;;
   queue) wp msc queue --limit=1000 ;;
   training) shift; wp --user=1 msc training "$@" ;;
+  timeline) wp --user=1 msc timeline ;;
   demo) wp eval-file /msc-examples/network-demo.php ;;
   legacy-demo) wp eval-file /msc-examples/style-demo.php; wp eval-file /msc-examples/create-demo.php ;;
   style) wp eval-file /msc-examples/style-demo.php ;;
@@ -47,10 +49,11 @@ case "${1:-setup}" in
     wp --url="$site_a_url" eval-file /msc-tests/entities-calendar.php
     wp --url="$site_a_url" eval-file /msc-tests/credit-visibility.php
     wp --url="$site_a_url" eval-file /msc-tests/catalog-archives.php
+    wp --url="$site_a_url" eval-file /msc-tests/timelines.php
     if ! docker compose run --rm -T -e MSC_DISPOSABLE_TESTS=1 cli --url="$site_a_url" eval-file /msc-tests/comics.php > /tmp/msc-comics-fixtures.log 2>&1; then cat /tmp/msc-comics-fixtures.log; exit 1; fi
     cat /tmp/msc-comics-fixtures.log
     docker compose run --rm -T -e MSC_DISPOSABLE_TESTS=1 cli --url="$site_a_url" eval-file /msc-tests/upcoming-releases.php
     ;;
   stop) docker compose down ;;
-  *) echo 'Usage: sh bin/shared-content.sh setup|training|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
+  *) echo 'Usage: sh bin/shared-content.sh setup|training|timeline|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
 esac

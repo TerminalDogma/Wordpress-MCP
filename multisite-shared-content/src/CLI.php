@@ -24,6 +24,13 @@ final class CLI {
         \WP_CLI::success( 'Complete training records are ready for editorial review. Publish from the Movies and TV Shows post lists.' );
     }
 
+    /** Create and publish the MCU in-universe timeline example once. */
+    public function timeline(): void {
+        $record = TimelineDemo::seed();
+        if ( ! $record ) { \WP_CLI::warning( 'No site has Timelines enabled or the original example was deleted.' ); return; }
+        \WP_CLI::success( 'MCU In-Universe Timeline example record: ' . $record['uuid'] . '. Find it under Timelines.' );
+    }
+
 	/** Print queue totals. */
 	public function status(): void { \WP_CLI::log( wp_json_encode( Queue::status() ) ); }
 	/** Retry failed jobs (run as a network administrator). */

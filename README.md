@@ -4,6 +4,8 @@ A Docker Compose installation of **WordPress 7.1.4**, MariaDB, and **Advanced Cu
 
 ## Comic Books on SuperHeroHype
 
+Version 2.8.0 adds [story timelines](docs/timelines.md), including an editable MCU example with movie and TV columns, phase colors and relative dates.
+
 Version 2.7.0 replaces thin training stubs with a complete-data rebuild requiring descriptions, linked cast/crew and downloaded poster/featured artwork, and adds shared Franchise pages containing multiple movies and TV shows. See [the training and publishing workflow](docs/training-and-bulk-publishing.md) and [Franchise pages](docs/franchises.md).
 
 Version 2.5.0 added live upcoming-release guides, streaming-service logos/profiles and an admin generator for monthly pages. See [the release-page workflow](docs/upcoming-releases.md).
@@ -12,7 +14,7 @@ Version 2.4.1 added GCD cover imports and direct Comic Book arc assignments, wit
 
 ## Four branded sites with shared catalogs
 
-The **Multisite Shared Content 2.7.4** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
+The **Multisite Shared Content 2.8.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 
