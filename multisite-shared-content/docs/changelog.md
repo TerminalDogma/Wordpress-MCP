@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.9.2
+
+Franchise headers display published story timelines. Franchise catalogs load eight titles at a time in release order, and Recent Articles loads four published, locally tagged WordPress posts at a time. The MCU demo adds 20 editable sample articles to each entertainment site.
+
 ## 2.9.1
 
 Movies and TV shows now use a compact poster header, section navigation and a details sidebar with franchise and story timeline links. Cast cards display character names alongside a compact crew list. Timeline headers link directly to their published franchise. The YouTube picker is scoped to the Trailers field in the Shared Content editor.

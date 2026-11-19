@@ -1,4 +1,8 @@
-# Shared Content 2.9.1 verification
+# Shared Content 2.9.2 verification
+
+Chromium verified the MCU timeline link in the franchise header on Sites A and B at desktop and mobile widths. Each hub loaded 24 titles in release order and 20 distinct articles independently in batches of eight and four without a reload. The links also worked with JavaScript disabled. Running the article seed again created zero posts. PHP, JavaScript, shell syntax and ZIP integrity checks passed.
+
+## Earlier 2.9.1 verification
 
 Chromium verified the movie and TV layouts and the linked franchise in the MCU timeline header on both entertainment sites at desktop and mobile widths. The season browser suite passed in-place switching, paging, browser history and direct links. The review suite passed editorial badge placement, medal colors, aggregate score placement and mobile layout. The trailer suite passed responsive carousel sizing, cast links and YouTube picker behavior in both editors. Plugin and theme PHP syntax checks passed.
 

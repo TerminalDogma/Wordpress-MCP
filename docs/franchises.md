@@ -9,4 +9,10 @@ Update the existing installation with `git pull --ff-only` and `sh bin/shared-co
 
 Public pages combine movies and TV shows in release-date order, place undated titles last, and show type/year with each poster. Draft, private, locally removed, disabled and password-protected members are omitted. The collection uses the site's brand styling plus its own artwork/accent, and has no card excerpts. Published movie/TV pages automatically link to the published franchises that contain them. The archive is available through **Franchises** in the catalog navigation.
 
+Published story timelines appear in the franchise header. The title list starts with eight entries. **Recent Articles** starts with four posts, newest first. **Show more** loads another batch in the selected section.
+
+To add an article, publish a regular WordPress post on the site and give it a tag matching the franchise name or slug. The MCU page recognizes **Marvel Cinematic Universe** and **MCU**. Site A and Site B each have their own posts and tags.
+
+Full setup adds 20 editable MCU sample articles to each of Sites A and B where Franchises is enabled. On an existing setup, run `sh bin/shared-content.sh franchise-demo` after pulling to add the samples. Repeating the command preserves edited posts and avoids duplicates.
+
 Membership is stored as shared record UUIDs, so a collection can display on multiple sites without copying site-specific post IDs. Local overrides and existing global/local publication controls apply to Franchise records in the same way as other shared types.
