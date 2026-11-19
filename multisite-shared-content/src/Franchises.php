@@ -4,7 +4,6 @@ namespace MSC;
 /** Shared franchise hubs; membership uses portable global record UUIDs. */
 final class Franchises {
     public const MCU_TAG = 'Marvel Cinematic Universe';
-    public const ARTICLES_PER_PAGE = 4;
 
     public static function schemas( array $common ): array {
         return array( 'msc_franchise' => array( 'label' => 'Franchises', 'slug' => 'franchises', 'archive' => true, 'noindex' => true, 'default_status' => 'draft', 'fields' => $common + array(
@@ -40,21 +39,6 @@ final class Franchises {
         }
         uasort( $out, static fn( $a, $b ) => array( $a['franchise_date'] ?: '9999', $a['data']['title'], $a['uuid'] ) <=> array( $b['franchise_date'] ?: '9999', $b['data']['title'], $b['uuid'] ) );
         return array_values( $out );
-    }
-
-    /** News posts are editorially linked through this site's native WordPress tags. */
-    public static function articles( array $franchise, int $page ): \WP_Query {
-        $tags = array( sanitize_title( $franchise['data']['title'] ) );
-        if ( ! empty( $franchise['data']['slug'] ) ) { $tags[] = sanitize_title( $franchise['data']['slug'] ); }
-        if ( array_intersect( $tags, array( 'marvel-cinematic-universe', 'mcu' ) ) ) {
-            $tags = array_merge( $tags, array( 'marvel-cinematic-universe', 'mcu' ) );
-        }
-        return new \WP_Query( array(
-            'post_type' => 'post', 'post_status' => 'publish', 'has_password' => false,
-            'posts_per_page' => self::ARTICLES_PER_PAGE, 'paged' => $page,
-            'ignore_sticky_posts' => true, 'orderby' => array( 'date' => 'DESC', 'ID' => 'DESC' ),
-            'tax_query' => array( array( 'taxonomy' => 'post_tag', 'field' => 'slug', 'terms' => array_unique( array_filter( $tags ) ) ) ),
-        ) );
     }
 
     public static function related( array $item ): array {

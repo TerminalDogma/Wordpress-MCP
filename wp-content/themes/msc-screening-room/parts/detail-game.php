@@ -4,3 +4,4 @@
 <?php \MSC\Trailers::render( $r ); ?>
 
 <?php \MSC\ReviewScores::render( $r ); ?>
+<?php get_template_part( 'parts/recent-articles', null, $args ); ?>

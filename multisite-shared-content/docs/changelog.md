@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.9.3
+
+Recent Articles is available on all catalog detail pages. It lists published posts tagged to the current entry on that site, shows four at a time, and hides when there is no matching coverage. Movie and TV pages link to the section from their page navigation. Reviews show coverage for the title being reviewed.
+
 ## 2.9.2
 
 Franchise headers display published story timelines. Franchise catalogs load eight titles at a time in release order, and Recent Articles loads four published, locally tagged WordPress posts at a time. The MCU demo adds 20 editable sample articles to each entertainment site.

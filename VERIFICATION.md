@@ -1,4 +1,8 @@
-# Shared Content 2.9.2 verification
+# Shared Content 2.9.3 verification
+
+Chromium verified Recent Articles on movies, shows, episodes, people, companies, timelines, comic series, issues, arcs and games across all four sites. Tagged fixtures verified newest-first order, publication filtering, site isolation, four-item pagination and mobile layout. Independent franchise pagination and ordinary links with JavaScript disabled also passed.
+
+## Earlier 2.9.2 verification
 
 Chromium verified the MCU timeline link in the franchise header on Sites A and B at desktop and mobile widths. Each hub loaded 24 titles in release order and 20 distinct articles independently in batches of eight and four without a reload. The links also worked with JavaScript disabled. Running the article seed again created zero posts. PHP, JavaScript, shell syntax and ZIP integrity checks passed.
 

@@ -29,3 +29,4 @@ $page = $issue ? null : \MSC\Comics::issue_page( $r, $_GET );
     <?php if ( $page['pages'] > 1 ) { ?><nav class="comic-pagination" aria-label="Issue pages"><?php for ( $n = max( 1, $page['page'] - 2 ); $n <= min( $page['pages'], $page['page'] + 2 ); ++$n ) { ?><a data-comic-nav href="<?php echo esc_url( add_query_arg( 'comic_page', $n ) . '#comic-issues' ); ?>"<?php echo $n === $page['page'] ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $n ); ?></a><?php } ?></nav><?php } ?>
 </section>
 <?php } ?>
+<?php get_template_part( 'parts/recent-articles', null, $args ); ?>

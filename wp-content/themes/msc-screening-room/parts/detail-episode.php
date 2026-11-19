@@ -4,3 +4,4 @@ if ( $parent ) { echo '<a class="parent-show" href="' . esc_url( \MSC\Presentati
 get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array( 'network' => 'Network', 'streaming_service' => 'Streaming service', 'overall_episode_number' => 'Overall episode', 'production_code' => 'Production code' ) ) ); \MSC\Presentation::credits( $r );
 
 \MSC\ReviewScores::render( $r );
+get_template_part( 'parts/recent-articles', null, $args );

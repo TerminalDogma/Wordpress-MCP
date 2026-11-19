@@ -1,3 +1,4 @@
 <?php $r = $args['record']; get_template_part( 'parts/hero', null, array( 'record' => $r, 'label' => 'Person', 'facts' => array( 'country' => 'Country', 'birth_date' => 'Birth date' ) ) );
 get_template_part( 'parts/story', null, array( 'record' => $r, 'facts' => array( 'country' => 'Country', 'birth_date' => 'Birth date' ) ) ); ?>
 <section class="filmography"><div class="section-heading"><h2>Filmography</h2></div><div class="catalog-grid"><?php $credits = \MSC\Presentation::filmography( $r['uuid'] ); if ( ! $credits ) { echo '<p class="empty-state">No published Movies, TV Shows or Episodes are linked to this Person.</p>'; } foreach ( $credits as $credit ) { echo '<div>'; \MSC\Presentation::card( $credit ); echo '<p class="credit-roles">' . esc_html( implode( ' · ', $credit['credit_roles'] ) ) . '</p></div>'; } ?></div></section>
+<?php get_template_part( 'parts/recent-articles', null, $args ); ?>

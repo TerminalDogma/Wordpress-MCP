@@ -133,4 +133,5 @@ foreach ( $entries as $index => $entry ) {
         <?php } ?>
         <p class="timeline-empty" data-timeline-empty hidden>No entries match these filters.</p>
     <?php } ?>
+    <?php get_template_part( 'parts/recent-articles', null, $args ); ?>
 </article>

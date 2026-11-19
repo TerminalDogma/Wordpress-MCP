@@ -11,7 +11,7 @@ Public pages combine movies and TV shows in release-date order, place undated ti
 
 Published story timelines appear in the franchise header. The title list starts with eight entries. **Recent Articles** starts with four posts, newest first. **Show more** loads another batch in the selected section.
 
-To add an article, publish a regular WordPress post on the site and give it a tag matching the franchise name or slug. The MCU page recognizes **Marvel Cinematic Universe** and **MCU**. Site A and Site B each have their own posts and tags.
+To attach an article to a catalog page, publish a regular WordPress post on the same site and tag it with the entry’s title or URL slug. This works for franchises, movies, TV shows, games, comics, people, companies, platforms, services and timelines. For an episode or comic issue, use its URL slug or tag it with the parent series name followed by the entry title. For example, **Loki Glorious Purpose** matches an episode named **Glorious Purpose** in **Loki**. The MCU franchise also recognizes **MCU**. Each site uses its own posts and tags.
 
 Full setup adds 20 editable MCU sample articles to each of Sites A and B where Franchises is enabled. On an existing setup, run `sh bin/shared-content.sh franchise-demo` after pulling to add the samples. Repeating the command preserves edited posts and avoids duplicates.
 

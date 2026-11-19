@@ -40,6 +40,7 @@ foreach ( array( 'director' => array( 'directors', 'Director' ), 'writers' => ar
 $sections['credits'] = array( 'Cast & crew', $credits );
 $sections['review-scores'] = array( 'Review scores', $capture( static fn() => ReviewScores::render( $record ) ) );
 $sections['gallery'] = array( 'Gallery', $capture( static fn() => get_template_part( 'parts/gallery', null, $args ) ) );
+$sections['recent-articles'] = array( 'Recent Articles', $capture( static fn() => get_template_part( 'parts/recent-articles', null, $args ) ) );
 $sections = array_filter( $sections, static fn( $section ) => '' !== trim( $section[1] ) );
 $genres = $capture( static fn() => msc_screen_chips( $record ) );
 $lead = $capture( static fn() => msc_screen_facts( $record, $lead_facts ) );

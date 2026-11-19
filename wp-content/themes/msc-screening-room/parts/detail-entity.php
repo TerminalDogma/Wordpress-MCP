@@ -6,3 +6,4 @@ if ( 'msc_streaming' === $r['type'] ) { echo '<p><a class="button" href="' . esc
 if ( 'msc_streaming' === $r['type'] && ! array_key_exists( 'official_website', $r['data'] ) ) { $brand = \MSC\StreamingServices::brands()[ $r['data']['external_ids']['msc_streaming_service'] ?? '' ] ?? null; if ( $brand ) { echo '<p><a href="' . esc_url( $brand[1] ) . '" target="_blank" rel="noopener">Official ' . esc_html( $brand[0] ) . ' website ↗</a></p>'; } }
 $related = \MSC\EntityCatalog::related( $r );
 if ( $related ) { echo '<section class="entity-titles"><div class="section-heading"><h2>Related Titles</h2></div><div class="catalog-grid">'; foreach ( $related as $title ) { \MSC\Presentation::card( $title ); } echo '</div></section>'; }
+get_template_part( 'parts/recent-articles', null, $args );
