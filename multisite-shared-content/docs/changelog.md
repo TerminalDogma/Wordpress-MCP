@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.9.4
+
+Movie and TV pages show ten cast cards and ten crew credits initially. Readers can expand either list to see the rest, then collapse it again. Episode credit groups and comic credits also expand beyond ten entries.
+
 ## 2.9.3
 
 Recent Articles is available on all catalog detail pages. It lists published posts tagged to the current entry on that site, shows four at a time, and hides when there is no matching coverage. Movie and TV pages link to the section from their page navigation. Reviews show coverage for the title being reviewed.

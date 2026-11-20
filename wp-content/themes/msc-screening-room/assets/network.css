@@ -33,3 +33,18 @@ body.single-msc_streaming .detail-hero{grid-template-columns:minmax(180px,300px)
 .entry-timelines a:hover { text-decoration: underline; }
 .person-card .person-card-name { display: block; }
 .person-card .person-card-character { display: block; color: var(--muted); font-size: .9em; font-weight: 400; margin-top: .2rem; }
+
+.credit-overflow { margin-top: .8rem; }
+.credit-overflow > summary {
+    width: fit-content;
+    padding: .45rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: .35rem;
+    background: var(--surface);
+    font-size: .85rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.credit-overflow > summary:hover, .credit-overflow > summary:focus-visible { border-color: var(--accent); }
+.credit-overflow[open] > summary { margin-bottom: .8rem; }
+.credit-overflow:not([open]) .credit-show-less, .credit-overflow[open] .credit-show-more { display: none; }

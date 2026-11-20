@@ -1,4 +1,8 @@
-# Shared Content 2.9.3 verification
+# Shared Content 2.9.4 verification
+
+Chromium verified ten visible credits, keyboard expansion and collapse, retained character names and profile links, and mobile layout on movie, TV and episode fixtures with JavaScript disabled. Long comic credits expand and a ten-person cast renders without a control. All 20 credit visibility regressions passed.
+
+## Earlier 2.9.3 verification
 
 Chromium verified Recent Articles on movies, shows, episodes, people, companies, timelines, comic series, issues, arcs and games across all four sites. Tagged fixtures verified newest-first order, publication filtering, site isolation, four-item pagination and mobile layout. Independent franchise pagination and ordinary links with JavaScript disabled also passed.
 

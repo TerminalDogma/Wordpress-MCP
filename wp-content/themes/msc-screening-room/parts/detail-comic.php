@@ -15,8 +15,26 @@ $page = $issue ? null : \MSC\Comics::issue_page( $r, $_GET );
         <?php if ( $parent ) { ?><p class="comic-parent-link"><a href="<?php echo esc_url( \MSC\Presentation::url( $parent ) ); ?>#comic-issues">All issues of <?php echo esc_html( $parent['data']['title'] ); ?></a></p><?php } ?>
     </div>
 </section>
-<?php $has_credits = ! empty( $d['writers'] ) || ! empty( $d['artists'] ) || ! empty( $d['cover_artists'] ); $overview = msc_screen_overview( $r ); if ( trim( wp_strip_all_tags( $overview ) ) || $has_credits ) { ?>
-<section class="story-section comic-story<?php echo $has_credits ? '' : ' comic-no-credits'; ?>"><div class="story-copy"><?php if ( trim( wp_strip_all_tags( $overview ) ) ) { ?><h2>Overview</h2><div class="catalog-description"><?php echo $overview; ?></div><?php } ?></div><?php if ( $has_credits ) { ?><aside class="details-panel"><p class="eyebrow">Credits</p><dl class="facts"><?php foreach ( array( 'writers' => 'Writers', 'artists' => 'Artists', 'cover_artists' => 'Cover artists' ) as $key => $label ) { if ( empty( $d[ $key ] ) ) { continue; } ?><div><dt><?php echo esc_html( $label ); ?></dt><dd><?php echo esc_html( implode( ', ', (array) $d[ $key ] ) ); ?></dd></div><?php } ?></dl></aside><?php } ?></section>
+<?php
+$credit_groups = array();
+foreach ( array( 'writers' => 'Writers', 'artists' => 'Artists', 'cover_artists' => 'Cover artists' ) as $key => $label ) {
+    if ( empty( $d[ $key ] ) ) { continue; }
+    $credit_groups[ $label ] = array_map( static fn( $name ) => array( 'title' => $name ), (array) $d[ $key ] );
+}
+$overview = msc_screen_overview( $r );
+$has_overview = '' !== trim( wp_strip_all_tags( $overview ) );
+if ( $has_overview || $credit_groups ) { ?>
+    <section class="story-section comic-story<?php echo $credit_groups ? '' : ' comic-no-credits'; ?>">
+        <div class="story-copy">
+            <?php if ( $has_overview ) { ?><h2>Overview</h2><div class="catalog-description"><?php echo $overview; ?></div><?php } ?>
+        </div>
+        <?php if ( $credit_groups ) { ?>
+            <aside class="details-panel">
+                <p class="eyebrow">Credits</p>
+                <?php \MSC\Presentation::credit_names( $credit_groups, 'credits', 'facts' ); ?>
+            </aside>
+        <?php } ?>
+    </section>
 <?php } ?>
 <?php if ( $page && ( $page['total'] || $page['arc'] ) ) { ?>
 <section id="comic-issues" class="comic-browser" data-comic-browser="<?php echo esc_attr( $r['uuid'] ); ?>">

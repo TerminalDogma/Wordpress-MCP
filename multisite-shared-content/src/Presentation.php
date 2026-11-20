@@ -3,6 +3,8 @@ namespace MSC;
 
 /** Public presentation helpers always enforce this site's publication state. */
 final class Presentation {
+	private const INITIAL_CREDITS = 10;
+
 	/** Decode source text before the output context applies HTML escaping. */
 	public static function text( string $value ): string { return html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ); }
 	public static function identities(): array {
@@ -78,33 +80,69 @@ final class Presentation {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
 			if ( $compact && 'actors' !== $key ) {
-				$crew[ $label ] = array_map( array( self::class, 'credit_link' ), $people );
+				$crew[ $label ] = $people;
 				continue;
 			}
 			$heading = $compact ? 'h3' : 'h2';
-			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><' . $heading . '>' . esc_html( $label ) . '</' . $heading . '><div class="people-grid">';
-			foreach ( $people as $person ) {
-				echo '<div class="person-credit">';
-				$character = 'actors' === $key ? ( $characters[ PersonIdentity::name( $person['title'] ) ] ?? '' ) : '';
-				$name = '<span class="person-card-name">' . esc_html( $person['title'] ) . '</span>';
-				if ( $character ) { $name .= '<span class="person-card-character">' . esc_html( $character ) . '</span>'; }
-				if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . $name . '</a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }
-				else { echo '<span class="person-card person-credit-name">' . $name . '</span>'; }
-				echo '</div>';
+			$roles = 'actors' === $key ? $characters : array();
+			echo '<section class="credit-section"' . ( 'actors' === $key ? ' id="cast"' : '' ) . '><' . $heading . '>' . esc_html( $label ) . '</' . $heading . '>';
+			self::credit_cards( array_slice( $people, 0, self::INITIAL_CREDITS ), $roles );
+			$more = array_slice( $people, self::INITIAL_CREDITS );
+			if ( $more ) {
+				self::credit_overflow( strtolower( $label ), static fn() => self::credit_cards( $more, $roles ) );
 			}
-			echo '</div></section>';
+			echo '</section>';
 		}
 		if ( $crew ) {
-			echo '<div class="title-crew"><h3>Crew</h3><dl>';
-			foreach ( $crew as $label => $names ) {
-				echo '<div><dt>' . esc_html( $label ) . '</dt><dd>' . implode( ', ', $names ) . '</dd></div>';
-			}
-			echo '</dl></div>';
+			echo '<div class="title-crew"><h3>Crew</h3>';
+			self::credit_names( $crew, 'crew' );
+			echo '</div>';
 		}
+	}
+	private static function credit_cards( array $people, array $roles ): void {
+		echo '<div class="people-grid">';
+		foreach ( $people as $person ) {
+			echo '<div class="person-credit">';
+			$character = $roles[ PersonIdentity::name( $person['title'] ) ] ?? '';
+			$name = '<span class="person-card-name">' . esc_html( $person['title'] ) . '</span>';
+			if ( $character ) { $name .= '<span class="person-card-character">' . esc_html( $character ) . '</span>'; }
+			if ( $person['public'] ) { echo '<a class="person-card" href="' . esc_url( $person['url'] ) . '">' . self::image( $person['public'], '', 'medium' ) . $name . '</a>' . Attribution::collect( $person['public'], array( 'title' ) ) . Attribution::collect_image( $person['public'] ); }
+			else { echo '<span class="person-card person-credit-name">' . $name . '</span>'; }
+			echo '</div>';
+		}
+		echo '</div>';
+	}
+	/** Compact grouped credits. Each entry has a title and an optional profile URL. */
+	public static function credit_names( array $groups, string $label, string $class = '' ): void {
+		$remaining = self::INITIAL_CREDITS;
+		$first = $more = array();
+		foreach ( $groups as $role => $people ) {
+			$first[ $role ] = array_slice( $people, 0, $remaining );
+			$more[ $role ] = array_slice( $people, $remaining );
+			$remaining -= count( $first[ $role ] );
+		}
+		self::credit_rows( array_filter( $first ), $class );
+		$more = array_filter( $more );
+		if ( $more ) {
+			self::credit_overflow( $label, static fn() => self::credit_rows( $more, $class ) );
+		}
+	}
+	private static function credit_rows( array $groups, string $class ): void {
+		echo '<dl class="' . esc_attr( $class ) . '">';
+		foreach ( $groups as $label => $people ) {
+			$names = array_map( array( self::class, 'credit_link' ), $people );
+			echo '<div><dt>' . esc_html( $label ) . '</dt><dd>' . implode( ', ', $names ) . '</dd></div>';
+		}
+		echo '</dl>';
+	}
+	private static function credit_overflow( string $label, callable $render ): void {
+		echo '<details class="credit-overflow"><summary><span class="credit-show-more">' . esc_html( 'Show more ' . $label ) . '</span><span class="credit-show-less">' . esc_html( 'Show less ' . $label ) . '</span></summary>';
+		$render();
+		echo '</details>';
 	}
 	private static function credit_link( array $person ): string {
 		$name = esc_html( $person['title'] );
-		return $person['url'] ? '<a href="' . esc_url( $person['url'] ) . '">' . $name . '</a>' : $name;
+		return ! empty( $person['url'] ) ? '<a href="' . esc_url( $person['url'] ) . '">' . $name . '</a>' : $name;
 	}
 	public static function filmography( string $person ): array {
 		$meta = array( 'relation' => 'OR' ); foreach ( array( 'actors', 'directors', 'screenwriters', 'producers', 'creators' ) as $field ) { $meta[] = array( 'key' => 'msc_' . $field, 'value' => $person, 'compare' => 'LIKE' ); }
