@@ -17,8 +17,16 @@ for name in names:
     path = root / name
     source.extend([path] if path.is_file() else [p for p in path.rglob('*') if p.is_file()])
 theme = root / 'wp-content/themes/msc-screening-room'
+takeovers = root / 'wp-content/plugins/site-takeovers'
+takeover_version = re.search(r'\* Version: ([0-9.]+)', (takeovers / 'site-takeovers.php').read_text()).group(1)
 archives = []
-for stem, paths, base in [('multisite-shared-content', list(plugin.rglob('*')), root), ('multisite-shared-content-source', source, root), ('msc-screening-room', list(theme.rglob('*')), theme.parent)]:
+packages = [
+    ('multisite-shared-content', list(plugin.rglob('*')), root, version),
+    ('multisite-shared-content-source', source, root, version),
+    ('msc-screening-room', list(theme.rglob('*')), theme.parent, version),
+    ('site-takeovers', list(takeovers.rglob('*')), takeovers.parent, takeover_version),
+]
+for stem, paths, base, version in packages:
     target = out / f'{stem}-{version}.zip'
     with ZipFile(target, 'w', ZIP_DEFLATED) as archive:
         for path in sorted(set(paths)):

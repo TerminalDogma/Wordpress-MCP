@@ -1,3 +1,7 @@
+# Site Takeovers 1.0.0 verification
+
+Chromium verified the Doomsday banner and both side ads at 1440px, the banner at 390px, and layouts without overlap or horizontal scrolling. Checks also covered site-wide and page-specific campaign priority, site isolation, feed exclusion, the Media Library picker, selected-page URL validation, and turning a campaign off. A repeat demo install reused the existing campaign.
+
 # Shared Content 2.10.3 verification
 
 The Site A Iron Man preview has 21 public People profiles and 17 distinct, credited Wikimedia Commons portraits. A repeat install created zero attachments and published zero additional posts. Chromium loaded all public profile URLs and credited images and verified the newly linked cinematographer, editor and composer filmographies.

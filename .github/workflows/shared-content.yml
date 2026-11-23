@@ -17,7 +17,7 @@ jobs:
         run: sh bin/shared-content.sh setup
       - name: PHP syntax
         run: |
-          COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose exec -T wordpress sh -c 'find wp-content/plugins/multisite-shared-content wp-content/themes/msc-screening-room -name "*.php" -print0 | xargs -0 -n1 php -l'
+          COMPOSE_FILE=compose.yaml:compose.shared-content.yaml docker compose exec -T wordpress sh -c 'find wp-content/plugins/multisite-shared-content wp-content/plugins/site-takeovers wp-content/themes/msc-screening-room -name "*.php" -print0 | xargs -0 -n1 php -l'
       - name: Integration, HTTP, concurrency, media and real ACF tests
         run: MSC_DISPOSABLE_TESTS=1 sh bin/shared-content.sh test
       - name: Package release

@@ -22,6 +22,12 @@ For commercial score display, Rotten Tomatoes® provides licensing and attributi
 
 `sh bin/shared-content.sh movie-portraits` adds the bundled Wikimedia Commons portraits to linked Iron Man People profiles on Site A and publishes their drafts. Existing portraits take precedence. Each bundled portrait has source, author and license details in the movie and profile footers.
 
+### Advertising takeovers
+
+In the site's dashboard, open **Ad Takeovers → Add Ad Takeover**. Pick **Entire site** or **Selected pages**, then choose Media Library artwork, destinations and a palette. Page-specific campaigns override the site campaign. Publish to display it, or choose **Off** to suspend it. The top banner remains visible on narrow screens, and both side ads appear on wide screens.
+
+Run `sh bin/shared-content.sh takeover-demo` with Docker Desktop running to install the page-only Avengers: Doomsday example on Site A and print its URL. The example uses original concept artwork and targets the published movie when available. It creates a local preview movie when the site needs one. For a manual WordPress installation, package and install `site-takeovers-1.0.0.zip` using `python3 tools/package-msc.py`.
+
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 
 Version 2.3 adds site-specific editorial Reviews with 1–10 half-point scores, verdicts and positives/negatives. Item images and score sections prioritize the site’s own published review, with Gold/Silver/Copper recommendations. Image badges show only published editorial reviews; aggregates appear on item pages. Games import Metacritic/OpenCritic from Wikipedia without API keys; Movies/TV keep OMDb. See [the review editing and score-source guide](docs/reviews.md).
