@@ -4,10 +4,11 @@ $data = $args['record']['data'];
 $events = MovieEditorial::releases( $data );
 $amounts = array();
 foreach ( array( 'film_budget' => 'Production budget', 'domestic_opening' => 'Domestic opening', 'worldwide_gross' => 'Worldwide box office' ) as $key => $label ) {
-    if ( isset( $data[ $key ] ) && is_numeric( $data[ $key ] ) ) { $amounts[ $label ] = (float) $data[ $key ]; }
+    if ( isset( $data[ $key ] ) && is_numeric( $data[ $key ] ) ) { $amounts[ $key ] = array( 'label' => $label, 'value' => (float) $data[ $key ] ); }
 }
 $currency = strtoupper( $data['box_office_currency'] ?? '' );
 $box_office = MovieEditorial::link( $data['box_office_url'] ?? '' );
+$budget_source = MovieEditorial::link( $data['film_budget_url'] ?? '' );
 if ( ! $events && ! $amounts ) { return; }
 ?>
 <section class="movie-section" id="movie-details">
@@ -15,8 +16,18 @@ if ( ! $events && ! $amounts ) { return; }
     <?php if ( $amounts ) { ?>
         <h3>Box office<?php if ( $currency ) { ?> <small><?php echo esc_html( $currency ); ?></small><?php } ?></h3>
         <dl class="movie-box-office">
-            <?php foreach ( $amounts as $label => $value ) { ?><div><dt><?php echo esc_html( $label ); ?></dt><dd><?php echo esc_html( ( 'USD' === $currency ? '$' : '' ) . number_format_i18n( $value ) ); ?></dd></div><?php } ?>
+            <?php foreach ( $amounts as $key => $amount ) { ?>
+                <div>
+                    <dt><?php echo esc_html( $amount['label'] ); ?></dt>
+                    <dd><?php echo esc_html( ( 'USD' === $currency ? '$' : '' ) . number_format_i18n( $amount['value'] ) ); ?>
+                        <?php if ( 'film_budget' === $key && ( $budget_source || $box_office ) ) { ?>
+                            <a class="movie-budget-source text-link" href="<?php echo esc_url( $budget_source ?: $box_office ); ?>"><?php echo $budget_source ? 'Budget source' : 'Box office source'; ?> <span aria-hidden="true">↗</span></a>
+                        <?php } ?>
+                    </dd>
+                </div>
+            <?php } ?>
         </dl>
+        <?php if ( isset( $amounts['film_budget'] ) && $budget_source && $budget_source !== $box_office ) { Attribution::collect_html( $data['title'] . ' — Production budget', '<a href="' . esc_url( $budget_source ) . '">Budget source</a>' ); } ?>
         <?php if ( $box_office ) { Attribution::collect_html( $data['title'] . ' — Box office', '<a href="' . esc_url( $box_office ) . '">Box office source</a>' ); } ?>
     <?php } ?>
     <?php if ( $events ) { ?>

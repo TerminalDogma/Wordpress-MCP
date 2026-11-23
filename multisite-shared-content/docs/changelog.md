@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.10.2
+
+Movie budgets link to their production budget source. Existing box office URLs can serve as a fallback. The public Overview shows the spoiler-free synopsis and quick answers.
+
 ## 2.10.1
 
 Movie headers show the theatrical release date. The full plot is visible in Overview, and watch links use service logos when available. Selected tabs and editorial review cards have explicit high-contrast colors. Coverage filters and sort changes update in place and support browser history.

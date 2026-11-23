@@ -21,6 +21,7 @@ final class MovieEditorial {
         }
         $fields['rotten_tomatoes_audience_count_plus'] = array( 'type' => 'boolean', 'label' => 'Popcornmeter count is a lower bound' );
         $fields['rotten_tomatoes_audience_score'] = array( 'type' => 'number', 'min' => 0, 'max' => 100, 'label' => 'Popcornmeter score (%)' );
+        $fields['film_budget_url'] = array( 'type' => 'url', 'format' => 'movie_editorial_link', 'label' => 'Production budget source URL', 'instructions' => 'Link to the page that reports the production budget.' );
         $fields['box_office_url'] = array( 'type' => 'url', 'format' => 'movie_editorial_link', 'label' => 'Box office source URL' );
         $fields['trailer_source_url'] = array( 'type' => 'url', 'format' => 'movie_editorial_link', 'label' => 'Official trailer page (fallback when no video is embedded)' );
         $fields['movie_faq'] = array( 'type' => 'json', 'label' => 'Editorial questions and answers', 'instructions' => 'List of objects with question and answer.' );

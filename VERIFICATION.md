@@ -1,4 +1,8 @@
-# Shared Content 2.10.1 verification
+# Shared Content 2.10.2 verification
+
+WordPress verified the budget source field upgrade, explicit source precedence, fallback to the existing box office URL, and budget-link placement. Chromium verified the Iron Man budget link and spoiler-free Overview on desktop and mobile.
+
+## Earlier 2.10.1 verification
 
 Chromium verified the full Iron Man synopsis, the May 2 U.S. date in the header, five provider icons, and readable selected tabs and editorial review text. Coverage type and sort changes preserve scroll position and keyboard focus, including when results shorten near the footer. Back and Forward, retry after a failed request, Show more, the mobile layout, and ordinary filter links with JavaScript disabled all passed. PHP fixtures verified U.S. release selection and the generic theatrical fallback.
 

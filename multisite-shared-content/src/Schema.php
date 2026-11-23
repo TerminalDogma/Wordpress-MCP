@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 15;
+	public const BUILTIN_VERSION = 16;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -111,7 +111,7 @@ final class Schema {
 				$properties = array_column( $schemas[ $type ]['fields'], 'property' );
 				foreach ( $default['fields'] as $key => $field ) {
 					// The 1.4 upgrade adds only Episode external IDs to already upgraded schemas.
-					$new_movie_field = 'msc_movie' === $type && $previous_version < 15 && isset( MovieEditorial::fields()[ $key ] );
+					$new_movie_field = 'msc_movie' === $type && ( ( $previous_version < 15 && isset( MovieEditorial::fields()[ $key ] ) ) || ( $previous_version < 16 && 'film_budget_url' === $key ) );
 					if ( ! $new_movie_field && ! ( $previous_version < 14 && 'msc_movie' === $type && 'cast_roles' === $key ) && ! ( $previous_version < 12 && 'msc_franchise' === $type ) && ! ( $previous_version < 11 && 'msc_comic' === $type && 'story_arcs' === $key ) && $previous_version >= 3 && ( 'msc_episode' !== $type || 'external_ids' !== $key ) && ! ( $previous_version < 6 && isset( EntityCatalog::fields( $type )[ $key ] ) ) && ! ( $previous_version < 7 && 'trailers' === $key ) && ! ( $previous_version < 9 && isset( ReviewScores::fields( $type )[ $key ] ) ) ) { continue; }
 					if ( array_key_exists( $key, $schemas[ $type ]['fields'] ) ) {
 						$existing = &$schemas[ $type ]['fields'][ $key ];
