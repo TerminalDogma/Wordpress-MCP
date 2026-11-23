@@ -1,4 +1,10 @@
-# Shared Content 2.9.4 verification
+# Shared Content 2.10.0 verification
+
+Chromium verified the Iron Man preview on desktop and mobile, including authored copy, spoiler disclosure, cast and crew cards, watch links, sourced score details, sticky navigation, trailer activation, franchise order, coverage filtering and article backlinks. Movie and nested Review JSON-LD parsed correctly. Existing movie and TV templates and the credit and review regression suites were checked in the disposable network.
+
+The preview uses generated workshop artwork and a labeled sample house score. The review card links to Scott Chitwood’s original ComingSoon review. Score and availability figures are dated snapshots.
+
+## Earlier 2.9.4 verification
 
 Chromium verified ten visible credits, keyboard expansion and collapse, retained character names and profile links, and mobile layout on movie, TV and episode fixtures with JavaScript disabled. Long comic credits expand and a ten-person cast renders without a control. All 20 credit visibility regressions passed.
 

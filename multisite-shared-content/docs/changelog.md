@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.10.0
+
+Movies have a film-specific layout with a cinematic hero, watch links, sticky navigation and fact rail. Editors can write original loglines and synopses, hide spoilers, add questions and answers, fill additional crew relationships, and record box office, release events and score context. Film pages show franchise neighbors in release and story order, site coverage by type and date, and Movie and Review structured data. Tagged WordPress articles link back to the relevant films.
+
 ## 2.9.4
 
 Movie and TV pages show ten cast cards and ten crew credits initially. Readers can expand either list to see the rest, then collapse it again. Episode credit groups and comic credits also expand beyond ten entries.

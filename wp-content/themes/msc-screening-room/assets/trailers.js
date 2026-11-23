@@ -6,6 +6,20 @@
         const previous = carousel.querySelector('[data-trailer-prev]');
         const next = carousel.querySelector('[data-trailer-next]');
         const status = carousel.querySelector('[data-trailer-status]');
+        slides.forEach(slide => {
+            const play = slide.querySelector('[data-trailer-play]');
+            if (!play) return;
+            play.hidden = false;
+            play.addEventListener('click', () => {
+                const player = slide.querySelector('iframe');
+                const url = new URL(player.dataset.src);
+                url.searchParams.set('autoplay', '1');
+                player.src = url.href;
+                player.hidden = false;
+                play.hidden = true;
+                player.focus();
+            });
+        });
         if (slides.length < 2) return;
         const capacity = () => Math.max(1, parseInt(getComputedStyle(stage).getPropertyValue('--trailer-columns'), 10) || 1);
         let size = capacity(), page = 0;
@@ -16,8 +30,12 @@
                 const visible = index >= start && index < end;
                 slide.hidden = !visible;
                 const player = slide.querySelector('iframe');
-                if (visible && !player.hasAttribute('src')) player.src = player.dataset.src;
-                else if (!visible && player.hasAttribute('src')) player.removeAttribute('src');
+                const play = slide.querySelector('[data-trailer-play]');
+                if (visible && !play && !player.hasAttribute('src')) player.src = player.dataset.src;
+                else if (!visible && player.hasAttribute('src')) {
+                    player.removeAttribute('src');
+                    if (play) { play.hidden = false; player.hidden = true; }
+                }
             });
             controls.hidden = slides.length <= size;
             previous.disabled = page === 0;

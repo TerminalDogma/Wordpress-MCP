@@ -34,12 +34,14 @@ final class Reviews {
             foreach ( array( '_msc_review_item', '_msc_review_score', '_msc_review_verdict', '_msc_review_pros', '_msc_review_cons', '_msc_review_platform' ) as $key ) {
                 register_post_meta( 'msc_review', $key, array( 'type' => 'string', 'single' => true, 'show_in_rest' => true, 'auth_callback' => static fn( $allowed, $meta, $post ) => current_user_can( 'edit_post', (int) $post ), 'sanitize_callback' => static function ( $v ) use ( $key ) { if ( '_msc_review_score' === $key ) { $s = self::score( $v ); return null === $s ? '' : self::number( $s ); } if ( '_msc_review_item' === $key ) { return self::item_uuid( $v ); } return sanitize_textarea_field( is_scalar( $v ) ? (string) $v : '' ); } ) );
             }
+            register_post_meta( 'msc_review', '_msc_review_archive_url', array( 'type' => 'string', 'single' => true, 'show_in_rest' => true, 'auth_callback' => static fn( $allowed, $meta, $post ) => current_user_can( 'edit_post', (int) $post ), 'sanitize_callback' => array( MovieEditorial::class, 'link' ) ) );
             if ( ! get_option( 'msc_reviews_installed' ) ) { update_option( 'msc_reviews_installed', 1 ); update_option( 'msc_flush_rewrite', 1 ); }
         }, 7 );
         add_action( 'acf/init', static function () {
             $fields = array(
                 array( 'key' => 'field_msc_review_item', 'name' => '_msc_review_item', 'label' => 'Reviewed item', 'type' => 'post_object', 'post_type' => array_values( array_filter( self::ITEMS, static fn( $t ) => Schema::enabled( $t ) ) ), 'return_format' => 'id', 'required' => 1, 'allow_null' => 0, 'instructions' => 'Choose the Movie, TV Show, Episode or Video Game reviewed on this site.' ),
                 array( 'key' => 'field_msc_review_score', 'name' => '_msc_review_score', 'label' => 'Review score / 10', 'type' => 'number', 'min' => 1, 'max' => 10, 'step' => 0.5, 'required' => 1, 'instructions' => 'Half-point scores. 9.5–10: Gold; 9: Silver; 8.5: Copper.' ),
+                array( 'key' => 'field_msc_review_archive_url', 'name' => '_msc_review_archive_url', 'label' => 'Original review URL', 'type' => 'url', 'instructions' => 'Optional link to the originally published editorial review.' ),
             );
             foreach ( array( 'verdict' => 'Final verdict', 'pros' => 'Positives (one per line)', 'cons' => 'Negatives (one per line)', 'platform' => 'Reviewed platform / edition (optional)' ) as $key => $label ) { $fields[] = array( 'key' => 'field_msc_review_' . $key, 'name' => '_msc_review_' . $key, 'label' => $label, 'type' => 'platform' === $key ? 'text' : 'textarea', 'rows' => 4, 'new_lines' => '' ); }
             acf_add_local_field_group( array( 'key' => 'group_msc_editorial_review', 'title' => 'Review verdict and score', 'fields' => $fields, 'location' => array( array( array( 'param' => 'post_type', 'operator' => '==', 'value' => 'msc_review' ) ) ) ) );

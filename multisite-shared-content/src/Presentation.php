@@ -72,13 +72,15 @@ final class Presentation {
 		$label = array( 'msc_movie' => 'Movie', 'msc_show' => 'TV Show', 'msc_episode' => 'Episode', 'msc_person' => 'Person', 'msc_game' => 'Video Game' )[ $r['type'] ] ?? ( EntityCatalog::definitions()[ $r['type'] ][1] ?? ( Comics::singular( $r['type'] ) ?: 'Content' ) );
 		echo '<article class="catalog-card type-' . esc_attr( $r['type'] ) . '"><a href="' . esc_url( self::url( $r ) ) . '">' . '<span class="catalog-card-media">' . self::image( $r, 'card-art', 'medium_large' ) . ReviewScores::badge( $r ) . '</span><div class="card-copy"><span class="eyebrow">' . esc_html( $label ) . '</span><h3>' . esc_html( $r['data']['title'] ?? '' ) . '</h3><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ), 16 ) ) . '</p></div></a>' . Attribution::collect( $r, array( 'title', 'excerpt' ) ) . Attribution::collect_image( $r ) . '</article>';
 	}
-	public static function credits( array $r, bool $compact = false ): void {
+	public static function credits( array $r, bool $compact = false, bool $crew_cards = false ): void {
 		$crew = array();
 		$characters = CastRoles::by_actor( $r['data']['cast_roles'] ?? '' );
 		$groups = array( 'actors' => 'Cast', 'directors' => 'Directors', 'screenwriters' => 'Writers', 'producers' => 'Producers', 'creators' => 'Creators' );
+		if ( $crew_cards ) { $groups += MovieEditorial::CREW; }
 		foreach ( $groups as $key => $label ) {
 			$people = array(); foreach ( (array) ( $r['data'][ $key ] ?? array() ) as $uuid ) { $person = self::credit( $uuid, 'msc_person' ); if ( $person ) { $people[] = $person; } }
 			if ( ! $people ) { continue; }
+			if ( $crew_cards && 'directors' === $key && 1 === count( $people ) ) { $label = 'Director'; }
 			if ( $compact && 'actors' !== $key ) {
 				$crew[ $label ] = $people;
 				continue;
@@ -95,7 +97,15 @@ final class Presentation {
 		}
 		if ( $crew ) {
 			echo '<div class="title-crew"><h3>Crew</h3>';
-			self::credit_names( $crew, 'crew' );
+			if ( $crew_cards ) {
+				self::credit_groups( $crew, 'crew', static function ( array $groups ): void {
+					foreach ( $groups as $label => $people ) {
+						echo '<div class="movie-crew-group"><h4>' . esc_html( $label ) . '</h4>';
+						self::credit_cards( $people, array() );
+						echo '</div>';
+					}
+				} );
+			} else { self::credit_names( $crew, 'crew' ); }
 			echo '</div>';
 		}
 	}
@@ -114,6 +124,10 @@ final class Presentation {
 	}
 	/** Compact grouped credits. Each entry has a title and an optional profile URL. */
 	public static function credit_names( array $groups, string $label, string $class = '' ): void {
+		self::credit_groups( $groups, $label, static fn( array $rows ) => self::credit_rows( $rows, $class ) );
+	}
+
+	private static function credit_groups( array $groups, string $label, callable $render ): void {
 		$remaining = self::INITIAL_CREDITS;
 		$first = $more = array();
 		foreach ( $groups as $role => $people ) {
@@ -121,10 +135,10 @@ final class Presentation {
 			$more[ $role ] = array_slice( $people, $remaining );
 			$remaining -= count( $first[ $role ] );
 		}
-		self::credit_rows( array_filter( $first ), $class );
+		$render( array_filter( $first ) );
 		$more = array_filter( $more );
 		if ( $more ) {
-			self::credit_overflow( $label, static fn() => self::credit_rows( $more, $class ) );
+			self::credit_overflow( $label, static fn() => $render( $more ) );
 		}
 	}
 	private static function credit_rows( array $groups, string $class ): void {

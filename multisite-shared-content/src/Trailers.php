@@ -56,7 +56,7 @@ final class Trailers {
         }
         return implode( "\n", array_keys( $urls ) );
     }
-    public static function render( array $record ): void {
+    public static function render( array $record, string $preview = '' ): void {
         if ( ! in_array( $record['type'], array( 'msc_movie', 'msc_show', 'msc_game' ), true ) ) { return; }
         $videos = array();
         foreach ( preg_split( '/\R/u', (string) ( $record['data']['trailers'] ?? '' ) ) as $line ) { $v = self::video( trim( $line ) ); if ( $v ) { $videos[ $v['url'] ] = $v; } if ( count( $videos ) >= 12 ) { break; } }
@@ -64,7 +64,11 @@ final class Trailers {
         echo '<section class="trailer-section" id="trailers" data-trailer-carousel role="region" aria-roledescription="carousel" aria-label="Trailers"><h2>Trailers</h2><div class="trailer-stage">';
         foreach ( array_values( $videos ) as $index => $video ) {
             $number = $index + 1;
-            echo '<div class="trailer-slide" role="group" aria-roledescription="slide" aria-label="' . esc_attr( $number . ' of ' . $total ) . '"' . ( $index ? ' hidden' : '' ) . '><iframe ' . ( $index ? '' : 'src="' . esc_url( $video['embed'] ) . '" ' ) . 'data-src="' . esc_url( $video['embed'] ) . '" title="' . esc_attr( ( $record['data']['title'] ?? '' ) . ' — Trailer ' . $number ) . '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+            echo '<div class="trailer-slide" role="group" aria-roledescription="slide" aria-label="' . esc_attr( $number . ' of ' . $total ) . '"' . ( $index ? ' hidden' : '' ) . '>';
+            if ( $preview ) {
+                echo '<button class="trailer-play" type="button" data-trailer-play hidden><img src="' . esc_url( $preview ) . '" loading="lazy" alt=""><span>▶ <span>Play trailer ' . (int) $number . '</span></span></button>';
+            }
+            echo '<iframe ' . ( $preview ? 'hidden ' : ( $index ? '' : 'src="' . esc_url( $video['embed'] ) . '" ' ) ) . 'data-src="' . esc_url( $video['embed'] ) . '" title="' . esc_attr( ( $record['data']['title'] ?? '' ) . ' — Trailer ' . $number ) . '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
         }
         echo '</div><div class="trailer-controls" hidden><button type="button" data-trailer-prev aria-label="Previous trailer" disabled>Previous</button><span data-trailer-status aria-live="polite" aria-atomic="true">Trailer 1 of ' . (int) $total . '</span><button type="button" data-trailer-next aria-label="Next trailer">Next</button></div><noscript><ul class="trailer-links">';
         foreach ( array_values( $videos ) as $index => $video ) { echo '<li><a href="' . esc_url( $video['url'] ) . '">Watch trailer ' . (int) ( $index + 1 ) . '</a></li>'; }

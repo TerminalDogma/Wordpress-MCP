@@ -1,0 +1,75 @@
+{
+  "film": {
+    "film_logline": "After an ambush in Afghanistan, weapons engineer Tony Stark builds an armored suit to escape and returns home determined to undo the damage his company has done.",
+    "film_tagline": "Heroes aren't born. They're built.",
+    "editorial_synopsis": "<p>Tony Stark travels to Afghanistan to demonstrate a new weapon and is taken prisoner by a group using his company's own arms. With help from fellow captive Ho Yinsen, he builds a prototype suit of armor from the equipment they have been given and fights his way out.</p><p>Back in California, Tony wants Stark Industries out of the weapons business. His decision puts him at odds with longtime company executive Obadiah Stane. As Tony refines the armor, he relies on Pepper Potts and longtime friend James Rhodes to help him confront what his company has been doing in his name.</p>",
+    "spoiler_synopsis": "<p>Yinsen dies buying Tony time to escape. Pepper uncovers Stane's role in Tony's capture, and Stane uses stolen technology to build a larger suit. Tony and Pepper stop him by overloading the reactor at Stark Industries. At the press conference afterward, Tony abandons his cover story and identifies himself as Iron Man.</p><p>After the credits, Nick Fury visits Tony and raises the prospect of the Avengers Initiative.</p>",
+    "post_credits_count": 1,
+    "rating_reason": "Intense sci-fi action and violence, and brief suggestive content.",
+    "franchise_context": "The first film released in the Marvel Cinematic Universe and the opening title in Phase One.",
+    "movie_faq": [
+      {"question": "What do I watch next?", "answer": "For MCU release order, continue with The Incredible Hulk (2008). For the next Tony Stark solo film, watch Iron Man 2 (2010)."}
+    ],
+    "release_date": "2008-05-02",
+    "runtime": 126,
+    "content_rating": "PG-13",
+    "country": "United States",
+    "language": "English",
+    "distributor": "Paramount Pictures",
+    "streaming_service": "Disney+",
+    "production_companies": "Marvel Studios",
+    "trailers": "https://www.youtube.com/watch?v=8ugaeA-nMTc",
+    "trailer_source_url": "https://www.marvel.com/movies/iron-man",
+    "watch_options": [
+      {"service": "Disney+", "url": "https://www.disneyplus.com/browse/entity-0c520152-b81f-4c20-9310-003debd1947e", "kind": "Subscription", "region": "US", "checked": "2026-11-23"},
+      {"service": "Prime Video", "url": "https://watch.amazon.com/detail?gti=amzn1.dv.gti.94a9f7c1-cbcf-da56-dc31-8e00a4f14a63", "kind": "Rent or buy", "region": "US", "checked": "2026-11-23"},
+      {"service": "Apple TV", "url": "https://tv.apple.com/us/movie/iron-man/umc.cmc.219lnb4s678o8roez3o905h7r", "kind": "Rent or buy", "region": "US", "checked": "2026-11-23"},
+      {"service": "Fandango at Home", "url": "https://athome.fandango.com/content/browse/details/Iron-Man/141479", "kind": "Rent or buy", "region": "US", "checked": "2026-11-23"},
+      {"service": "JustWatch", "url": "https://www.justwatch.com/us/movie/iron-man", "kind": "All offers", "region": "US", "checked": "2026-11-23"}
+    ],
+    "release_history": [
+      {"date": "2008-04-14", "label": "World premiere", "region": "Sydney, Australia", "url": "https://en.wikipedia.org/wiki/Iron_Man_(2008_film)"},
+      {"date": "2008-05-02", "label": "Theatrical release", "region": "United States", "url": "https://www.marvel.com/movies/iron-man"},
+      {"date": "2013-03-01", "label": "Streaming release listed by Rotten Tomatoes", "region": "United States", "url": "https://www.rottentomatoes.com/m/iron_man"}
+    ],
+    "box_office_currency": "USD",
+    "film_budget": 140000000,
+    "domestic_opening": 98618668,
+    "worldwide_gross": 585796247,
+    "box_office_url": "https://www.boxofficemojo.com/title/tt0371746/",
+    "rotten_tomatoes_score": 94,
+    "rotten_tomatoes_review_count": 277,
+    "rotten_tomatoes_audience_score": 91,
+    "rotten_tomatoes_audience_count": 250000,
+    "rotten_tomatoes_audience_count_plus": true,
+    "rotten_tomatoes_url": "https://www.rottentomatoes.com/m/iron_man",
+    "metacritic_score": 79,
+    "metacritic_review_count": 38,
+    "metacritic_positive_count": 33,
+    "metacritic_mixed_count": 5,
+    "metacritic_url": "https://www.metacritic.com/movie/iron-man/",
+    "score_updated_at": "2026-11-23"
+  },
+  "cast": {
+    "Robert Downey Jr.": "Tony Stark / Iron Man",
+    "Terrence Howard": "James Rhodes",
+    "Jeff Bridges": "Obadiah Stane",
+    "Gwyneth Paltrow": "Pepper Potts",
+    "Leslie Bibb": "Christine Everhart",
+    "Shaun Toub": "Ho Yinsen",
+    "Faran Tahir": "Raza",
+    "Clark Gregg": "Phil Coulson",
+    "Bill Smitrovich": "General Gabriel",
+    "Sayed Badreya": "Abu Bakaar",
+    "Paul Bettany": "J.A.R.V.I.S. (voice)",
+    "Jon Favreau": "Happy Hogan"
+  },
+  "crew": {
+    "directors": ["Jon Favreau"],
+    "screenwriters": ["Mark Fergus", "Hawk Ostby", "Art Marcum", "Matt Holloway"],
+    "producers": ["Avi Arad", "Kevin Feige"],
+    "cinematographers": ["Matthew Libatique"],
+    "film_editors": ["Dan Lebental"],
+    "composers": ["Ramin Djawadi"]
+  }
+}

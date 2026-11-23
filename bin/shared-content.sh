@@ -23,6 +23,11 @@ case "${1:-setup}" in
   queue) wp msc queue --limit=1000 ;;
   training) shift; wp --user=1 msc training "$@" ;;
   timeline) wp --user=1 msc timeline ;;
+  movie-preview)
+    shift
+    site_a_url="$(wp site list --field=url | grep '/site-a/$')"
+    wp --url="$site_a_url" --user=1 eval-file /msc-examples/iron-man-preview.php "$@"
+    ;;
   franchise-demo) wp --user=1 eval-file /msc-examples/franchise-demo.php ;;
   demo) wp eval-file /msc-examples/network-demo.php ;;
   legacy-demo) wp eval-file /msc-examples/style-demo.php; wp eval-file /msc-examples/create-demo.php ;;
@@ -57,5 +62,5 @@ case "${1:-setup}" in
     docker compose run --rm -T -e MSC_DISPOSABLE_TESTS=1 cli --url="$site_a_url" eval-file /msc-tests/upcoming-releases.php
     ;;
   stop) docker compose down ;;
-  *) echo 'Usage: sh bin/shared-content.sh setup|training|timeline|franchise-demo|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
+  *) echo 'Usage: sh bin/shared-content.sh setup|training|timeline|movie-preview|franchise-demo|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
 esac
