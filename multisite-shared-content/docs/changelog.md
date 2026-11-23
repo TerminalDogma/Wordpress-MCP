@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.10.3
+
+The Iron Man preview can install bundled, credited portraits and publish its linked People drafts on Site A. Cinematographer, editor and composer credits link back to the movie from People filmographies.
+
 ## 2.10.2
 
 Movie budgets link to their production budget source. Existing box office URLs can serve as a fallback. The public Overview shows the spoiler-free synopsis and quick answers.

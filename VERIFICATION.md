@@ -1,4 +1,8 @@
-# Shared Content 2.10.2 verification
+# Shared Content 2.10.3 verification
+
+The Site A Iron Man preview has 21 public People profiles and 17 distinct, credited Wikimedia Commons portraits. A repeat install created zero attachments and published zero additional posts. Chromium loaded all public profile URLs and credited images and verified the newly linked cinematographer, editor and composer filmographies.
+
+## Earlier 2.10.2 verification
 
 WordPress verified the budget source field upgrade, explicit source precedence, fallback to the existing box office URL, and budget-link placement. Chromium verified the Iron Man budget link and spoiler-free Overview on desktop and mobile.
 

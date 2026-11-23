@@ -159,9 +159,24 @@ final class Presentation {
 		return ! empty( $person['url'] ) ? '<a href="' . esc_url( $person['url'] ) . '">' . $name . '</a>' : $name;
 	}
 	public static function filmography( string $person ): array {
-		$meta = array( 'relation' => 'OR' ); foreach ( array( 'actors', 'directors', 'screenwriters', 'producers', 'creators' ) as $field ) { $meta[] = array( 'key' => 'msc_' . $field, 'value' => $person, 'compare' => 'LIKE' ); }
+		$credit_roles = array(
+			'actors' => 'Actor', 'directors' => 'Director', 'screenwriters' => 'Writer', 'producers' => 'Producer', 'creators' => 'Creator',
+			'cinematographers' => 'Cinematographer', 'film_editors' => 'Editor', 'composers' => 'Composer',
+		);
+		$meta = array( 'relation' => 'OR' );
+		foreach ( array_keys( $credit_roles ) as $field ) { $meta[] = array( 'key' => 'msc_' . $field, 'value' => $person, 'compare' => 'LIKE' ); }
 		$posts = get_posts( array( 'post_type' => array( 'msc_movie', 'msc_show', 'msc_episode' ), 'post_status' => 'publish', 'posts_per_page' => 100, 'meta_query' => $meta, 'orderby' => 'title', 'order' => 'ASC' ) );
-		$result = array(); foreach ( $posts as $post ) { $global = Plugin::store()->by_post( $post->ID ); $r = $global ? self::record( $global['id'] ) : null; if ( ! $r ) { continue; } $roles = array(); foreach ( array( 'actors' => 'Actor', 'directors' => 'Director', 'screenwriters' => 'Writer', 'producers' => 'Producer', 'creators' => 'Creator' ) as $key => $label ) { if ( in_array( $person, (array) ( $r['data'][ $key ] ?? array() ), true ) ) { $roles[] = $label; } } if ( $roles ) { $r['credit_roles'] = $roles; $result[] = $r; } }
+		$result = array();
+		foreach ( $posts as $post ) {
+			$global = Plugin::store()->by_post( $post->ID );
+			$r = $global ? self::record( $global['id'] ) : null;
+			if ( ! $r ) { continue; }
+			$roles = array();
+			foreach ( $credit_roles as $field => $label ) {
+				if ( in_array( $person, (array) ( $r['data'][ $field ] ?? array() ), true ) ) { $roles[] = $label; }
+			}
+			if ( $roles ) { $r['credit_roles'] = $roles; $result[] = $r; }
+		}
 		return $result;
 	}
 }
