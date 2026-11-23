@@ -20,7 +20,7 @@ if ( ! $overview && ! $spoilers && ! $faq ) { return; }
 <section class="movie-section" id="overview" aria-labelledby="movie-overview-title">
     <h2 id="movie-overview-title">Overview</h2>
     <?php if ( $overview ) { ?><div class="catalog-description movie-prose"><?php echo $overview; ?></div><?php } ?>
-    <?php if ( $spoilers ) { ?><details class="movie-disclosure"><summary>Read the full synopsis <span>Spoilers</span></summary><div class="catalog-description movie-prose"><?php echo $spoilers; ?></div></details><?php } ?>
+    <?php if ( $spoilers ) { ?><h3 class="movie-spoilers-heading">Plot details (spoilers)</h3><div class="catalog-description movie-prose"><?php echo $spoilers; ?></div><?php } ?>
     <?php if ( $faq ) { ?><div class="movie-quick-answers"><h3>Quick answers</h3>
         <?php foreach ( $faq as $item ) { ?><details class="movie-disclosure"><summary><?php echo esc_html( $item['question'] ); ?></summary><div class="movie-prose"><?php echo wp_kses_post( wpautop( $item['answer'] ) ); ?></div></details><?php } ?>
     </div><?php } ?>

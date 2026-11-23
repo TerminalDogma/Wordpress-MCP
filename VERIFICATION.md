@@ -1,8 +1,12 @@
-# Shared Content 2.10.0 verification
+# Shared Content 2.10.1 verification
+
+Chromium verified the full Iron Man synopsis, the May 2 U.S. date in the header, five provider icons, and readable selected tabs and editorial review text. Coverage type and sort changes preserve scroll position and keyboard focus, including when results shorten near the footer. Back and Forward, retry after a failed request, Show more, the mobile layout, and ordinary filter links with JavaScript disabled all passed. PHP fixtures verified U.S. release selection and the generic theatrical fallback.
+
+## Earlier 2.10.0 verification
 
 Chromium verified the Iron Man preview on desktop and mobile, including authored copy, spoiler disclosure, cast and crew cards, watch links, sourced score details, sticky navigation, trailer activation, franchise order, coverage filtering and article backlinks. Movie and nested Review JSON-LD parsed correctly. Existing movie and TV templates and the credit and review regression suites were checked in the disposable network.
 
-The preview uses generated workshop artwork and a labeled sample house score. The review card links to Scott Chitwood’s original ComingSoon review. Score and availability figures are dated snapshots.
+The preview uses generated workshop artwork and a labeled sample review score. The review card links to Scott Chitwood’s original ComingSoon review. Score and availability figures are dated snapshots.
 
 ## Earlier 2.9.4 verification
 

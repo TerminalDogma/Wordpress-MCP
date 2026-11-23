@@ -14,7 +14,7 @@ Version 2.4.1 added GCD cover imports and direct Comic Book arc assignments, wit
 
 ## Four branded sites with shared catalogs
 
-The **Multisite Shared Content 2.10.0** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
+The **Multisite Shared Content 2.10.1** plugin provides distinct TV Show, Episode and Movie schemas, with authoritative network records, native posts on each participating site, per-field overrides, relationships, noindex, and supported ACF controls. Follow [the Mac shared-content quickstart](docs/shared-content-quickstart.md). Catalog detail pages show one overview, and TV season links load episodes without a full page refresh.
 
 Movie editors can set original synopses, spoiler text, viewing links, FAQs, additional crew, score context and release history in Shared Content or ACF. Tag news posts with the movie title or slug and with a coverage type such as **Interviews**, **Features**, **Reviews** or **News**. On the local four-site network, `sh bin/shared-content.sh movie-preview` applies the Iron Man example as Site A overrides and adds sample coverage. The optional positional arguments are Site A attachment IDs for the backdrop, poster and gallery image.
 

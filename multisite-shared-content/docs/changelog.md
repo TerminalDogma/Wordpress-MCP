@@ -1,5 +1,9 @@
 # Changelog and release boundaries
 
+## 2.10.1
+
+Movie headers show the theatrical release date. The full plot is visible in Overview, and watch links use service logos when available. Selected tabs and editorial review cards have explicit high-contrast colors. Coverage filters and sort changes update in place and support browser history.
+
 ## 2.10.0
 
 Movies have a film-specific layout with a cinematic hero, watch links, sticky navigation and fact rail. Editors can write original loglines and synopses, hide spoilers, add questions and answers, fill additional crew relationships, and record box office, release events and score context. Film pages show franchise neighbors in release and story order, site coverage by type and date, and Movie and Review structured data. Tagged WordPress articles link back to the relevant films.

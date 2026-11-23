@@ -1,12 +1,12 @@
 <?php
-use MSC\{Attribution, CatalogArticles, EntityCatalog, Franchises, Media, MovieEditorial, Presentation, ReleaseCalendar, ReviewScores, Reviews, Timelines};
+use MSC\{Attribution, CatalogArticles, EntityCatalog, Franchises, MovieEditorial, Presentation, ReleaseCalendar, ReviewScores, Reviews, Timelines};
 
 $record = $args['record'];
 $data = $record['data'];
 $title = $data['title'];
-$release = ReleaseCalendar::date( $data['release_date'] ?? '' );
-$year = $release ? substr( $release, 0, 4 ) : '';
-$logline = $data['film_logline'] ?? '';
+$release = MovieEditorial::theatrical_release( $data );
+$release_year = ReleaseCalendar::date( $data['release_date'] ?? '' ) ?: $release['date'];
+$year = substr( $release_year, 0, 4 );
 $credits = EntityCatalog::rows( $record );
 $franchises = Franchises::related( $record );
 $timelines = Timelines::related( $record );
@@ -14,7 +14,6 @@ $watch = MovieEditorial::watch( $data );
 $review = Reviews::own( $record );
 $sample_review = $review && get_post_meta( $review['review_id'], '_msc_movie_preview', true );
 $scores = ReviewScores::rows( $record );
-$backdrop = Media::url( (array) ( $data['featured_image'] ?? array() ), 'full' );
 $trailer_url = MovieEditorial::link( $data['trailer_source_url'] ?? '' );
 $latest = CatalogArticles::query( $record, 1 )->posts[0] ?? null;
 if ( $latest && (int) get_post_time( 'U', true, $latest ) < time() - 90 * DAY_IN_SECONDS ) { $latest = null; }
@@ -57,33 +56,30 @@ $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'tit
     </nav>
 
     <header class="movie-hero">
-        <?php if ( $backdrop ) { ?>
-            <img class="movie-backdrop" src="<?php echo esc_url( $backdrop ); ?>" alt="" fetchpriority="high">
-            <?php Attribution::collect_media( (array) $data['featured_image'], $title . ' backdrop' ); ?>
-        <?php } ?>
         <div class="hero-art">
             <?php echo Presentation::image( $record, 'movie-poster' ); Attribution::collect_image( $record ); ?>
-            <?php if ( $review ) { echo ReviewScores::badge_row( $sample_review ? array_replace( $review, array( 'name' => 'Sample house score' ) ) : $review ); } ?>
+            <?php if ( $review ) { echo ReviewScores::badge_row( $sample_review ? array_replace( $review, array( 'name' => 'Sample review score' ) ) : $review ); } ?>
         </div>
         <div class="movie-hero-copy">
             <?php if ( $franchises ) { ?><p class="movie-franchise-kicker"><a href="<?php echo esc_url( Presentation::url( $franchises[0] ) ); ?>"><?php echo esc_html( $franchises[0]['data']['title'] ); ?></a></p><?php } ?>
             <h1><?php echo esc_html( $title ); ?><?php if ( $year ) { ?> <span class="movie-year">(<?php echo esc_html( $year ); ?>)</span><?php } ?></h1>
             <?php if ( ! empty( $data['original_title'] ) && $data['original_title'] !== $title ) { ?><p class="movie-original"><?php echo esc_html( $data['original_title'] ); ?></p><?php } ?>
+            <?php if ( $release['date'] ) { ?>
+                <p class="movie-hero-release"><span><?php echo esc_html( $release['label'] ); ?></span> <time datetime="<?php echo esc_attr( $release['date'] ); ?>"><?php echo esc_html( wp_date( 'M j, Y', strtotime( $release['date'] . ' 12:00 UTC' ), new DateTimeZone( 'UTC' ) ) ); ?></time></p>
+            <?php } ?>
             <div class="movie-hero-meta">
                 <?php if ( ! empty( $data['content_rating'] ) ) { ?><span class="movie-cert"><?php echo esc_html( $data['content_rating'] ); ?></span><?php } ?>
                 <?php if ( ! empty( $data['runtime'] ) ) { ?><span><?php echo esc_html( $data['runtime'] . ' min' ); ?></span><?php } ?>
                 <?php if ( ! empty( $data['genres'] ) ) { ?><span><?php echo esc_html( implode( ' · ', array_slice( (array) $data['genres'], 0, 3 ) ) ); ?></span><?php } ?>
             </div>
-            <?php if ( ! empty( $data['film_tagline'] ) ) { ?><p class="movie-tagline"><?php echo esc_html( $data['film_tagline'] ); ?></p><?php } ?>
-            <?php if ( $logline ) { ?><p class="movie-logline"><?php echo esc_html( $logline ); ?></p><?php } ?>
             <?php if ( $directors ) { ?><p class="movie-hero-credits"><strong>Directed by</strong> <?php echo esc_html( implode( ', ', $directors ) ); ?></p><?php } ?>
             <?php if ( $stars ) { ?><p class="movie-hero-credits"><strong>Starring</strong> <?php echo esc_html( implode( ', ', $stars ) ); ?></p><?php } ?>
             <?php if ( $scores ) { ?>
                 <div class="movie-hero-scores" aria-label="Review scores">
                     <?php foreach ( $scores as $row ) { ?>
-                        <a class="movie-hero-score<?php echo 'editorial' === $row['provider'] ? ' house-score' : ''; ?>" href="<?php echo esc_url( 'editorial' !== $row['provider'] && $row['url'] ? $row['url'] : '#movie-score-' . $row['provider'] ); ?>">
+                        <a class="movie-hero-score<?php echo 'editorial' === $row['provider'] ? ' movie-editorial-chip' : ''; ?>" href="<?php echo esc_url( 'editorial' !== $row['provider'] && $row['url'] ? $row['url'] : '#movie-score-' . $row['provider'] ); ?>">
                             <strong><?php echo esc_html( Reviews::number( $row['score'] ) . ( 'rotten_tomatoes' === $row['provider'] ? '%' : '/' . $row['max'] ) ); ?></strong>
-                            <span><?php echo esc_html( $sample_review && 'editorial' === $row['provider'] ? 'Sample house score' : $row['name'] ); ?></span>
+                            <span><?php echo esc_html( $sample_review && 'editorial' === $row['provider'] ? 'Sample review score' : $row['name'] ); ?></span>
                         </a>
                     <?php } ?>
                 </div>

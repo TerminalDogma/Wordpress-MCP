@@ -51,7 +51,7 @@ Database::lock( 'iron-man-editorial-' . get_current_blog_id(), static function (
         $review = wp_insert_post( wp_slash( array(
             'post_type' => 'msc_review', 'post_status' => 'publish',
             'post_title' => 'Iron Man review (editorial preview)',
-            'post_content' => '<p>This local sample demonstrates a house score and verdict.</p><p>Jon Favreau keeps the action grounded in Tony Stark’s choices. The workshop sequences make each new piece of armor feel like an experiment, and Robert Downey Jr. keeps the quiet scenes moving as well as the fights.</p><p><a href="https://www.comingsoon.net/movies/reviews/44535-iron-man-2">Read Scott Chitwood’s original ComingSoon review from May 2, 2008</a>.</p>',
+            'post_content' => '<p>This local sample demonstrates a review score and verdict.</p><p>Jon Favreau keeps the action grounded in Tony Stark’s choices. The workshop sequences make each new piece of armor feel like an experiment, and Robert Downey Jr. keeps the quiet scenes moving as well as the fights.</p><p><a href="https://www.comingsoon.net/movies/reviews/44535-iron-man-2">Read Scott Chitwood’s original ComingSoon review from May 2, 2008</a>.</p>',
             'meta_input' => array( '_msc_review_item' => $record['uuid'], '_msc_review_score' => '9', '_msc_review_verdict' => '“Iron Man” is everything you’d hope a comic book movie would be. — Scott Chitwood, 2008', '_msc_review_archive_url' => 'https://www.comingsoon.net/movies/reviews/44535-iron-man-2', '_msc_movie_preview' => '1' ),
         ) ), true );
         if ( is_wp_error( $review ) ) { throw new RuntimeException( $review->get_error_message() ); }

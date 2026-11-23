@@ -67,6 +67,16 @@ final class MovieEditorial {
         return $releases;
     }
 
+    public static function theatrical_release( array $data ): array {
+        foreach ( self::releases( $data ) as $event ) {
+            $region = strtolower( preg_replace( '/[^a-z]/i', '', $event['region'] ) );
+            if ( in_array( $region, array( 'us', 'usa', 'unitedstates', 'unitedstatesofamerica' ), true ) && preg_match( '/\b(?:theatrical|cinema|wide release)\b/i', $event['label'] ) && ! preg_match( '/\bpremiere\b/i', $event['label'] ) ) {
+                return array( 'date' => $event['date'], 'label' => 'U.S. theatrical release' );
+            }
+        }
+        return array( 'date' => ReleaseCalendar::date( $data['release_date'] ?? '' ), 'label' => 'Theatrical release' );
+    }
+
     public static function link( $url ): string {
         $parts = is_string( $url ) ? wp_parse_url( $url ) : false;
         return $parts && in_array( strtolower( $parts['scheme'] ?? '' ), array( 'https', 'http' ), true ) && ! empty( $parts['host'] ) && ! isset( $parts['user'] ) && ! isset( $parts['pass'] ) ? esc_url_raw( $url, array( 'https', 'http' ) ) : '';

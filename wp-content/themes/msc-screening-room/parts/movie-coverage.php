@@ -16,19 +16,20 @@ $filters = static function ( array $values ) use ( $key, $id ): string {
     return esc_url( add_query_arg( $values, remove_query_arg( $key ) ) . '#' . $id );
 };
 ?>
-<section class="movie-section movie-coverage" id="<?php echo esc_attr( $id ); ?>" data-catalog-collection>
+<section class="movie-section movie-coverage" id="<?php echo esc_attr( $id ); ?>" data-catalog-collection data-movie-coverage>
     <h2>Coverage</h2>
     <div class="movie-coverage-controls">
         <nav aria-label="Coverage type">
             <?php foreach ( array( '' => 'All coverage' ) + $kinds as $value => $label ) { ?>
-                <a href="<?php echo $filters( array( 'coverage_type' => $value !== '' ? $value : false ) ); ?>"<?php if ( $value === $kind ) { ?> aria-current="true"<?php } ?>><?php echo esc_html( $label ); ?></a>
+                <a data-coverage-filter="<?php echo esc_attr( 'type-' . ( $value ?: 'all' ) ); ?>" href="<?php echo $filters( array( 'coverage_type' => $value !== '' ? $value : false ) ); ?>"<?php if ( $value === $kind ) { ?> aria-current="true"<?php } ?>><?php echo esc_html( $label ); ?></a>
             <?php } ?>
         </nav>
         <nav aria-label="Coverage order">
-            <a href="<?php echo $filters( array( 'coverage_order' => false ) ); ?>"<?php if ( ! $oldest ) { ?> aria-current="true"<?php } ?>>Newest first</a>
-            <a href="<?php echo $filters( array( 'coverage_order' => 'oldest' ) ); ?>"<?php if ( $oldest ) { ?> aria-current="true"<?php } ?>>Oldest first</a>
+            <a data-coverage-filter="order-newest" href="<?php echo $filters( array( 'coverage_order' => false ) ); ?>"<?php if ( ! $oldest ) { ?> aria-current="true"<?php } ?>>Newest first</a>
+            <a data-coverage-filter="order-oldest" href="<?php echo $filters( array( 'coverage_order' => 'oldest' ) ); ?>"<?php if ( $oldest ) { ?> aria-current="true"<?php } ?>>Oldest first</a>
         </nav>
     </div>
+    <p class="movie-coverage-status" role="status"></p>
     <?php if ( $posts ) { ?>
         <ul class="movie-coverage-list" data-collection-items>
             <?php foreach ( $posts as $article ) {
