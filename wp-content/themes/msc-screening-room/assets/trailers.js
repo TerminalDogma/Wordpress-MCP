@@ -9,6 +9,10 @@
         slides.forEach(slide => {
             const play = slide.querySelector('[data-trailer-play]');
             if (!play) return;
+            const image = play.querySelector('img');
+            const hideMissingImage = () => { image.hidden = true; };
+            image.addEventListener('error', hideMissingImage);
+            if (image.complete && !image.naturalWidth) hideMissingImage();
             play.hidden = false;
             play.addEventListener('click', () => {
                 const player = slide.querySelector('iframe');

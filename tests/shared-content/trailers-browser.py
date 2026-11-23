@@ -46,6 +46,12 @@ async def main():
             carousel = page.locator('[data-trailer-carousel]')
             await expect(carousel.locator('.trailer-slide:visible')).to_have_count(3)
             await expect(carousel.locator('.trailer-controls')).to_be_hidden()
+            covers = carousel.locator('.trailer-play img')
+            await expect(covers).to_have_count(2)
+            assert [(await covers.nth(i).get_attribute('src')).split('/')[-2] for i in range(2)] == ['abcdefghijk', 'lmnopqrstuv']
+            await expect(carousel.locator('iframe[src]')).to_have_count(1)
+            await carousel.get_by_role('button', name='Play trailer 2').click()
+            await expect(carousel.locator('iframe[src*="lmnopqrstuv"]')).to_have_count(1)
             desktop = await carousel.locator('.trailer-slide:visible').evaluate_all('(slides) => slides.map(slide => ({x:slide.offsetLeft,y:slide.offsetTop,width:slide.offsetWidth}))')
             assert len({slide['y'] for slide in desktop}) == 1 and max(slide['width'] for slide in desktop) <= 400
             await page.set_viewport_size({'width': 900, 'height': 1000})
@@ -67,18 +73,18 @@ async def main():
 
         await page.goto(data['msc_movie']['url'])
         panel = page.locator('.details-panel')
-        text = await panel.inner_text()
-        assert data['msc_movie']['names'][4] in text and data['msc_movie']['names'][5] not in text
-        lists = panel.locator('dl.facts')
-        first, second = await lists.nth(0).bounding_box(), await lists.nth(1).bounding_box()
-        assert second['y'] - first['y'] - first['height'] >= 23
+        await expect(panel).to_contain_text('English')
+        starring = page.locator('.movie-hero-credits').filter(has_text='Starring')
+        for name in data['msc_movie']['names'][:3]:
+            await expect(starring).to_contain_text(name)
+        await expect(starring).not_to_contain_text(data['msc_movie']['names'][3])
         await expect(page.locator('#cast')).to_contain_text(data['msc_movie']['names'][6])
         await panel.screenshot(path='/tmp/msc-sidebar.png')
         await page.set_viewport_size({'width': 390, 'height': 844})
         await expect(page.locator('.trailer-slide:visible')).to_have_count(1)
         assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
         await page.screenshot(path='/tmp/msc-trailers-mobile.png', full_page=True)
-        print('PASS: Sidebar facts have a clear gap; only five actors appear, with all seven retained below. Mobile layout has no horizontal overflow.', flush=True)
+        print('PASS: The movie header shows three lead actors and the cast section retains all seven. Mobile layout has no horizontal overflow.', flush=True)
 
         await page.set_viewport_size({'width': 1440, 'height': 1000})
         await page.goto(base+'/wp-login.php')
@@ -118,14 +124,14 @@ async def main():
                 await expect(page.locator('.trailer-slide:visible')).to_have_count(3)
                 await page.locator('[data-trailer-next]').click()
                 await expect(page.locator('[data-trailer-status]')).to_have_text('Trailer 4 of 4')
-                await expect(page.locator('iframe[src]')).to_have_count(1)
+                await expect(page.locator('iframe[src]')).to_have_count(0)
         print('PASS: YouTube picker thumbnails, previews, duplicate prevention and retries work in ACF and the full shared editor; ACF global saves persist selected trailers. Missing AJAX nonces are rejected.', flush=True)
         nojs = await browser.new_context(java_script_enabled=False)
         await nojs.route('**/*', lambda route: route.continue_() if urlparse(route.request.url).hostname in ('localhost', '127.0.0.1') else route.abort())
         fallback = await nojs.new_page(); await fallback.goto(data['msc_movie']['url'])
         await expect(fallback.locator('.trailer-links a')).to_have_count(4)
         await expect(fallback.locator('.trailer-controls')).to_be_hidden()
-        print('PASS: Without JavaScript, the first trailer remains embedded and all trailers have ordinary watch links.', flush=True)
+        print('PASS: Without JavaScript, all trailers have ordinary watch links.', flush=True)
         await browser.close()
 
 asyncio.run(main())

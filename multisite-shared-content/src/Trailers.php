@@ -25,7 +25,7 @@ final class Trailers {
             $video = self::video( $row['link'] );
             if ( ! $video || ! str_starts_with( $video['url'], 'https://www.youtube.com/watch?v=' ) || isset( $items[ $video['url'] ] ) ) { continue; }
             $text = static fn( $v ) => is_string( $v ) ? mb_substr( sanitize_text_field( $v ), 0, 300 ) : '';
-            $items[ $video['url'] ] = $video + array( 'title' => $text( $row['title'] ?? '' ) ?: 'YouTube trailer', 'channel' => $text( $row['channel'] ?? '' ), 'duration' => $text( $row['duration'] ?? '' ), 'thumbnail' => 'https://i.ytimg.com/vi/' . substr( $video['url'], -11 ) . '/mqdefault.jpg' );
+            $items[ $video['url'] ] = $video + array( 'title' => $text( $row['title'] ?? '' ) ?: 'YouTube trailer', 'channel' => $text( $row['channel'] ?? '' ), 'duration' => $text( $row['duration'] ?? '' ) );
         }
         return array_values( $items );
     }
@@ -38,7 +38,11 @@ final class Trailers {
             elseif ( '/watch' === $path ) { parse_str( $parts['query'] ?? '', $query ); $id = $query['v'] ?? ''; }
             elseif ( preg_match( '~^/(?:embed|shorts)/([A-Za-z0-9_-]{11})/?$~D', $path, $match ) ) { $id = $match[1]; }
             if ( ! is_string( $id ) || ! preg_match( '/^[A-Za-z0-9_-]{11}$/D', $id ) ) { return null; }
-            return array( 'url' => 'https://www.youtube.com/watch?v=' . $id, 'embed' => 'https://www.youtube-nocookie.com/embed/' . $id . '?rel=0' );
+            return array(
+                'url' => 'https://www.youtube.com/watch?v=' . $id,
+                'embed' => 'https://www.youtube-nocookie.com/embed/' . $id . '?rel=0',
+                'thumbnail' => 'https://i.ytimg.com/vi/' . $id . '/mqdefault.jpg',
+            );
         }
         if ( in_array( $host, array( 'vimeo.com', 'www.vimeo.com', 'player.vimeo.com' ), true ) && preg_match( '~^/(?:video/)?([0-9]{6,12})/?$~D', $path, $match ) ) {
             return array( 'url' => 'https://vimeo.com/' . $match[1], 'embed' => 'https://player.vimeo.com/video/' . $match[1] . '?dnt=1' );
@@ -56,7 +60,7 @@ final class Trailers {
         }
         return implode( "\n", array_keys( $urls ) );
     }
-    public static function render( array $record, string $preview = '' ): void {
+    public static function render( array $record ): void {
         if ( ! in_array( $record['type'], array( 'msc_movie', 'msc_show', 'msc_game' ), true ) ) { return; }
         $videos = array();
         foreach ( preg_split( '/\R/u', (string) ( $record['data']['trailers'] ?? '' ) ) as $line ) { $v = self::video( trim( $line ) ); if ( $v ) { $videos[ $v['url'] ] = $v; } if ( count( $videos ) >= 12 ) { break; } }
@@ -65,10 +69,11 @@ final class Trailers {
         foreach ( array_values( $videos ) as $index => $video ) {
             $number = $index + 1;
             echo '<div class="trailer-slide" role="group" aria-roledescription="slide" aria-label="' . esc_attr( $number . ' of ' . $total ) . '"' . ( $index ? ' hidden' : '' ) . '>';
-            if ( $preview ) {
-                echo '<button class="trailer-play" type="button" data-trailer-play hidden><img src="' . esc_url( $preview ) . '" loading="lazy" alt=""><span>▶ <span>Play trailer ' . (int) $number . '</span></span></button>';
+            $thumbnail = $video['thumbnail'] ?? '';
+            if ( $thumbnail ) {
+                echo '<button class="trailer-play" type="button" data-trailer-play hidden><img src="' . esc_url( $thumbnail ) . '" width="320" height="180" loading="lazy" alt=""><span><span aria-hidden="true">▶</span> Play trailer ' . (int) $number . '</span></button>';
             }
-            echo '<iframe ' . ( $preview ? 'hidden ' : ( $index ? '' : 'src="' . esc_url( $video['embed'] ) . '" ' ) ) . 'data-src="' . esc_url( $video['embed'] ) . '" title="' . esc_attr( ( $record['data']['title'] ?? '' ) . ' — Trailer ' . $number ) . '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+            echo '<iframe ' . ( $thumbnail ? 'hidden ' : ( $index ? '' : 'src="' . esc_url( $video['embed'] ) . '" ' ) ) . 'data-src="' . esc_url( $video['embed'] ) . '" title="' . esc_attr( ( $record['data']['title'] ?? '' ) . ' — Trailer ' . $number ) . '" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
         }
         echo '</div><div class="trailer-controls" hidden><button type="button" data-trailer-prev aria-label="Previous trailer" disabled>Previous</button><span data-trailer-status aria-live="polite" aria-atomic="true">Trailer 1 of ' . (int) $total . '</span><button type="button" data-trailer-next aria-label="Next trailer">Next</button></div><noscript><ul class="trailer-links">';
         foreach ( array_values( $videos ) as $index => $video ) { echo '<li><a href="' . esc_url( $video['url'] ) . '">Watch trailer ' . (int) ( $index + 1 ) . '</a></li>'; }

@@ -1,0 +1,715 @@
+{
+  "title": "Avengers: Doomsday",
+  "sources": [
+    "https://www.marvel.com/movies/avengers-doomsday",
+    "https://www.disneyplus.com/explore/articles/avengers-doomsday-cast-characters",
+    "https://en.wikipedia.org/wiki/Avengers:_Doomsday"
+  ],
+  "trailers": [
+    "https://www.youtube.com/watch?v=Wb8Tq_HD4E8",
+    "https://www.youtube.com/watch?v=irVNGjRFZGk",
+    "https://www.youtube.com/watch?v=kH1XlwHQv9o"
+  ],
+  "cast": {
+    "Robert Downey Jr.": "Victor von Doom / Doctor Doom",
+    "Chris Evans": "Steve Rogers / Captain America",
+    "Chris Hemsworth": "Thor",
+    "Anthony Mackie": "Sam Wilson / Captain America",
+    "Paul Rudd": "Scott Lang / Ant-Man",
+    "Pedro Pascal": "Reed Richards / Mister Fantastic",
+    "Vanessa Kirby": "Sue Storm / Invisible Woman",
+    "Joseph Quinn": "Johnny Storm / Human Torch",
+    "Ebon Moss-Bachrach": "Ben Grimm / The Thing",
+    "Patrick Stewart": "Charles Xavier / Professor X",
+    "Ian McKellen": "Erik Lehnsherr / Magneto",
+    "James Marsden": "Scott Summers / Cyclops",
+    "Kelsey Grammer": "Hank McCoy / Beast",
+    "Alan Cumming": "Kurt Wagner / Nightcrawler",
+    "Rebecca Romijn": "Raven Darkholme / Mystique",
+    "Channing Tatum": "Remy LeBeau / Gambit",
+    "Florence Pugh": "Yelena Belova",
+    "Sebastian Stan": "Bucky Barnes / The Winter Soldier",
+    "Wyatt Russell": "John Walker / U.S. Agent",
+    "David Harbour": "Alexei Shostakov / Red Guardian",
+    "Hannah John-Kamen": "Ava Starr / Ghost",
+    "Lewis Pullman": "Bob Reynolds / Sentry",
+    "Letitia Wright": "Shuri / Black Panther",
+    "Winston Duke": "M’Baku",
+    "Tenoch Huerta Mejía": "Namor",
+    "Mabel Cadena": "Namora",
+    "Tom Hiddleston": "Loki",
+    "Simu Liu": "Shang-Chi",
+    "Hayley Atwell": "Peggy Carter",
+    "Danny Ramirez": "Joaquin Torres / Falcon",
+    "Kathryn Newton": "Cassie Lang",
+    "Alex Livinalli": "Attuma",
+    "Hailee Steinfeld": "Kate Bishop",
+    "India Rose Hemsworth": "Love"
+  },
+  "crew": {
+    "directors": [
+      "Anthony Russo",
+      "Joe Russo"
+    ],
+    "screenwriters": [
+      "Stephen McFeely",
+      "Michael Waldron"
+    ],
+    "producers": [
+      "Kevin Feige",
+      "Louis D'Esposito",
+      "Jonathan Schwartz"
+    ],
+    "cinematographers": [
+      "Newton Thomas Sigel"
+    ],
+    "film_editors": [
+      "Jeffrey Ford",
+      "Matthew Schmidt"
+    ],
+    "composers": [
+      "Alan Silvestri"
+    ]
+  },
+  "people": {
+    "Robert Downey Jr.": {
+      "aliases": [
+        "Robert Downey, Jr.",
+        "Robert Downey Jr"
+      ],
+      "wikidata": "Q165219",
+      "portrait": {
+        "file": "robert-downey-jr.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:RobertDowneyJr-byPhilipRomano7_(cropped).jpg",
+          "attribution": "RobertDowneyJr-byPhilipRomano7 (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "PhilipRomano",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Chris Evans": {
+      "wikidata": "Q178348",
+      "portrait": {
+        "file": "chris-evans.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Chris_Evans_at_the_2025_Toronto_International_Film_Festival_(cropped).jpg",
+          "attribution": "Chris Evans at the 2025 Toronto International Film Festival (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Sara Komatsu",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Chris Hemsworth": {
+      "wikidata": "Q54314",
+      "portrait": {
+        "file": "chris-hemsworth.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Chris_Hemsworth_-_Crime_101.jpg",
+          "attribution": "Chris Hemsworth - Crime 101.jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Kevin Paul",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Anthony Mackie": {
+      "wikidata": "Q511554",
+      "portrait": {
+        "file": "anthony-mackie.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Anthony_Mackie_on_the_Green_Carpet_at_the_2025_Zurich_Film_Festival_03_(cropped).jpg",
+          "attribution": "Anthony Mackie on the Green Carpet at the 2025 Zurich Film Festival 03 (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Quejaytee",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Paul Rudd": {
+      "wikidata": "Q276525",
+      "portrait": {
+        "file": "paul-rudd.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Paul_Rudd_at_a_presser_(cropped).jpg",
+          "attribution": "Paul Rudd at a presser (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 2.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Pedro Pascal": {
+      "wikidata": "Q14752155",
+      "portrait": {
+        "file": "pedro-pascal.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Pedro_Pascal_at_the_2026_New_York_Film_Festival-042.jpg",
+          "attribution": "Pedro Pascal at the 2026 New York Film Festival-042.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Bryan Berlin",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Vanessa Kirby": {
+      "wikidata": "Q6159535",
+      "portrait": {
+        "file": "vanessa-kirby.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Vanessa_Kirby_at_the_2024_Toronto_International_Film_Festival_08_(Cropped).jpg",
+          "attribution": "Vanessa Kirby at the 2024 Toronto International Film Festival 08 (Cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Jay Dixit",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Joseph Quinn": {
+      "wikidata": "Q39073476",
+      "portrait": {
+        "file": "joseph-quinn.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Joseph_Quinn_by_Gage_Skidmore.jpg",
+          "attribution": "Joseph Quinn by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Ebon Moss-Bachrach": {
+      "wikidata": "Q1279993",
+      "portrait": {
+        "file": "ebon-moss-bachrach.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Ebon_Moss-Bachrach_at_the_2026_New_York_Film_Festival_(2)_(cropped).jpg",
+          "attribution": "Ebon Moss-Bachrach at the 2026 New York Film Festival (2) (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Amy Hecht",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Patrick Stewart": {
+      "wikidata": "Q16296",
+      "portrait": {
+        "file": "patrick-stewart.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Patrick_Stewart_1999_(retouch).jpg",
+          "attribution": "Patrick Stewart 1999 (retouch).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 2.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+          "credit": "Kingkongphoto & www.celebrity-photos.com from Laurel Maryland, USA",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Ian McKellen": {
+      "wikidata": "Q170510",
+      "portrait": {
+        "file": "ian-mckellen.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:SDCC13_-_Ian_McKellen.jpg",
+          "attribution": "SDCC13 - Ian McKellen.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 2.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "James Marsden": {
+      "wikidata": "Q485901",
+      "portrait": {
+        "file": "james-marsden.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:James_Marsden_by_Gage_Skidmore.jpg",
+          "attribution": "James Marsden by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Kelsey Grammer": {
+      "aliases": [
+        "Allen Kelsey Grammer"
+      ],
+      "wikidata": "Q196560",
+      "portrait": {
+        "file": "kelsey-grammer.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Kelsey_Grammer_Young_Washington_Film_Screening_2026_(cropped).jpg",
+          "attribution": "Kelsey Grammer Young Washington Film Screening 2026 (cropped).jpg via Wikimedia Commons",
+          "license": "CC0",
+          "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+          "credit": "Exchanges Photos",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Alan Cumming": {
+      "wikidata": "Q316629",
+      "portrait": {
+        "file": "alan-cumming.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:FM_and_Alan_Cumming_in_NY-4_(cropped).jpg",
+          "attribution": "FM and Alan Cumming in NY-4 (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Scottish Government",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Rebecca Romijn": {
+      "wikidata": "Q202792",
+      "portrait": {
+        "file": "rebecca-romijn.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Rebecca_Romijn_by_Gage_Skidmore_2.jpg",
+          "attribution": "Rebecca Romijn by Gage Skidmore 2.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Channing Tatum": {
+      "wikidata": "Q212064",
+      "portrait": {
+        "file": "channing-tatum.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Channing_Tatum_at_the_2026_Berlin_International_Film_Festival-69843.jpg",
+          "attribution": "Channing Tatum at the 2026 Berlin International Film Festival-69843.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Harald Krichel",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Florence Pugh": {
+      "wikidata": "Q22277803",
+      "portrait": {
+        "file": "florence-pugh.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Florence_Pugh_2026.jpg",
+          "attribution": "Florence Pugh 2026.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Marlene Landu",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Sebastian Stan": {
+      "wikidata": "Q455898",
+      "portrait": {
+        "file": "sebastian-stan.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Sebastian_Stan-64526.jpg",
+          "attribution": "Sebastian Stan-64526.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Harald Krichel",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Wyatt Russell": {
+      "wikidata": "Q15542608",
+      "portrait": {
+        "file": "wyatt-russell.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Wyatt_Russell_at_Comic_Con_Connections_26_19_(cropped).jpg",
+          "attribution": "Wyatt Russell at Comic Con Connections 26 19 (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "JaceMerlyn",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "David Harbour": {
+      "wikidata": "Q391359",
+      "portrait": {
+        "file": "david-harbour.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:David_Harbour_2025.jpg",
+          "attribution": "David Harbour 2025.jpg via Wikimedia Commons",
+          "license": "CC BY 3.0",
+          "license_url": "https://creativecommons.org/licenses/by/3.0",
+          "credit": "PelucheEn ElEstuche",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Hannah John-Kamen": {
+      "wikidata": "Q16232660",
+      "portrait": {
+        "file": "hannah-john-kamen.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Hannah_John-Kamen_Ant-Man_%26_The_Wasp_premiere.jpg",
+          "attribution": "Hannah John-Kamen Ant-Man & The Wasp premiere.jpg via Wikimedia Commons",
+          "license": "CC BY 3.0",
+          "license_url": "https://creativecommons.org/licenses/by/3.0",
+          "credit": "joyparris",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Lewis Pullman": {
+      "wikidata": "Q59830990",
+      "portrait": {
+        "file": "lewis-pullman.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Lewis_Pullman_at_San_Diego_Comic_Con_2026-2.jpg",
+          "attribution": "Lewis Pullman at San Diego Comic Con 2026-2.jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Kevin Paul",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Letitia Wright": {
+      "wikidata": "Q27489535",
+      "portrait": {
+        "file": "letitia-wright.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Letitia_Wright_at_2025_SXSW_London_(cropped).jpg",
+          "attribution": "Letitia Wright at 2025 SXSW London (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Duk3L1xon",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Winston Duke": {
+      "wikidata": "Q27045579",
+      "portrait": {
+        "file": "winston-duke.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Winston_duke_(49562238976).jpg",
+          "attribution": "Winston duke (49562238976).jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Zach Catanzareti Photo",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Tenoch Huerta Mejía": {
+      "aliases": [
+        "Tenoch Huerta",
+        "Tenoch Huerta Mejia"
+      ],
+      "wikidata": "Q6141629",
+      "portrait": {
+        "file": "tenoch-huerta-mejia.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Tenoch_Huerta_2024.jpg",
+          "attribution": "Tenoch Huerta 2024.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Kevin Payravi",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Mabel Cadena": {
+      "wikidata": "Q41796284",
+      "portrait": {
+        "file": "mabel-cadena.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Actriz_Mabel_Cadena_2024_(cropped).jpg",
+          "attribution": "Actriz Mabel Cadena 2024 (cropped).jpg via Wikimedia Commons",
+          "license": "CC0",
+          "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+          "credit": "Ricardogarcia10",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Tom Hiddleston": {
+      "wikidata": "Q295803",
+      "portrait": {
+        "file": "tom-hiddleston.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Tom_Hiddleston_at_the_2024_Toronto_International_Film_Festival_(cropped).jpg",
+          "attribution": "Tom Hiddleston at the 2024 Toronto International Film Festival (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Kevin Payravi",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Simu Liu": {
+      "wikidata": "Q24004849",
+      "portrait": {
+        "file": "simu-liu.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Simu_Liu_by_Gage_Skidmore_2.jpg",
+          "attribution": "Simu Liu by Gage Skidmore 2.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Hayley Atwell": {
+      "wikidata": "Q234959",
+      "portrait": {
+        "file": "hayley-atwell.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Hayley_Atwell_2025_(crop).jpg",
+          "attribution": "Hayley Atwell 2025 (crop).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Harald Krichel",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Danny Ramirez": {
+      "wikidata": "Q51754587",
+      "portrait": {
+        "file": "danny-ramirez.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Guests_at_the_2026_Met_Gala_416_(cropped_2).jpg",
+          "attribution": "Guests at the 2026 Met Gala 416 (cropped 2).jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "SWinxy",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Kathryn Newton": {
+      "wikidata": "Q165625",
+      "portrait": {
+        "file": "kathryn-newton.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Kathryn_Newton_4DX_2023.jpg",
+          "attribution": "Kathryn Newton 4DX 2023.jpg via Wikimedia Commons",
+          "license": "CC BY 3.0",
+          "license_url": "https://creativecommons.org/licenses/by/3.0",
+          "credit": "4DX",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Alex Livinalli": {
+      "wikidata": "Q115248485",
+      "portrait": {
+        "file": "alex-livinalli-initials.jpg"
+      }
+    },
+    "Hailee Steinfeld": {
+      "wikidata": "Q231726",
+      "portrait": {
+        "file": "hailee-steinfeld.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Hailee_Steinfeld_by_Gage_Skidmore.jpg",
+          "attribution": "Hailee Steinfeld by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "India Rose Hemsworth": {
+      "wikidata": "Q113130405",
+      "portrait": {
+        "file": "india-rose-hemsworth-initials.jpg"
+      }
+    },
+    "Anthony Russo": {
+      "aliases": [
+        "Anthony Russo (director)"
+      ],
+      "portrait": {
+        "file": "anthony-russo.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Anthony_Russo_(48385343301)_(cropped).jpg",
+          "attribution": "Anthony Russo (48385343301) (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 2.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+          "credit": "Gage Skidmore from Peoria, AZ, United States of America",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Joe Russo": {
+      "aliases": [
+        "Joe Russo (director)"
+      ],
+      "portrait": {
+        "file": "joe-russo.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Joe_Russo_by_Gage_Skidmore.jpg",
+          "attribution": "Joe Russo by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Stephen McFeely": {
+      "portrait": {
+        "file": "stephen-mcfeely.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Stephen_McFeely_by_Gage_Skidmore.jpg",
+          "attribution": "Stephen McFeely by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Michael Waldron": {
+      "wikidata": "Q104741807",
+      "portrait": {
+        "file": "michael-waldron-initials.jpg"
+      }
+    },
+    "Kevin Feige": {
+      "wikidata": "Q515161",
+      "portrait": {
+        "file": "kevin-feige.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Kevin_Feige_by_Gage_Skidmore.jpg",
+          "attribution": "Kevin Feige by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Louis D'Esposito": {
+      "portrait": {
+        "file": "louis-d-esposito-initials.jpg"
+      }
+    },
+    "Jonathan Schwartz": {
+      "portrait": {
+        "file": "jonathan-schwartz.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Jonathan_Schwartz_at_the_2026_New_York_Film_Festival-052.jpg",
+          "attribution": "Jonathan Schwartz at the 2026 New York Film Festival-052.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Bryan Berlin",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Newton Thomas Sigel": {
+      "wikidata": "Q1367452",
+      "portrait": {
+        "file": "newton-thomas-sigel.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Newton_Thomas_Sigel_2023.jpg",
+          "attribution": "Newton Thomas Sigel 2023.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "TaurusEmerald",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Jeffrey Ford": {
+      "aliases": [
+        "Jeffrey Ford (film editor)"
+      ],
+      "wikidata": "Q11309299",
+      "portrait": {
+        "file": "jeffrey-ford-initials.jpg"
+      }
+    },
+    "Matthew Schmidt": {
+      "aliases": [
+        "Matt Schmidt"
+      ],
+      "wikidata": "Q24206656",
+      "portrait": {
+        "file": "matthew-schmidt-initials.jpg"
+      }
+    },
+    "Alan Silvestri": {
+      "wikidata": "Q313537",
+      "portrait": {
+        "file": "alan-silvestri.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Alan_Silvestri_2009.jpg",
+          "attribution": "Alan Silvestri 2009.jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Anthony Skelton at https://www.flickr.com/people/17955537@N00",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    }
+  }
+}

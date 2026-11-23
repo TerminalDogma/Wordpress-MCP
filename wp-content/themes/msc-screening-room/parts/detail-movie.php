@@ -70,7 +70,7 @@ $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'tit
             <div class="movie-hero-meta">
                 <?php if ( ! empty( $data['content_rating'] ) ) { ?><span class="movie-cert"><?php echo esc_html( $data['content_rating'] ); ?></span><?php } ?>
                 <?php if ( ! empty( $data['runtime'] ) ) { ?><span><?php echo esc_html( $data['runtime'] . ' min' ); ?></span><?php } ?>
-                <?php if ( ! empty( $data['genres'] ) ) { ?><span><?php echo esc_html( implode( ' · ', array_slice( (array) $data['genres'], 0, 3 ) ) ); ?></span><?php } ?>
+                <?php if ( ! empty( $data['genres'] ) ) { ?><span><?php echo esc_html( implode( ' · ', array_map( static fn( $genre ) => msc_screen_genre( $genre, 'msc_movie' ), array_slice( (array) $data['genres'], 0, 3 ) ) ) ); ?></span><?php } ?>
             </div>
             <?php if ( $directors ) { ?><p class="movie-hero-credits"><strong>Directed by</strong> <?php echo esc_html( implode( ', ', $directors ) ); ?></p><?php } ?>
             <?php if ( $stars ) { ?><p class="movie-hero-credits"><strong>Starring</strong> <?php echo esc_html( implode( ', ', $stars ) ); ?></p><?php } ?>

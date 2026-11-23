@@ -50,7 +50,9 @@ foreach ( array( 'msc_movie' => '/site-a/', 'msc_show' => '/site-a/', 'msc_game'
         if ( 'msc_game' === $type ) { $data += array( 'platforms' => array( 'PlayStation 5' ), 'platform_ids' => array( 167 ) ); }
         $r = $s->create( $type, $data ); Plugin::materializer()->sync( (int) $r['id'], get_current_blog_id() ); $m = $s->mapping( (int) $r['id'] ); $s->local( $r['uuid'], array(), array(), (int) $m['local_version'], 'publish' ); $public = Presentation::record( $r['uuid'] );
         trailer_check( null !== $public, 'Trailer fixture is public on its participating site: ' . $type );
-        ob_start(); Trailers::render( $public ); $html = ob_get_clean(); trailer_check( 3 === substr_count( $html, '<iframe ' ) && 1 === preg_match_all( '/<iframe src=/', $html ) && 3 === substr_count( $html, ' hidden' ), 'Only the first trailer player loads initially: ' . $type );
+        ob_start(); Trailers::render( $public ); $html = ob_get_clean();
+        trailer_check( 3 === substr_count( $html, '<iframe ' ) && ! preg_match( '/<iframe src=/', $html ), 'Players are deferred for YouTube trailer covers: ' . $type );
+        trailer_check( 2 === substr_count( $html, 'data-trailer-play' ) && str_contains( $html, '/vi/abcdefghijk/mqdefault.jpg' ) && str_contains( $html, '/vi/lmnopqrstuv/mqdefault.jpg' ), 'Each YouTube cover matches its own video: ' . $type );
         $empty = $public; $empty['data']['trailers'] = ''; ob_start(); Trailers::render( $empty ); trailer_check( '' === ob_get_clean(), 'Empty trailer areas are hidden: ' . $type );
         if ( 'msc_movie' === $type ) {
             $sidebar = EntityCatalog::sidebar( $public ); trailer_check( str_contains( $sidebar, $names[4] ) && ! str_contains( $sidebar, $names[5] ) && str_contains( $sidebar, 'href="#cast"' ), 'The sidebar includes five credited actors and a full-cast link' );

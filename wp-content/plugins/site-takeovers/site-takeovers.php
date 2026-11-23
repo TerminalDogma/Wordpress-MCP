@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Takeovers
  * Description: Site-wide and page-specific advertising skins with banner and side placements.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * License: GPL-2.0-or-later
@@ -16,7 +16,9 @@ defined( 'ABSPATH' ) || exit;
 final class Plugin {
     public const TYPE = 'sat_campaign';
     public const META = '_sat_campaign';
-    public const SLOTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad', 'background' => 'Page background image' );
+    public const VERSION = '1.1.0';
+    public const PLACEMENTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad' );
+    public const SLOTS = self::PLACEMENTS + array( 'background' => 'Page background image', 'logo' => 'Campaign logo' );
     public const COLORS = array(
         'background' => array( 'Page background', '#0c1712' ),
         'surface' => array( 'Content background', '#f0f3e9' ),
@@ -109,7 +111,7 @@ final class Plugin {
             $attachment = $input['art'][ $key ] ?? '';
             $attachment = is_scalar( $attachment ) ? absint( $attachment ) : 0;
             if ( $attachment && wp_attachment_is_image( $attachment ) ) { $settings['art'][ $key ] = $attachment; }
-            if ( 'background' !== $key ) { $settings['links'][ $key ] = self::url( $input['links'][ $key ] ?? '' ); }
+            if ( isset( self::PLACEMENTS[ $key ] ) ) { $settings['links'][ $key ] = self::url( $input['links'][ $key ] ?? '' ); }
         }
         $settings['destination'] = self::url( $input['destination'] ?? '' );
         foreach ( array( 'brand' => 60, 'headline' => 100, 'message' => 140, 'cta' => 36 ) as $key => $length ) {
@@ -151,13 +153,14 @@ final class Plugin {
         if ( ! $data ) { return $classes; }
         $classes[] = 'sat-active';
         if ( self::has_rails( $data ) ) { $classes[] = 'sat-has-rails'; }
+        if ( ! empty( $data['art']['background'] ) ) { $classes[] = 'sat-has-wallpaper'; }
         return $classes;
     }
 
     public static function styles(): void {
         $data = self::active();
         if ( ! $data ) { return; }
-        wp_enqueue_style( 'site-takeovers', plugins_url( 'assets/takeovers.css', __FILE__ ), array(), '1.0.0' );
+        wp_enqueue_style( 'site-takeovers', plugins_url( 'assets/takeovers.css', __FILE__ ), array(), self::VERSION );
         $vars = '';
         foreach ( self::COLORS as $key => list( , $default ) ) {
             $color = sanitize_hex_color( $data['colors'][ $key ] ?? '' ) ?: $default;
@@ -173,13 +176,16 @@ final class Plugin {
     public static function render(): void {
         $data = self::active();
         if ( ! $data ) { return; }
-        $slots = array_intersect_key( $data['art'], array( 'banner' => true, 'left' => true, 'right' => true ) );
+        $slots = array_intersect_key( $data['art'], self::PLACEMENTS );
         if ( ! $slots ) { return; }
+        $logo = empty( $data['art']['logo'] ) ? '' : wp_get_attachment_image( $data['art']['logo'], 'full', false, array(
+            'class' => 'sat-logo', 'alt' => $data['headline'] ?: $data['title'], 'decoding' => 'async',
+        ) );
         ?>
         <aside class="sat-stage" aria-label="Advertising">
             <?php foreach ( $slots as $slot => $attachment ) {
                 $destination = ( $data['links'][ $slot ] ?? '' ) ?: ( $data['destination'] ?? '' );
-                $overlay = '' !== $data['headline'];
+                $overlay = $logo || '' !== $data['headline'];
                 $image = wp_get_attachment_image( $attachment, 'banner' === $slot ? 'large' : 'medium_large', false, array(
                     'class' => 'sat-image', 'alt' => $overlay ? '' : ( get_post_meta( $attachment, '_wp_attachment_image_alt', true ) ?: $data['title'] ),
                     'loading' => 'eager', 'decoding' => 'async',
@@ -192,8 +198,10 @@ final class Plugin {
                         <?php echo $image; ?>
                         <?php if ( $overlay ) { ?>
                             <div class="sat-copy">
-                                <?php if ( $data['brand'] ) { ?><p class="sat-brand"><?php echo esc_html( $data['brand'] ); ?></p><?php } ?>
-                                <p class="sat-headline"><?php echo esc_html( $data['headline'] ); ?></p>
+                                <?php if ( $logo ) { echo $logo; } else { ?>
+                                    <?php if ( $data['brand'] ) { ?><p class="sat-brand"><?php echo esc_html( $data['brand'] ); ?></p><?php } ?>
+                                    <p class="sat-headline"><?php echo esc_html( $data['headline'] ); ?></p>
+                                <?php } ?>
                                 <?php if ( $data['message'] ) { ?><p class="sat-message"><?php echo esc_html( $data['message'] ); ?></p><?php } ?>
                                 <?php if ( $data['cta'] && $destination ) { ?><span class="sat-cta"><?php echo esc_html( $data['cta'] ); ?> <span aria-hidden="true">↗</span></span><?php } ?>
                             </div>

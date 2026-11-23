@@ -30,6 +30,9 @@ body.sat-active {
 .sat-active .movie-page { --movie-highlight: var(--sat-accent); }
 .sat-active .archive-content,
 .sat-active .site-footer { border-color: var(--line); }
+.sat-active.sat-has-wallpaper { background-image: linear-gradient(#07100b26, #07100b4d), var(--sat-background-image); }
+.sat-has-wallpaper #main.container { box-shadow: 0 0 52px #040906b8; }
+.sat-has-wallpaper .sat-banner .sat-creative { border-color: color-mix(in srgb, var(--sat-accent) 55%, #eace83); box-shadow: 0 8px 30px #070c06a6; }
 
 .sat-stage {
     position: relative;
@@ -90,6 +93,14 @@ body.sat-active {
     overflow-wrap: anywhere;
 }
 .sat-copy p { margin: 0; }
+.sat-copy .sat-logo {
+    display: block;
+    width: min(85%, 390px);
+    height: clamp(100px, 12vw, 170px);
+    object-fit: contain;
+    object-position: left center;
+    filter: drop-shadow(0 3px 6px #030704);
+}
 .sat-copy .sat-brand {
     color: #d9e6b7;
     font-size: .67rem;
@@ -128,11 +139,13 @@ body.sat-active {
         min-height: calc(var(--sat-rail) * 3.5);
         padding: .8rem;
     }
+    :is(.sat-left, .sat-right) .sat-logo { width: 100%; height: auto; }
     :is(.sat-left, .sat-right) .sat-headline { font-size: clamp(1rem, 1.6vw, 1.45rem); }
     :is(.sat-left, .sat-right) .sat-message { font-size: .69rem; }
 }
 
 @media (max-width: 600px) {
+    body.sat-has-wallpaper { background-size: auto 110svh; background-repeat: no-repeat; }
     .sat-stage { width: calc(100% - 28px); }
     .sat-copy { padding: .85rem; }
     .sat-creative:has(.sat-copy)::before { background: linear-gradient(90deg, #08130df9 5%, #08130da8 70%, #08130d30 100%); }

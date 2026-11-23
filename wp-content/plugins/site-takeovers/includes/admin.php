@@ -11,7 +11,7 @@ final class Admin {
             $screen = get_current_screen();
             if ( Plugin::TYPE !== ( $screen->post_type ?? '' ) || 'post' !== $screen->base ) { return; }
             wp_enqueue_media();
-            wp_enqueue_script( 'site-takeovers-admin', plugins_url( 'assets/admin.js', dirname( __DIR__ ) . '/site-takeovers.php' ), array(), '1.0.0', true );
+            wp_enqueue_script( 'site-takeovers-admin', plugins_url( 'assets/admin.js', dirname( __DIR__ ) . '/site-takeovers.php' ), array( 'media-editor' ), Plugin::VERSION, true );
         } );
         add_action( 'save_post_' . Plugin::TYPE, array( self::class, 'save' ) );
         add_filter( 'manage_' . Plugin::TYPE . '_posts_columns', static function ( array $columns ): array {
@@ -78,7 +78,7 @@ final class Admin {
     public static function creative( \WP_Post $post ): void {
         $data = Plugin::read( (int) $post->ID );
         ?>
-        <p>Use finished ad artwork, or enter a headline and optional copy to lay over the artwork. Side ads display on wide screens.</p>
+        <p>Use finished ad artwork, or add a campaign logo or headline and copy over the artwork. Side ads display on wide screens.</p>
         <table class="form-table" role="presentation">
             <?php foreach ( array( 'destination' => 'Default destination URL', 'brand' => 'Brand line', 'headline' => 'Headline', 'message' => 'Supporting text', 'cta' => 'Button text' ) as $key => $label ) { ?>
                 <tr><th scope="row"><label for="sat-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
@@ -95,7 +95,7 @@ final class Admin {
                         <button type="button" class="button" data-sat-choose>Choose image</button>
                         <button type="button" class="button" data-sat-remove<?php if ( ! $id ) { ?> hidden<?php } ?>>Remove image</button>
                     </div>
-                    <?php if ( 'background' !== $key ) { ?>
+                    <?php if ( isset( Plugin::PLACEMENTS[ $key ] ) ) { ?>
                         <p><label>Destination URL <input type="url" class="regular-text" name="sat[links][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $data['links'][ $key ] ?? '' ); ?>" placeholder="Use default destination"></label></p>
                     <?php } ?>
                 </td></tr>

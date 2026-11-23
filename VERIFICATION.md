@@ -1,3 +1,9 @@
+# Shared Content 2.10.4 and Site Takeovers 1.1.0 verification
+
+The local Site A Doomsday example contains 34 character credits and 11 crew credits. Chromium checked 45 public profile links and image responses, the three distinct official trailer thumbnails, and the movie’s formatted genre line. It verified the wallpaper, three official logos on desktop, one on mobile, reserved side space, and page-only targeting. Six bundled images are labeled initials cards. Re-running the installer reused the campaign and added zero images or publications.
+
+All 40 trailer integration checks passed. Chromium verified mixed YouTube and Vimeo carousels at three widths, click-to-play, paging, no-script watch links, and both editor pickers.
+
 # Site Takeovers 1.0.0 verification
 
 Chromium verified the Doomsday banner and both side ads at 1440px, the banner at 390px, and layouts without overlap or horizontal scrolling. Checks also covered site-wide and page-specific campaign priority, site isolation, feed exclusion, the Media Library picker, selected-page URL validation, and turning a campaign off. A repeat demo install reused the existing campaign.

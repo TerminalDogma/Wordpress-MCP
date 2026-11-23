@@ -3,7 +3,9 @@ function msc_archive_arrow(): string { return '<svg viewBox="0 0 24 24" fill="no
 function msc_archive_date( string $date ): string { return $date ? wp_date( 'M j, Y', strtotime( $date . ' 12:00 UTC' ), new DateTimeZone( 'UTC' ) ) : ''; }
 function msc_archive_meta( array $r ): array {
     $d = $r['data']; $facts = array(); $tags = array(); $kicker = ''; $date = $r['catalog_date'];
-    if ( in_array( $r['type'], array( 'msc_movie', 'msc_show', 'msc_game' ), true ) ) { $kicker = implode( ' · ', array_slice( (array) ( $d['genres'] ?? array() ), 0, 2 ) ); }
+    if ( in_array( $r['type'], array( 'msc_movie', 'msc_show', 'msc_game' ), true ) ) {
+        $kicker = implode( ' · ', array_map( static fn( $genre ) => msc_screen_genre( $genre, $r['type'] ), array_slice( (array) ( $d['genres'] ?? array() ), 0, 2 ) ) );
+    }
     if ( $date ) { $facts[] = msc_archive_date( $date ); }
     if ( in_array( $r['type'], array( 'msc_movie', 'msc_episode' ), true ) && ! empty( $d['runtime'] ) ) { $facts[] = $d['runtime'] . ' min'; }
     if ( 'msc_movie' === $r['type'] && ! empty( $d['content_rating'] ) ) { $tags[] = $d['content_rating']; }

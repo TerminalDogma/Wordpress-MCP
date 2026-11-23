@@ -24,9 +24,11 @@ For commercial score display, Rotten Tomatoes® provides licensing and attributi
 
 ### Advertising takeovers
 
-In the site's dashboard, open **Ad Takeovers → Add Ad Takeover**. Pick **Entire site** or **Selected pages**, then choose Media Library artwork, destinations and a palette. Page-specific campaigns override the site campaign. Publish to display it, or choose **Off** to suspend it. The top banner remains visible on narrow screens, and both side ads appear on wide screens.
+In the site's dashboard, open **Ad Takeovers → Add Ad Takeover**. Pick **Entire site** or **Selected pages**, then choose Media Library artwork, destinations and a palette. The optional wallpaper covers the page background and the campaign logo appears in each ad. Page-specific campaigns override the site campaign. Publish to display it, or choose **Off** to suspend it. The top banner remains visible on narrow screens, and both side ads appear on wide screens.
 
-Run `sh bin/shared-content.sh takeover-demo` with Docker Desktop running to install the page-only Avengers: Doomsday example on Site A and print its URL. The example uses original concept artwork and targets the published movie when available. It creates a local preview movie when the site needs one. For a manual WordPress installation, package and install `site-takeovers-1.0.0.zip` using `python3 tools/package-msc.py`.
+Run `sh bin/shared-content.sh takeover-demo` with Docker Desktop running to install or refresh the page-only Avengers: Doomsday example on Site A. It finds the published movie or creates a local preview and prints its URL. The ads combine Marvel Studios’ official logo with original concept artwork. The command adds verified character credits, fills missing images, and publishes linked People drafts on Site A. Six bundled credit cards use initials where a reusable photo could not be verified. Existing trailer selections and profile images are preserved. The manual WordPress installer `site-takeovers-1.1.0.zip` is built by `python3 tools/package-msc.py`.
+
+YouTube trailers use their individual video thumbnails automatically. Vimeo trailers show their own player preview. Movie genre labels remove a trailing “film” and use title case on the page.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 

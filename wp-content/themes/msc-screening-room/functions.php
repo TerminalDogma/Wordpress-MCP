@@ -29,16 +29,25 @@ add_action( 'wp_enqueue_scripts', static function () {
     if ( $movie ) { wp_enqueue_script( 'msc-movies', get_template_directory_uri() . '/assets/movies.js', array(), MSC_VERSION, true ); }
 }, 35 );
 add_action( 'after_setup_theme', static function () { add_theme_support( 'title-tag' ); add_theme_support( 'post-thumbnails' ); add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) ); } );
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.10.3' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.10.3' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.10.3', true ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'screening-room', get_stylesheet_uri(), array(), '2.10.4' ); wp_enqueue_style( 'network-presentation', get_template_directory_uri() . '/assets/network.css', array( 'screening-room' ), '2.10.4' ); wp_enqueue_script( 'network-presentation', get_template_directory_uri() . '/assets/network.js', array(), '2.10.4', true ); } );
 function msc_screen_identity(): array { return class_exists( '\MSC\Presentation' ) ? \MSC\Presentation::identity() : array( 'name' => get_bloginfo( 'name' ), 'label' => 'Catalog', 'tagline' => get_bloginfo( 'description' ) ); }
 function msc_screen_record(): ?array { $r = function_exists( 'msc_from_post' ) ? msc_from_post( get_the_ID() ) : null; return $r ? \MSC\Presentation::record( $r['id'] ) : null; }
+function msc_screen_genre( string $genre, string $type ): string {
+    $suffix = array( 'msc_movie' => 'film', 'msc_show' => '(?:television|TV) (?:series|show)', 'msc_game' => 'video game' )[ $type ] ?? '';
+    if ( $suffix ) { $genre = preg_replace( '/\s+' . $suffix . '$/iu', '', trim( $genre ) ); }
+    return preg_replace_callback( '/(?<![\pL\pN\x{2019}\x{27}])\p{Ll}/u', static fn( $match ) => mb_strtoupper( $match[0], 'UTF-8' ), $genre );
+}
 function msc_screen_chips( array $r ): void {
     $taxonomies = get_object_taxonomies( $r['type'] );
     foreach ( $taxonomies as $taxonomy ) {
         if ( ! in_array( $taxonomy, array( 'msc_genre', 'msc_profession' ), true ) ) { continue; }
         $terms = get_the_terms( (int) $r['mapping']['post_id'], $taxonomy );
         if ( ! $terms || is_wp_error( $terms ) ) { continue; }
-        foreach ( $terms as $term ) { $url = get_term_link( $term ); if ( ! is_wp_error( $url ) ) { echo '<a class="chip" href="' . esc_url( $url ) . '">' . esc_html( $term->name ) . '</a>'; } }
+        foreach ( $terms as $term ) {
+            $url = get_term_link( $term );
+            $label = 'msc_genre' === $taxonomy ? msc_screen_genre( $term->name, $r['type'] ) : $term->name;
+            if ( ! is_wp_error( $url ) ) { echo '<a class="chip" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>'; }
+        }
     }
 }
 function msc_screen_facts( array $r, array $fields ): void {
@@ -106,9 +115,9 @@ function msc_screen_overview( array $record ): string {
     }
     return wp_kses_post( msc_screen_overview_breaks( apply_filters( 'the_content', $value ) ) );
 }
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.10.3', true ); } } );
-add_action( 'wp_enqueue_scripts', static function () { if ( \MSC\CatalogArchive::current() ) { wp_enqueue_style( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.css', array( 'network-presentation' ), '2.10.3' ); wp_enqueue_script( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.js', array(), '2.10.3', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.10.4', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( \MSC\CatalogArchive::current() ) { wp_enqueue_style( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.css', array( 'network-presentation' ), '2.10.4' ); wp_enqueue_script( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.js', array(), '2.10.4', true ); } } );
 
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_movie', 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), '2.10.3', true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_movie', 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), MSC_VERSION, true ); } } );
 
-add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'msc-reviews', get_template_directory_uri() . '/assets/reviews.css', array( 'network-presentation' ), '2.10.3' ); } );
+add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'msc-reviews', get_template_directory_uri() . '/assets/reviews.css', array( 'network-presentation' ), '2.10.4' ); } );
