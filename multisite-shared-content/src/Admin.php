@@ -6,6 +6,7 @@ final class Admin {
 		add_action( 'network_admin_menu', array( self::class, 'network_menu' ) );
 		add_action( 'admin_post_msc_save', array( self::class, 'save' ) );
 		add_action( 'wp_ajax_msc_timeline_titles', array( Timelines::class, 'search' ) );
+		add_action( 'wp_ajax_msc_field_picker', array( FieldPicker::class, 'search' ) );
 		add_action( 'admin_notices', array( self::class, 'notices' ) );
 		add_action( 'network_admin_notices', array( self::class, 'notices' ) );
 		add_action( 'add_meta_boxes', array( self::class, 'metaboxes' ) );
@@ -13,6 +14,10 @@ final class Admin {
 		add_filter( 'post_row_actions', static function ( $actions, $post ) { if ( isset( Schema::all()[ $post->post_type ] ) && current_user_can( 'msc_edit_global' ) && current_user_can( 'msc_override_local' ) && Plugin::store()->by_post( $post->ID ) ) { $actions['msc_edit_locally'] = '<a href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) ) . '">Edit locally (WordPress)</a>'; } return $actions; }, 30, 2 );
 		add_action( 'admin_enqueue_scripts', static function () {
 			wp_enqueue_style( 'msc-admin', plugins_url( 'assets/admin.css', MSC_FILE ), array(), MSC_VERSION );
+			if ( 'msc' === ( $_GET['page'] ?? '' ) ) {
+				wp_enqueue_script( 'msc-field-picker', plugins_url( 'assets/field-picker.js', MSC_FILE ), array( 'jquery-ui-autocomplete' ), MSC_VERSION, true );
+				wp_localize_script( 'msc-field-picker', 'mscFieldPicker', array( 'nonce' => wp_create_nonce( 'msc_field_picker_' . get_current_blog_id() ) ) );
+			}
 			if ( in_array( $_GET['page'] ?? '', array( 'msc-import', 'msc-omdb' ), true ) ) { wp_enqueue_script( 'msc-import-selection', plugins_url( 'assets/import-selection.js', MSC_FILE ), array(), MSC_VERSION, true ); }
 			if ( in_array( $_GET['page'] ?? '', array( 'msc', 'msc-acf' ), true ) ) {
 				wp_enqueue_media();
@@ -56,17 +61,7 @@ final class Admin {
 		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
 			Media::control( $name, $id, $value, 'media_list' === $type, $key );
 		} elseif ( ! empty( $field['taxonomy'] ) || 'multiselect' === $type && ! empty( $field['options'] ) || in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
-			$multiple = in_array( $type, array( 'multiselect', 'relationship_list' ), true );
-			$options = array();
-			if ( in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
-				foreach ( Plugin::store()->query( $field['target'], array(), 0, 500 ) as $related ) { $r = Plugin::store()->get( $related ); $options[ $r['uuid'] ] = $r['data']['title'] ?? $r['uuid']; }
-				foreach ( (array) $value as $uuid ) { if ( $uuid && ! isset( $options[ $uuid ] ) ) { $r = Plugin::store()->get( $uuid ); $options[ $uuid ] = ( $r['data']['title'] ?? 'Unavailable record' ) . ' (current)'; } }
-			} else { foreach ( Taxonomies::choices( $field, $value ) as $choice ) { $options[ $choice ] = $choice; } }
-			echo '<select class="large-text" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name . ( $multiple ? '[]' : '' ) ) . '"' . ( $multiple ? ' multiple size="6"' : '' ) . '>';
-			if ( ! $multiple ) { echo '<option value="">— None —</option>'; }
-			foreach ( $options as $option => $label ) { echo '<option value="' . esc_attr( $option ) . '"' . selected( in_array( (string) $option, array_map( 'strval', (array) $value ), true ), true, false ) . '>' . esc_html( $label ) . '</option>'; }
-			echo '</select>';
-			if ( $multiple ) { echo '<p class="description">Select multiple with Command (Mac) or Ctrl. Use ACF for searchable, ordered record links.</p>'; }
+			FieldPicker::control( $name, $id, $field, $value );
 			if ( ! empty( $field['taxonomy'] ) ) { echo '<p class="description">Reusable category. Network administrators can add choices under Shared Content Network → Categories.</p>'; }
 		} elseif ( ! empty( $field['multiline'] ) ) {
 			$trailer_picker = 'trailers' === $key ? ' data-msc-trailers' : '';

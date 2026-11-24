@@ -44,11 +44,13 @@ Database::lock( 'star-wars-50-takeover-example-' . $site, static function () use
     $overview = '<p>Luke Skywalker leaves Tatooine with Obi-Wan Kenobi after a message from Princess Leia draws him into the fight against the Galactic Empire. With Han Solo, Chewbacca and two droids, he joins the Rebel Alliance on a mission to rescue Leia and stop the Death Star.</p>';
     $poster = array( 'site_id' => $site, 'attachment_id' => $art['poster'] );
     $featured = array( 'site_id' => $site, 'attachment_id' => $art['background'] );
-    $defaults = array( 'release_date' => '1977-05-25', 'runtime' => 121, 'content_rating' => 'PG', 'genres' => array( 'Action', 'Adventure', 'Science Fiction' ), 'content' => $overview, 'poster' => $poster, 'featured_image' => $featured );
+    $defaults = array( 'release_date' => '1977-05-25', 'runtime' => 121, 'content_rating' => 'PG', 'content' => $overview, 'poster' => $poster, 'featured_image' => $featured );
     if ( ! $movie ) {
         $preview = get_page_by_path( $preview_slug, OBJECT, 'msc_movie' );
         $movie = $preview ? $store->by_post( $preview->ID ) : null;
-        $movie = $movie ?: $store->create( 'msc_movie', array( 'title' => 'Star Wars: A New Hope', 'slug' => $preview_slug ) + $defaults );
+        $movie = $movie ?: $store->create( 'msc_movie', array( 'title' => 'Star Wars: A New Hope', 'slug' => $preview_slug,
+            'genres' => array( 'space opera', 'science fiction film', 'action film', 'adventure film', 'coming-of-age film' ),
+        ) + $defaults );
         SharedContent::materializer()->sync( (int) $movie['id'], $site );
         $mapping = $store->mapping( (int) $movie['id'] );
         if ( empty( $mapping['post_id'] ) ) { throw new RuntimeException( 'The local A New Hope movie could not be created.' ); }

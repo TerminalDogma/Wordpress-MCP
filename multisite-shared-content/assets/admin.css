@@ -44,3 +44,7 @@
 
 .msc-timeline-entry-actions { display: flex; align-items: end; flex-wrap: wrap; gap: 5px; }
 .msc-timeline-entry-actions .msc-timeline-field { width: 68px; margin-bottom: 4px; }
+
+.msc-field-picker .description:empty, .msc-field-picker-selected:empty { margin: 0; }
+.msc-field-picker-selected li { display: flex; align-items: baseline; gap: .75em; }
+.msc-field-picker-menu.ui-autocomplete { max-height: 18rem; overflow-y: auto; z-index: 1000; }

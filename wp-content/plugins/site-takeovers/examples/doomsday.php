@@ -41,7 +41,7 @@ Database::lock( 'doomsday-takeover-example-' . $site, static function () use ( $
                 'title' => 'Avengers: Doomsday',
                 'slug' => 'avengers-doomsday-takeover-preview',
                 'content' => '<p>Doctor Doom draws the Avengers into a conflict across realities, bringing them together with the Fantastic Four, the X-Men and heroes from Wakanda.</p>',
-                'genres' => array( 'action film', 'adventure film', 'science fiction film' ),
+                'genres' => array( 'Action', 'Adventure' ),
                 'release_date' => '2026-12-18',
                 'poster' => array( 'site_id' => $site, 'attachment_id' => $art['left'] ),
             ) );
@@ -76,9 +76,6 @@ Database::lock( 'doomsday-takeover-example-' . $site, static function () use ( $
     $film = $store->resolved( $movie['id'] )['data'];
     $values = array();
     if ( empty( $film['release_date'] ) ) { $values['release_date'] = '2026-12-18'; }
-    if ( 'avengers-doomsday-takeover-preview' === get_post_field( 'post_name', $target ) && array( 'Action', 'Adventure' ) === ( $film['genres'] ?? array() ) ) {
-        $values['genres'] = array( 'action film', 'adventure film', 'science fiction film' );
-    }
     $credits = require __DIR__ . '/catalog-credits.php';
     $credits( $movie, $site, 'doomsday', $values );
     WP_CLI::success( 'Doomsday takeover #' . $campaign . ' — ' . get_permalink( $target ) );

@@ -34,9 +34,11 @@ Run `sh bin/shared-content.sh takeover-demo` with Docker Desktop running to inst
 
 Run `sh bin/shared-content.sh star-wars-demo` to refresh Site A’s A New Hope movie and install its separate 50th-anniversary takeover. The sample runs February 12 through February 21, 2027, in the site timezone. The command prints the campaign editor link and the movie URL. The movie lists the February 19 theatrical re-release in its release history. [StarWars.com announcement](https://www.starwars.com/news/star-wars-50th-anniversary-theatrical-release)
 
-The manual WordPress installer `site-takeovers-1.3.0.zip` is built by `python3 tools/package-msc.py`.
+The manual WordPress installer `site-takeovers-1.3.1.zip` is built by `python3 tools/package-msc.py`.
 
-YouTube trailers use their individual video thumbnails automatically. Vimeo trailers show their own player preview. Movie genre labels remove a trailing “film” and use title case on the page.
+YouTube trailers use their individual video thumbnails automatically. Vimeo trailers show their own player preview. Movie pages display genre labels in title case and omit a trailing “film” while keeping the saved category names. On an existing local demo, run `sh bin/shared-content.sh restore-demo-genres` to restore the genre assignments supplied by earlier takeover installers.
+
+In **Shared Content → Manage fields**, type to search for existing genres, categories, and linked records such as actors, directors, writers, and producers. Select each result to add it, and use **Remove** next to a selection to clear it. The ACF editor also provides searchable category and credit fields.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 

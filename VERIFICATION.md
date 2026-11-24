@@ -1,3 +1,7 @@
+# Shared Content 2.10.5 and Site Takeovers 1.3.1 verification
+
+Chromium verified searchable genre, cast and crew fields, keyboard selection, removal, credit order, and saving both global values and local overrides. It also checked the ACF selectors and the public genre lines for Doomsday and A New Hope. The local Doomsday preview inherited its original Action and Adventure categories after the repair. A New Hope already had its original imported categories.
+
 # Site Takeovers 1.3.0 verification
 
 Chromium verified live title and tag search in the campaign editor, keyboard selection, target removal, URL entry, saved selections, and matching preview links. Tagged WordPress posts and Pages matched either of two tags. Checks covered draft and password-protected search exclusions, tag archives, site isolation, nonce enforcement, and precedence from selected pages through tags to the site-wide campaign.

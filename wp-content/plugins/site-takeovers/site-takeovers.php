@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Takeovers
  * Description: Site-wide and page-specific advertising skins with banner and side placements.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * License: GPL-2.0-or-later
@@ -17,7 +17,7 @@ require_once __DIR__ . '/includes/schedule.php';
 final class Plugin {
     public const TYPE = 'sat_campaign';
     public const META = '_sat_campaign';
-    public const VERSION = '1.3.0';
+    public const VERSION = '1.3.1';
     public const PLACEMENTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad' );
     public const SLOTS = self::PLACEMENTS + array( 'background' => 'Page background image', 'logo' => 'Campaign logo' );
     public const COLORS = array(
