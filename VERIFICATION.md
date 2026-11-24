@@ -1,3 +1,9 @@
+# Site Takeovers 1.2.0 verification
+
+The scheduling checks passed for site-timezone conversion, exact start and end boundaries, open-ended periods, invalid dates, nonexistent daylight-saving times, and end times at or before the start. Chromium saved the publishing period through the real editor, checked the public page before, during and after a period, confirmed site-wide and page-specific placement, and checked that only authorized previews showed the scheduled ad. The anniversary sample was restored to February 12 through February 21, 2027.
+
+The A New Hope refresh updated the existing Site A entry. Chromium checked the full wallpaper, official logo and creative on desktop and mobile, three distinct trailer covers, the anniversary release-history row, 13 character credits, and all 20 public People pages and their images. Three images are labeled initials cards.
+
 # Shared Content 2.10.4 and Site Takeovers 1.1.0 verification
 
 The local Site A Doomsday example contains 34 character credits and 11 crew credits. Chromium checked 45 public profile links and image responses, the three distinct official trailer thumbnails, and the movie’s formatted genre line. It verified the wallpaper, three official logos on desktop, one on mobile, reserved side space, and page-only targeting. Six bundled images are labeled initials cards. Re-running the installer reused the campaign and added zero images or publications.

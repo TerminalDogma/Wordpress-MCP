@@ -1,0 +1,340 @@
+{
+  "title": "Star Wars: A New Hope",
+  "sources": [
+    "https://www.starwars.com/films/star-wars-episode-iv-a-new-hope",
+    "https://www.starwars.com/news/star-wars-50th-anniversary-theatrical-release",
+    "https://www.imdb.com/title/tt0076759/fullcredits/"
+  ],
+  "trailers": [
+    "https://www.youtube.com/watch?v=vZ734NWnAHA",
+    "https://www.youtube.com/watch?v=i-vsILeJ8_8",
+    "https://www.youtube.com/watch?v=L-_xHEv0l-w"
+  ],
+  "cast": {
+    "Mark Hamill": "Luke Skywalker",
+    "Harrison Ford": "Han Solo",
+    "Carrie Fisher": "Princess Leia Organa",
+    "Peter Cushing": "Grand Moff Tarkin",
+    "Alec Guinness": "Obi-Wan Kenobi",
+    "Anthony Daniels": "C-3PO",
+    "Kenny Baker": "R2-D2",
+    "Peter Mayhew": "Chewbacca",
+    "David Prowse": "Darth Vader",
+    "James Earl Jones": "Darth Vader (voice)",
+    "Phil Brown": "Owen Lars",
+    "Shelagh Fraser": "Beru Lars",
+    "Denis Lawson": "Wedge Antilles"
+  },
+  "crew": {
+    "directors": [
+      "George Lucas"
+    ],
+    "screenwriters": [
+      "George Lucas"
+    ],
+    "producers": [
+      "Gary Kurtz"
+    ],
+    "cinematographers": [
+      "Gilbert Taylor"
+    ],
+    "film_editors": [
+      "Richard Chew",
+      "Paul Hirsch",
+      "Marcia Lucas"
+    ],
+    "composers": [
+      "John Williams"
+    ]
+  },
+  "people": {
+    "Mark Hamill": {
+      "wikidata": "Q210447",
+      "portrait": {
+        "file": "mark-hamill.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Mark_Hamill_at_Fan_Expo_Anaheim_2026-1_(3x4_cropped).jpg",
+          "attribution": "Mark Hamill at Fan Expo Anaheim 2026-1 (3x4 cropped).jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Kevin Paul",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Harrison Ford": {
+      "wikidata": "Q81328",
+      "portrait": {
+        "file": "harrison-ford.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Harrison_Ford_-_Televerse_2025-03.jpg",
+          "attribution": "Harrison Ford - Televerse 2025-03.jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Kevin Paul",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Carrie Fisher": {
+      "wikidata": "Q108941",
+      "portrait": {
+        "file": "carrie-fisher.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Carrie_Fisher_2013-a_straightened.jpg",
+          "attribution": "Carrie Fisher 2013-a straightened.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "By Riccardo Ghilardi - Crop of File:Actress Carrie Fisher © Riccardo Ghilardi photographer.jpg, CC BY-SA 3.0, https://commons.wikimedia.org/w/index.php?curid=55103929",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Peter Cushing": {
+      "wikidata": "Q309589",
+      "portrait": {
+        "file": "peter-cushing.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Revenge_of_Frankenstein_(trailer)_-_Peter_Cushing_(cropped).png",
+          "attribution": "Revenge of Frankenstein (trailer) - Peter Cushing (cropped).png via Wikimedia Commons",
+          "license": "Public domain",
+          "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+          "credit": "Hammer films",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Alec Guinness": {
+      "wikidata": "Q103894",
+      "aliases": [
+        "Sir Alec Guinness"
+      ],
+      "portrait": {
+        "file": "alec-guinness.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Sir_Alec_Guinness_Allan_Warren.jpg",
+          "attribution": "Sir Alec Guinness Allan Warren.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Allan warren",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Anthony Daniels": {
+      "wikidata": "Q441685",
+      "portrait": {
+        "file": "anthony-daniels.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Anthony_Daniels_2011.jpg",
+          "attribution": "Anthony Daniels 2011.jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Major Nelson",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Kenny Baker": {
+      "wikidata": "Q454081",
+      "aliases": [
+        "Kenny Baker (English actor)"
+      ],
+      "portrait": {
+        "file": "kenny-baker.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Kenny_Baker_at_Star_Wars_Celebration_VI_(7868145702).jpg",
+          "attribution": "Kenny Baker at Star Wars Celebration VI (7868145702).jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Gordon Tarpley from Tampa, USA",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Peter Mayhew": {
+      "wikidata": "Q560552",
+      "portrait": {
+        "file": "peter-mayhew.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Peter_Mayhew_2015.jpg",
+          "attribution": "Peter Mayhew 2015.jpg via Wikimedia Commons",
+          "license": "CC BY 2.0",
+          "license_url": "https://creativecommons.org/licenses/by/2.0",
+          "credit": "Florida Supercon",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "David Prowse": {
+      "wikidata": "Q128379",
+      "portrait": {
+        "file": "david-prowse.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:David_Prowse_2013.jpg",
+          "attribution": "David Prowse 2013.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Xanathon",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "James Earl Jones": {
+      "wikidata": "Q203960",
+      "portrait": {
+        "file": "james-earl-jones.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:James_Earl_Jones_Baltimore.jpg",
+          "attribution": "James Earl Jones Baltimore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 2.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+          "credit": "Kingkongphoto & www.celebrity-photos.com from Laurel",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Phil Brown": {
+      "wikidata": "Q325398",
+      "aliases": [
+        "Phil Brown (actor)"
+      ],
+      "portrait": {
+        "file": "phil-brown.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Phil_Brown_Calling_Dr._Gillespie_trailer.jpg",
+          "attribution": "Phil Brown Calling Dr. Gillespie trailer.jpg via Wikimedia Commons",
+          "license": "Public domain",
+          "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+          "credit": "Trailer screenshot (Metro-Goldwyn-Mayer)",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Shelagh Fraser": {
+      "wikidata": "Q512456",
+      "portrait": {
+        "file": "shelagh-fraser-initials.jpg"
+      }
+    },
+    "Denis Lawson": {
+      "wikidata": "Q1187504",
+      "portrait": {
+        "file": "denis-lawson.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Denis_Lawson_at_Fan_Expo_Anaheim_2026.jpg",
+          "attribution": "Denis Lawson at Fan Expo Anaheim 2026.jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Kevin Paul",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "George Lucas": {
+      "wikidata": "Q38222",
+      "portrait": {
+        "file": "george-lucas.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:George_Lucas_by_Gage_Skidmore.jpg",
+          "attribution": "George Lucas by Gage Skidmore.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+          "credit": "Gage Skidmore",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Gary Kurtz": {
+      "wikidata": "Q1494912",
+      "portrait": {
+        "file": "gary-kurtz.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:GaryKurtz2012.jpg",
+          "attribution": "GaryKurtz2012.jpg via Wikimedia Commons",
+          "license": "CC BY 3.0",
+          "license_url": "https://creativecommons.org/licenses/by/3.0",
+          "credit": "Documentally",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Gilbert Taylor": {
+      "wikidata": "Q182148",
+      "aliases": [
+        "Gil Taylor"
+      ],
+      "portrait": {
+        "file": "gilbert-taylor-initials.jpg"
+      }
+    },
+    "Richard Chew": {
+      "wikidata": "Q542167",
+      "portrait": {
+        "file": "richard-chew.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:RichardChew2013.jpg",
+          "attribution": "RichardChew2013.jpg via Wikimedia Commons",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0",
+          "credit": "Fgeier",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Paul Hirsch": {
+      "wikidata": "Q429973",
+      "aliases": [
+        "Paul Hirsch (film editor)"
+      ],
+      "portrait": {
+        "file": "paul-hirsch.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:Paul_Hirsch_2022_(cropped).jpg",
+          "attribution": "Paul Hirsch 2022 (cropped).jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Lymanunsay",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    },
+    "Marcia Lucas": {
+      "wikidata": "Q463119",
+      "portrait": {
+        "file": "marcia-lucas-initials.jpg"
+      }
+    },
+    "John Williams": {
+      "wikidata": "Q131285",
+      "portrait": {
+        "file": "john-williams.jpg",
+        "source": {
+          "provider": "Wikimedia Commons",
+          "url": "https://commons.wikimedia.org/wiki/File:John_Williams_2024.jpg",
+          "attribution": "John Williams 2024.jpg via Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+          "credit": "Lindseysharpe",
+          "changes": "Resized from the Commons file"
+        }
+      }
+    }
+  }
+}

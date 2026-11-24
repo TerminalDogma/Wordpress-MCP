@@ -1,7 +1,7 @@
 <?php
 /** Create the local, page-only Doomsday takeover example. */
 use MSC\{Database, Plugin as SharedContent, Presentation, Schema};
-use SiteTakeovers\Plugin as Takeovers;
+use SiteTakeovers\{Plugin as Takeovers, Schedule};
 
 if ( 'local' !== wp_get_environment_type() || ! current_user_can( 'manage_options' ) || ! current_user_can( 'upload_files' ) || ! class_exists( SharedContent::class ) || ! Schema::enabled( 'msc_movie' ) ) {
     WP_CLI::error( 'Run this example as a site administrator on a local site with Movies enabled.' );
@@ -16,31 +16,13 @@ Database::lock( 'doomsday-takeover-example-' . $site, static function () use ( $
     $campaign = (int) ( $existing[0]->ID ?? 0 );
     $settings = $campaign ? Takeovers::read( $campaign ) : array();
 
-    require_once ABSPATH . 'wp-admin/includes/image.php';
-    $art = array();
-    $assets = array( 'banner' => array( 'doomsday-banner.webp', 'Top banner' ), 'left' => array( 'doomsday-rail.webp', 'Side ads' ),
-        'background' => array( 'doomsday-wallpaper.webp', 'Page background' ), 'logo' => array( 'doomsday-logo.webp', 'Official Marvel Studios logo' ) );
-    foreach ( $assets as $slot => list( $name, $label ) ) {
-        $path = __DIR__ . '/' . $name;
-        if ( ! is_readable( $path ) ) { throw new RuntimeException( 'The bundled Doomsday artwork is missing.' ); }
-        $media = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => '_sat_demo_asset', 'meta_value' => $name ) );
-        if ( $media && is_file( (string) get_attached_file( $media[0] ) ) ) { $art[ $slot ] = (int) $media[0]; continue; }
-
-        $upload = wp_upload_bits( $name, null, file_get_contents( $path ) );
-        if ( $upload['error'] ) { throw new RuntimeException( $upload['error'] ); }
-        $id = wp_insert_attachment( array(
-            'post_title' => 'Avengers Doomsday demo — ' . $label,
-            'post_mime_type' => 'image/webp', 'post_status' => 'inherit',
-            'post_content' => 'logo' === $slot ? 'Marvel Studios artwork from https://www.marvel.com/movies/avengers-doomsday' : '',
-            'meta_input' => array( '_sat_demo_asset' => $name, '_wp_attachment_image_alt' => 'logo' === $slot ? 'Marvel Studios Avengers: Doomsday' : 'Emerald and brass Doomsday concept artwork' ),
-        ), $upload['file'], 0, true );
-        if ( is_wp_error( $id ) ) {
-            wp_delete_file( $upload['file'] );
-            throw new RuntimeException( $id->get_error_message() );
-        }
-        wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $upload['file'] ) );
-        $art[ $slot ] = $id;
-    }
+    $install_art = require __DIR__ . '/demo-art.php';
+    $art = $install_art( 'Avengers: Doomsday', array(
+        'banner' => array( 'doomsday-banner.webp', 'Top banner' ),
+        'left' => array( 'doomsday-rail.webp', 'Side ads' ),
+        'background' => array( 'doomsday-wallpaper.webp', 'Page background' ),
+        'logo' => array( 'doomsday-logo.webp', 'Official Marvel Studios logo', array( 'source_page' => 'https://www.marvel.com/movies/avengers-doomsday', 'credit' => 'Marvel Studios' ) ),
+    ) );
     $art['right'] = $art['left'];
 
     $store = SharedContent::store();
@@ -88,8 +70,16 @@ Database::lock( 'doomsday-takeover-example-' . $site, static function () use ( $
     $targets = array_filter( $settings['targets'], static fn( $id ) => 'avengers-doomsday-takeover-preview' !== get_post_field( 'post_name', $id ) );
     $settings['targets'] = implode( "\n", array_unique( array( $target, ...$targets ) ) );
     $settings['art'] += $art;
+    $settings['window'] = array_map( array( Schedule::class, 'format' ), $settings['window'] ?? array() );
     Takeovers::save( $campaign, $settings );
-    $credits = require __DIR__ . '/doomsday-credits.php';
-    $credits( $store->by_post( $target ), $site );
+    $movie = $store->by_post( $target );
+    $film = $store->resolved( $movie['id'] )['data'];
+    $values = array();
+    if ( empty( $film['release_date'] ) ) { $values['release_date'] = '2026-12-18'; }
+    if ( 'avengers-doomsday-takeover-preview' === get_post_field( 'post_name', $target ) && array( 'Action', 'Adventure' ) === ( $film['genres'] ?? array() ) ) {
+        $values['genres'] = array( 'action film', 'adventure film', 'science fiction film' );
+    }
+    $credits = require __DIR__ . '/catalog-credits.php';
+    $credits( $movie, $site, 'doomsday', $values );
     WP_CLI::success( 'Doomsday takeover #' . $campaign . ' — ' . get_permalink( $target ) );
 } );

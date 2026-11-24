@@ -2,6 +2,7 @@ body.sat-active {
     --sat-width: 1120px;
     --sat-gap: 14px;
     --sat-rail: clamp(112px, 10.8vw, 160px);
+    --sat-shade: color-mix(in srgb, var(--sat-header) 46%, #020305);
     --bg: var(--sat-surface);
     --text: var(--sat-text);
     --accent: var(--sat-accent);
@@ -78,7 +79,7 @@ body.sat-active {
     position: absolute;
     z-index: -1;
     inset: 0;
-    background: linear-gradient(90deg, #08130df8 4%, #08130dc9 43%, #08130d05 80%);
+    background: linear-gradient(90deg, var(--sat-shade) 4%, color-mix(in srgb, var(--sat-shade) 86%, transparent) 43%, transparent 80%);
 }
 .sat-copy {
     box-sizing: border-box;
@@ -109,6 +110,7 @@ body.sat-active {
     text-transform: uppercase;
 }
 .sat-copy .sat-headline { color: #f8fbf0; font-size: clamp(1.65rem, 4vw, 3.3rem); font-weight: 900; line-height: .98; letter-spacing: -.05em; text-transform: uppercase; }
+.sat-copy .sat-tagline { max-width: 36ch; color: #fff1d6; font: 700 clamp(.97rem, 1.45vw, 1.22rem)/1.25 system-ui, sans-serif; text-wrap: balance; }
 .sat-copy .sat-message { color: #e8eed9; font-size: .81rem; font-weight: 650; }
 .sat-cta {
     display: inline-flex;
@@ -132,7 +134,7 @@ body.sat-active {
     .sat-left, .sat-right { display: block; position: absolute; top: 12px; width: var(--sat-rail); }
     .sat-left { right: calc(100% + var(--sat-gap)); }
     .sat-right { left: calc(100% + var(--sat-gap)); }
-    :is(.sat-left, .sat-right) .sat-creative:has(.sat-copy)::before { background: linear-gradient(0deg, #08130dfc 14%, #08130dd7 38%, #08130d00 70%); }
+    :is(.sat-left, .sat-right) .sat-creative:has(.sat-copy)::before { background: linear-gradient(0deg, var(--sat-shade) 18%, color-mix(in srgb, var(--sat-shade) 85%, transparent) 39%, transparent 80%); }
     .sat-right .sat-image { object-position: 62% center; }
     :is(.sat-left, .sat-right) .sat-copy {
         justify-content: flex-end;
@@ -141,6 +143,7 @@ body.sat-active {
     }
     :is(.sat-left, .sat-right) .sat-logo { width: 100%; height: auto; }
     :is(.sat-left, .sat-right) .sat-headline { font-size: clamp(1rem, 1.6vw, 1.45rem); }
+    :is(.sat-left, .sat-right) .sat-tagline { font-size: .78rem; }
     :is(.sat-left, .sat-right) .sat-message { font-size: .69rem; }
 }
 
@@ -148,5 +151,5 @@ body.sat-active {
     body.sat-has-wallpaper { background-size: auto 110svh; background-repeat: no-repeat; }
     .sat-stage { width: calc(100% - 28px); }
     .sat-copy { padding: .85rem; }
-    .sat-creative:has(.sat-copy)::before { background: linear-gradient(90deg, #08130df9 5%, #08130da8 70%, #08130d30 100%); }
+    .sat-creative:has(.sat-copy)::before { background: linear-gradient(90deg, var(--sat-shade) 5%, color-mix(in srgb, var(--sat-shade) 70%, transparent) 76%, transparent); }
 }

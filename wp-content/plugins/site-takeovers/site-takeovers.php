@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Takeovers
  * Description: Site-wide and page-specific advertising skins with banner and side placements.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * License: GPL-2.0-or-later
@@ -12,11 +12,12 @@
 namespace SiteTakeovers;
 
 defined( 'ABSPATH' ) || exit;
+require_once __DIR__ . '/includes/schedule.php';
 
 final class Plugin {
     public const TYPE = 'sat_campaign';
     public const META = '_sat_campaign';
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.2.0';
     public const PLACEMENTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad' );
     public const SLOTS = self::PLACEMENTS + array( 'background' => 'Page background image', 'logo' => 'Campaign logo' );
     public const COLORS = array(
@@ -28,9 +29,12 @@ final class Plugin {
     );
     private static ?array $active = null;
     private static bool $resolved = false;
+    private static bool $private_preview = false;
+    private static bool $time_sensitive = false;
 
     public static function boot(): void {
         add_action( 'init', array( self::class, 'register' ) );
+        add_action( 'template_redirect', array( self::class, 'cache_headers' ), 0 );
         add_action( 'wp_enqueue_scripts', array( self::class, 'styles' ), 45 );
         add_filter( 'body_class', array( self::class, 'body_class' ) );
         add_action( 'msc_screening_room_after_header', array( self::class, 'render' ) );
@@ -91,6 +95,7 @@ final class Plugin {
         $settings = array(
             'scope' => in_array( $scope, array( 'off', 'site', 'pages' ), true ) ? $scope : 'off',
             'targets' => array(), 'colors' => array(), 'art' => array(), 'links' => array(),
+            'window' => Schedule::from_input( (array) ( $input['window'] ?? array() ) ),
         );
         $targets = $input['targets'] ?? '';
         if ( is_scalar( $targets ) ) {
@@ -114,11 +119,47 @@ final class Plugin {
             if ( isset( self::PLACEMENTS[ $key ] ) ) { $settings['links'][ $key ] = self::url( $input['links'][ $key ] ?? '' ); }
         }
         $settings['destination'] = self::url( $input['destination'] ?? '' );
-        foreach ( array( 'brand' => 60, 'headline' => 100, 'message' => 140, 'cta' => 36 ) as $key => $length ) {
+        foreach ( array( 'brand' => 60, 'headline' => 100, 'tagline' => 120, 'message' => 140, 'cta' => 36 ) as $key => $length ) {
             $text = $input[ $key ] ?? '';
             $settings[ $key ] = is_string( $text ) ? mb_substr( sanitize_text_field( $text ), 0, $length ) : '';
         }
         update_post_meta( $id, self::META, wp_slash( $settings ) );
+    }
+
+    private static function matches( array $data, int $target ): bool {
+        $scope = $data['scope'] ?? 'off';
+        return 'site' === $scope || ( 'pages' === $scope && $target && in_array( $target, $data['targets'] ?? array(), true ) );
+    }
+
+    public static function preview_url( int $id ): string {
+        $data = self::read( $id );
+        $url = 'site' === ( $data['scope'] ?? '' ) ? home_url( '/' ) : '';
+        foreach ( $data['targets'] ?? array() as $target ) {
+            if ( $url ) { break; }
+            $post = get_post( $target );
+            if ( $post && 'publish' === $post->post_status && ! $post->post_password && self::matches( $data, $target ) ) { $url = get_permalink( $post ); }
+        }
+        return $url ? add_query_arg( array( 'sat_preview' => $id, 'sat_preview_nonce' => wp_create_nonce( 'sat_preview_' . get_current_blog_id() . '_' . $id ) ), $url ) : '';
+    }
+
+    private static function preview( int $target ): ?array {
+        $raw_id = $_GET['sat_preview'] ?? null;
+        $nonce = $_GET['sat_preview_nonce'] ?? null;
+        if ( ! is_string( $raw_id ) || ! ctype_digit( $raw_id ) || ! is_string( $nonce ) || ! current_user_can( 'manage_options' ) ) { return null; }
+        $id = (int) $raw_id;
+        $post = get_post( $id );
+        if ( ! $id || ! $post || self::TYPE !== $post->post_type || ! in_array( $post->post_status, array( 'publish', 'draft', 'pending', 'private', 'future' ), true ) || ! current_user_can( 'edit_post', $id ) || ! wp_verify_nonce( wp_unslash( $nonce ), 'sat_preview_' . get_current_blog_id() . '_' . $id ) ) { return null; }
+        $data = self::read( $id );
+        return self::matches( $data, $target ) ? $data + array( 'title' => get_the_title( $post ) ) : null;
+    }
+
+    public static function cache_headers(): void {
+        self::active();
+        if ( self::$private_preview || self::$time_sensitive ) {
+            if ( ! defined( 'DONOTCACHEPAGE' ) ) { define( 'DONOTCACHEPAGE', true ); }
+            nocache_headers();
+        }
+        if ( self::$private_preview ) { add_filter( 'wp_robots', 'wp_robots_no_robots' ); }
     }
 
     public static function active(): ?array {
@@ -126,22 +167,28 @@ final class Plugin {
         self::$resolved = true;
         if ( is_admin() || is_feed() || is_embed() || is_404() || is_preview() || ( is_singular() && post_password_required() ) ) { return null; }
         $target = is_singular() ? get_queried_object_id() : 0;
+        if ( $preview = self::preview( $target ) ) {
+            self::$private_preview = true;
+            return self::$active = $preview;
+        }
         $campaigns = get_posts( array(
             'post_type' => self::TYPE, 'post_status' => 'publish', 'numberposts' => -1,
             'orderby' => array( 'modified' => 'DESC', 'ID' => 'DESC' ),
         ) );
-        $site = null;
+        $site = $page = null;
+        $now = time();
         foreach ( $campaigns as $post ) {
             $data = self::read( (int) $post->ID );
-            $scope = $data['scope'] ?? 'off';
-            if ( 'off' === $scope ) { continue; }
+            if ( ! self::matches( $data, $target ) ) { continue; }
+            $window = $data['window'] ?? array();
+            $state = Schedule::state( $window, $now );
+            if ( 'Ended' !== $state && ( isset( $window['start'] ) || isset( $window['end'] ) ) ) { self::$time_sensitive = true; }
+            if ( 'Running' !== $state ) { continue; }
             $data['title'] = get_the_title( $post );
-            if ( 'pages' === $scope && $target && in_array( $target, $data['targets'] ?? array(), true ) ) {
-                return self::$active = $data;
-            }
-            if ( 'site' === $scope && ! $site ) { $site = $data; }
+            if ( 'pages' === $data['scope'] ) { $page ??= $data; }
+            else { $site ??= $data; }
         }
-        return self::$active = $site;
+        return self::$active = $page ?? $site;
     }
 
     private static function has_rails( array $data ): bool {
@@ -202,6 +249,7 @@ final class Plugin {
                                     <?php if ( $data['brand'] ) { ?><p class="sat-brand"><?php echo esc_html( $data['brand'] ); ?></p><?php } ?>
                                     <p class="sat-headline"><?php echo esc_html( $data['headline'] ); ?></p>
                                 <?php } ?>
+                                <?php if ( ! empty( $data['tagline'] ) ) { ?><p class="sat-tagline"><?php echo esc_html( $data['tagline'] ); ?></p><?php } ?>
                                 <?php if ( $data['message'] ) { ?><p class="sat-message"><?php echo esc_html( $data['message'] ); ?></p><?php } ?>
                                 <?php if ( $data['cta'] && $destination ) { ?><span class="sat-cta"><?php echo esc_html( $data['cta'] ); ?> <span aria-hidden="true">↗</span></span><?php } ?>
                             </div>

@@ -1,11 +1,12 @@
 <?php
-/** Complete the Doomsday example using site-local overrides and publication. */
+/** Complete a local campaign's movie credits through site overrides and publication. */
 use MSC\{CastRoles, PersonIdentity, Plugin, Presentation, Schema};
 
-return static function ( array $movie, int $site ): void {
+return static function ( array $movie, int $site, string $example, array $movie_values = array() ): void {
     $store = Plugin::store();
     $film = $store->resolved( $movie['id'] );
-    $sample = json_decode( file_get_contents( __DIR__ . '/doomsday-credits.json' ), true, 32, JSON_THROW_ON_ERROR );
+    $sample = json_decode( file_get_contents( __DIR__ . '/' . $example . '-credits.json' ), true, 32, JSON_THROW_ON_ERROR );
+    $media_key = '_sat_' . str_replace( '-', '_', $example ) . '_portrait';
     $groups = array( 'actors' => array_keys( $sample['cast'] ) ) + $sample['crew'];
     $professions = array( 'actors' => 'Actor', 'directors' => 'Director', 'screenwriters' => 'Writer', 'producers' => 'Producer',
         'cinematographers' => 'Cinematographer', 'film_editors' => 'Editor', 'composers' => 'Composer' );
@@ -13,9 +14,10 @@ return static function ( array $movie, int $site ): void {
     foreach ( $sample['people'] as $name => $info ) {
         foreach ( array( $name, ...( $info['aliases'] ?? array() ) ) as $alias ) { $keys[ PersonIdentity::name( $alias ) ] = $name; }
     }
-    $linked = $names = $jobs = $updated = array();
+    $linked = $names = $jobs = array();
+    $updated = $movie_values;
     foreach ( $groups as $field => $list ) {
-        $linked[ $field ] = $film['data'][ $field ] ?? array();
+        $linked[ $field ] = $movie_values[ $field ] ?? $film['data'][ $field ] ?? array();
         foreach ( $linked[ $field ] as $uuid ) {
             $person = $store->get( $uuid );
             if ( ! $person || 'active' !== $person['state'] || 'msc_person' !== $person['type'] ) { continue; }
@@ -79,14 +81,14 @@ return static function ( array $movie, int $site ): void {
                 $portrait = $sample['people'][ $canonical ]['portrait'] ?? null;
                 if ( $portrait ) {
                     $asset = $portrait['file'];
-                    $existing = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => '_sat_doomsday_portrait', 'meta_value' => $asset ) );
+                    $existing = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => $media_key, 'meta_value' => $asset ) );
                     $id = (int) ( $existing[0] ?? 0 );
                     if ( ! $id || ! is_file( (string) get_attached_file( $id ) ) ) {
-                        $bytes = file_get_contents( __DIR__ . '/doomsday-portraits/' . $asset );
+                        $bytes = file_get_contents( __DIR__ . '/' . $example . '-portraits/' . $asset );
                         if ( ! $bytes || 'image/jpeg' !== ( getimagesizefromstring( $bytes )['mime'] ?? '' ) ) { throw new RuntimeException( 'Invalid portrait file for ' . $name ); }
                         $upload = wp_upload_bits( $asset, null, $bytes );
                         if ( $upload['error'] ) { throw new RuntimeException( $upload['error'] ); }
-                        $meta = array( '_sat_doomsday_portrait' => $asset, '_wp_attachment_image_alt' => isset( $portrait['source'] ) ? $name : $name . ' — initials artwork' );
+                        $meta = array( $media_key => $asset, '_wp_attachment_image_alt' => isset( $portrait['source'] ) ? $name : $name . ' — initials artwork' );
                         if ( isset( $portrait['source'] ) ) { $meta['_msc_open_source'] = $portrait['source']; }
                         $id = wp_insert_attachment( wp_slash( array(
                             'post_title' => $name . ( isset( $portrait['source'] ) ? ' portrait' : ' initials artwork' ),
@@ -110,7 +112,8 @@ return static function ( array $movie, int $site ): void {
                 if ( $status && 'publish' === get_post_status( (int) $mapping['post_id'] ) ) { ++$published; }
             }
         }
-        $roles = CastRoles::by_actor( $film['data']['cast_roles'] ?? '' );
+        $saved_roles = $movie_values['cast_roles'] ?? $film['data']['cast_roles'] ?? '';
+        $roles = CastRoles::by_actor( $saved_roles );
         $lines = array();
         foreach ( $linked['actors'] as $uuid ) {
             $person = $store->resolved( $uuid );
@@ -120,7 +123,7 @@ return static function ( array $movie, int $site ): void {
             $role = $roles[ $key ] ?? $sample['cast'][ $keys[ $key ] ?? $name ] ?? '';
             if ( $role ) { $lines[ $key ] = $name . ' | ' . $role; }
         }
-        foreach ( preg_split( '/\R/u', $film['data']['cast_roles'] ?? '', -1, PREG_SPLIT_NO_EMPTY ) as $line ) {
+        foreach ( preg_split( '/\R/u', $saved_roles, -1, PREG_SPLIT_NO_EMPTY ) as $line ) {
             $key = PersonIdentity::name( trim( explode( '|', $line, 2 )[0] ) );
             $lines[ $key ] ??= $line;
         }
@@ -128,10 +131,6 @@ return static function ( array $movie, int $site ): void {
         foreach ( $linked as $field => $uuids ) { $updated[ $field ] = array_values( array_unique( $uuids ) ); }
     }
     if ( empty( $film['data']['trailers'] ) ) { $updated['trailers'] = implode( "\n", $sample['trailers'] ); }
-    if ( empty( $film['data']['release_date'] ) ) { $updated['release_date'] = '2026-12-18'; }
-    if ( 'avengers-doomsday-takeover-preview' === get_post_field( 'post_name', $film['mapping']['post_id'] ) && array( 'Action', 'Adventure' ) === ( $film['data']['genres'] ?? array() ) ) {
-        $updated['genres'] = array( 'action film', 'adventure film', 'science fiction film' );
-    }
     $updated = array_filter( $updated, static fn( $value, $key ) => $value !== ( $film['data'][ $key ] ?? null ), ARRAY_FILTER_USE_BOTH );
     if ( $updated ) { $store->local( $movie['uuid'], $updated, array(), (int) $film['mapping']['local_version'] ); }
     WP_CLI::log( sprintf( '%d linked profiles checked. Added %d profile images and published %d drafts.', $checked, $photos, $published ) );
