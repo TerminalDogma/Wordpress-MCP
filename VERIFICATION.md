@@ -1,3 +1,7 @@
+# Shared Content 2.11.0 verification
+
+Chromium verified visual formatting in Description and Synopsis, genre selection chips, bounded rating and status menus, and a single Person row with multiple roles. Both admin forms saved the unified credits. The ACF form also verified a local-only credit change. The fixture retained its original legacy rating and status on an unrelated save and accepted specific release choices later. All 30 ACF adapter checks passed, including formatted content, global and local credits, and the authenticated save endpoint.
+
 # Shared Content 2.10.5 and Site Takeovers 1.3.1 verification
 
 Chromium verified searchable genre, cast and crew fields, keyboard selection, removal, credit order, and saving both global values and local overrides. It also checked the ACF selectors and the public genre lines for Doomsday and A New Hope. The local Doomsday preview inherited its original Action and Adventure categories after the repair. A New Hope already had its original imported categories.

@@ -1,5 +1,6 @@
 (() => {
     const $ = window.jQuery;
+    window.mscLookupFields = (type, term) => $.getJSON(window.ajaxurl, {action: 'msc_field_picker', nonce: mscFieldPicker.nonce, type, term});
     document.querySelectorAll('.msc-field-picker').forEach(picker => {
         const config = JSON.parse(picker.dataset.picker);
         const value = picker.querySelector('input[type="hidden"]');
@@ -16,8 +17,8 @@
                 text.textContent = label;
                 const remove = document.createElement('button');
                 remove.type = 'button';
-                remove.className = 'button-link-delete';
-                remove.textContent = 'Remove';
+                remove.className = 'msc-chip-remove';
+                remove.textContent = '×';
                 remove.setAttribute('aria-label', `Remove ${label}`);
                 remove.addEventListener('click', () => {
                     selected.delete(id);
@@ -46,7 +47,7 @@
                     show(config.choices.filter(item => item.label.toLocaleLowerCase().includes(query)));
                     return;
                 }
-                $.getJSON(window.ajaxurl, {action: 'msc_field_picker', nonce: mscFieldPicker.nonce, type: config.target, term})
+                window.mscLookupFields(config.target, term)
                     .done(show)
                     .fail(() => {
                         if (input.val() === term) status.textContent = 'Search unavailable. Try again.';

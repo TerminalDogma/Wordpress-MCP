@@ -14,9 +14,10 @@ final class Admin {
 		add_filter( 'post_row_actions', static function ( $actions, $post ) { if ( isset( Schema::all()[ $post->post_type ] ) && current_user_can( 'msc_edit_global' ) && current_user_can( 'msc_override_local' ) && Plugin::store()->by_post( $post->ID ) ) { $actions['msc_edit_locally'] = '<a href="' . esc_url( admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) ) . '">Edit locally (WordPress)</a>'; } return $actions; }, 30, 2 );
 		add_action( 'admin_enqueue_scripts', static function () {
 			wp_enqueue_style( 'msc-admin', plugins_url( 'assets/admin.css', MSC_FILE ), array(), MSC_VERSION );
-			if ( 'msc' === ( $_GET['page'] ?? '' ) ) {
+			if ( in_array( $_GET['page'] ?? '', array( 'msc', 'msc-acf' ), true ) ) {
 				wp_enqueue_script( 'msc-field-picker', plugins_url( 'assets/field-picker.js', MSC_FILE ), array( 'jquery-ui-autocomplete' ), MSC_VERSION, true );
 				wp_localize_script( 'msc-field-picker', 'mscFieldPicker', array( 'nonce' => wp_create_nonce( 'msc_field_picker_' . get_current_blog_id() ) ) );
+				wp_enqueue_script( 'msc-credit-editor', plugins_url( 'assets/credit-editor.js', MSC_FILE ), array( 'msc-field-picker' ), MSC_VERSION, true );
 			}
 			if ( in_array( $_GET['page'] ?? '', array( 'msc-import', 'msc-omdb' ), true ) ) { wp_enqueue_script( 'msc-import-selection', plugins_url( 'assets/import-selection.js', MSC_FILE ), array(), MSC_VERSION, true ); }
 			if ( in_array( $_GET['page'] ?? '', array( 'msc', 'msc-acf' ), true ) ) {
@@ -60,15 +61,20 @@ final class Admin {
 		if ( 'release_dates' === $key && 'json' === $type ) { GameFields::control( (array) $value ); return; }
 		if ( in_array( $type, array( 'media', 'media_list' ), true ) ) {
 			Media::control( $name, $id, $value, 'media_list' === $type, $key );
+		} elseif ( 'richtext' === $type ) {
+			wp_editor( (string) $value, $id, array( 'textarea_name' => $name, 'textarea_rows' => 6, 'media_buttons' => false, 'teeny' => true, 'quicktags' => false ) );
+		} elseif ( null !== ( $choices = Taxonomies::fixed_choices( $field, $value ) ) ) {
+			echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '"><option value="">Select an option</option>';
+			foreach ( $choices as $choice ) { echo '<option value="' . esc_attr( $choice ) . '"' . selected( $choice, $value, false ) . '>' . esc_html( $choice ) . '</option>'; }
+			echo '</select>';
 		} elseif ( ! empty( $field['taxonomy'] ) || 'multiselect' === $type && ! empty( $field['options'] ) || in_array( $type, array( 'relationship', 'relationship_list' ), true ) ) {
 			FieldPicker::control( $name, $id, $field, $value );
 			if ( ! empty( $field['taxonomy'] ) ) { echo '<p class="description">Reusable category. Network administrators can add choices under Shared Content Network → Categories.</p>'; }
 		} elseif ( ! empty( $field['multiline'] ) ) {
 			$trailer_picker = 'trailers' === $key ? ' data-msc-trailers' : '';
 			echo '<textarea' . $trailer_picker . ' class="large-text" rows="4" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( (string) $value ) . '</textarea><p class="description">' . esc_html( $field['instructions'] ?? '' ) . '</p>';
-		} elseif ( in_array( $type, array( 'richtext', 'json', 'multiselect' ), true ) ) {
-			echo '<textarea class="large-text" rows="' . ( 'richtext' === $type ? 5 : 3 ) . '" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( self::text( $value ) ) . '</textarea>';
-			if ( 'richtext' !== $type ) { echo '<p class="description">JSON array or object.</p>'; }
+		} elseif ( in_array( $type, array( 'json', 'multiselect' ), true ) ) {
+			echo '<textarea class="large-text" rows="3" id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">' . esc_textarea( self::text( $value ) ) . '</textarea><p class="description">JSON array or object.</p>';
 		} elseif ( 'boolean' === $type || 'select' === $type && ! empty( $field['options'] ) ) {
 			$options = 'boolean' === $type ? array( '0', '1' ) : $field['options'];
 			echo '<select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">';
@@ -81,7 +87,7 @@ final class Admin {
 		}
 	}
 	public static function page(): void {
-		echo '<div class="wrap msc"><h1>Shared Content</h1><p>Global information is shared across participating sites. Local overrides affect only this website.</p>';
+		echo '<div class="wrap msc msc-record-editor"><h1>Shared Content</h1><p>Global information is shared across participating sites. Local overrides affect only this website.</p>';
 		$available = array_values( array_filter( array_keys( Schema::all() ), static fn( $t ) => Schema::enabled( $t ) ) );
 		$type = sanitize_key( $_GET['type'] ?? ( $available[0] ?? 'msc_show' ) );
 		try { $schema = Schema::get( $type ); } catch ( \Throwable $e ) { echo '<p>Unknown type.</p></div>'; return; }
@@ -115,20 +121,40 @@ final class Admin {
 		}
 		echo '<div class="notice notice-' . ( $global ? 'warning' : 'info' ) . ' inline"><p><strong>' . ( $global ? 'GLOBAL EDITING — Saving changes shared information for every participating website.' : 'LOCAL EDITING — Only this website changes. Uncheck Override to reset a field to the latest global value.' ) . '</strong></p></div>';
 		self::form_start( $global ? 'global' : 'local' ); self::hidden( 'type', $type ); self::hidden( 'record', $r['uuid'] ?? '' ); self::hidden( 'version', $r['version'] ?? 0 ); self::hidden( 'local_version', $r['mapping']['local_version'] ?? 0 );
-		echo '<table class="form-table msc-fields"><tbody>';
+		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
+		$sections = array( 'Overview' => array(), 'Catalog details' => array(), 'Artwork and trailers' => array(), 'Additional settings' => array() );
 		foreach ( $schema['fields'] as $key => $field ) {
-			if ( ! empty( $field['hidden'] ) ) { continue; }
-			$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : ( Comics::defaults( $type )[ $key ] ?? '' ) );
-			if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
-			echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ) . '</label></th><td>';
-			if ( ! $global ) {
-				echo '<details><summary>Global value · ' . ( array_key_exists( $key, $r['overrides'] ) ? 'Overridden here' : 'Inherited' ) . '</summary>'; if ( in_array( $field['type'], array( 'media', 'media_list' ), true ) ) { echo '<div class="msc-media-previews">' . Media::previews( $r['global'][ $key ] ?? array(), 'media_list' === $field['type'] ) . '</div>'; } else { echo '<pre>' . esc_html( self::text( $r['global'][ $key ] ?? '' ) ) . '</pre>'; } echo '</details>';
-				if ( false === ( $field['override'] ?? true ) ) { echo '<p>Network locked; local overrides disabled.</p></td></tr>'; continue; }
-				echo '<label><input type="checkbox" name="override[' . esc_attr( $key ) . ']" value="1" ' . checked( array_key_exists( $key, $r['overrides'] ), true, false ) . '> Override on this site (including an intentionally empty value)</label>';
-			}
-			self::input( $key, $field, $value ); echo '</td></tr>';
+			if ( ! empty( $field['hidden'] ) || in_array( $key, $managed, true ) ) { continue; }
+			$section = match ( true ) {
+				in_array( $key, array( 'title', 'original_title', 'content', 'excerpt', 'editorial_synopsis', 'spoiler_synopsis', 'film_logline', 'film_tagline' ), true ) => 'Overview',
+				in_array( $field['type'], array( 'media', 'media_list' ), true ) || in_array( $key, array( 'trailers', 'trailer_source_url' ), true ) => 'Artwork and trailers',
+				in_array( $key, array( 'slug', 'external_ids', 'additional_metadata', 'seo_title', 'seo_description' ), true ) => 'Additional settings',
+				default => 'Catalog details',
+			};
+			$sections[ $section ][ $key ] = $field;
 		}
-		echo '</tbody></table>';
+		foreach ( $sections as $heading => $fields ) {
+			if ( ! $fields ) { continue; }
+			echo '<section class="msc-editor-section"><h2>' . esc_html( $heading ) . '</h2><table class="form-table msc-fields"><tbody>';
+			foreach ( $fields as $key => $field ) {
+				$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : ( Comics::defaults( $type )[ $key ] ?? '' ) );
+				if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
+				echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ) . '</label></th><td>';
+				if ( ! $global ) {
+					echo '<details><summary>Global value · ' . ( array_key_exists( $key, $r['overrides'] ) ? 'Overridden here' : 'Inherited' ) . '</summary>';
+					if ( in_array( $field['type'], array( 'media', 'media_list' ), true ) ) { echo '<div class="msc-media-previews">' . Media::previews( $r['global'][ $key ] ?? array(), 'media_list' === $field['type'] ) . '</div>'; }
+					elseif ( 'richtext' === $field['type'] ) { echo wp_kses_post( wpautop( $r['global'][ $key ] ?? '' ) ); }
+					else { echo '<pre>' . esc_html( self::text( $r['global'][ $key ] ?? '' ) ) . '</pre>'; }
+					echo '</details>';
+					if ( false === ( $field['override'] ?? true ) ) { echo '<p>Network locked; local overrides disabled.</p></td></tr>'; continue; }
+					echo '<label><input type="checkbox" name="override[' . esc_attr( $key ) . ']" value="1" ' . checked( array_key_exists( $key, $r['overrides'] ), true, false ) . '> Override on this site (including an intentionally empty value)</label>';
+				}
+				self::input( $key, $field, $value ); echo '</td></tr>';
+			}
+			echo '</tbody></table></section>';
+			if ( 'Overview' === $heading ) { CreditEditor::control( $schema, ( $global ? $r['global'] : $r['data'] ) ?? array(), $r['overrides'] ?? array(), $global, 'fields' ); }
+		}
+		if ( ! $sections['Overview'] ) { CreditEditor::control( $schema, ( $global ? $r['global'] : $r['data'] ) ?? array(), $r['overrides'] ?? array(), $global, 'fields' ); }
 		if ( ! $global && current_user_can( 'msc_publish_local' ) ) {
 			echo '<label>Publish on this website <select name="status">';
 			foreach ( array( 'draft', 'publish', 'private', 'unpublished', 'removed' ) as $status ) { echo '<option ' . selected( $r['mapping']['status'], $status, false ) . '>' . esc_html( $status ) . '</option>'; }
@@ -190,7 +216,9 @@ final class Admin {
 			$id = sanitize_text_field( $_POST['record'] ?? '' ); $r = $id ? Plugin::store()->get( $id ) : null;
 			if ( in_array( $action, array( 'global', 'local' ), true ) ) {
 				$type = $r['type'] ?? sanitize_key( $_POST['type'] ?? '' ); $schema = Schema::get( $type ); $values = array(); $reset = array();
+				$legacy = CreditEditor::legacy( $schema );
 				foreach ( $schema['fields'] as $key => $field ) {
+					if ( in_array( $key, $legacy, true ) ) { continue; }
 					if ( 'local' === $action && empty( $_POST['override'][ $key ] ) ) { if ( false !== ( $field['override'] ?? true ) ) { $reset[] = $key; } continue; }
 					$value = wp_unslash( $_POST['fields'][ $key ] ?? '' );
 					if ( in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = is_array( $value ) ? $value : json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }

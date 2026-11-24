@@ -38,7 +38,7 @@ The manual WordPress installer `site-takeovers-1.3.1.zip` is built by `python3 t
 
 YouTube trailers use their individual video thumbnails automatically. Vimeo trailers show their own player preview. Movie pages display genre labels in title case and omit a trailing “film” while keeping the saved category names. On an existing local demo, run `sh bin/shared-content.sh restore-demo-genres` to restore the genre assignments supplied by earlier takeover installers.
 
-In **Shared Content → Manage fields**, type to search for existing genres, categories, and linked records such as actors, directors, writers, and producers. Select each result to add it, and use **Remove** next to a selection to clear it. The ACF editor also provides searchable category and credit fields.
+In **Shared Content → Manage fields** and the ACF editor, use the visual editors for descriptions and synopses. Search categories by name and use the remove button on a selection to clear it. In **Cast and crew**, find a Person once and assign all of their roles on the same row, including an actor’s character. Movie ratings and release statuses use controlled menus. Network administrators can add choices under **Shared Content Network → Categories**.
 
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 

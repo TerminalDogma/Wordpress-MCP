@@ -26,12 +26,19 @@ final class Acf {
 		foreach ( Schema::all() as $type => $schema ) {
 			$fields = array();
 			foreach ( $schema['fields'] as $name => $definition ) {
-				if ( ! empty( $definition['hidden'] ) || isset( $definition['property'] ) || ! isset( $types[ $definition['type'] ] ) ) { continue; }
+				$prose = 'richtext' === $definition['type'] && in_array( $definition['property'] ?? '', array( 'post_content', 'post_excerpt' ), true );
+				if ( ! empty( $definition['hidden'] ) || isset( $definition['property'] ) && ! $prose || ! isset( $types[ $definition['type'] ] ) ) { continue; }
 				$key = self::key( $type, $name );
 				$field = array( 'key' => $key, 'name' => 'msc_' . $name, 'label' => $definition['label'] ?? ucwords( str_replace( '_', ' ', $name ) ), 'type' => $types[ $definition['type'] ], 'msc_type' => $type, 'msc_name' => $name, 'required' => 0 );
-				if ( ! empty( $definition['taxonomy'] ) ) { $field['type'] = 'select'; $field['multiple'] = 'multiselect' === $definition['type']; $field['ui'] = 1; $choices = Taxonomies::choices( $definition ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }
+				if ( ! empty( $definition['taxonomy'] ) ) {
+					$fixed = Taxonomies::fixed_choices( $definition );
+					$choices = $fixed ?? Taxonomies::choices( $definition );
+					$field['type'] = 'select'; $field['multiple'] = 'multiselect' === $definition['type']; $field['ui'] = null === $fixed ? 1 : 0;
+					$field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1;
+				}
 				elseif ( in_array( $definition['type'], array( 'select', 'multiselect', 'timezone' ), true ) ) { $choices = 'timezone' === $definition['type'] ? \DateTimeZone::listIdentifiers() : ( $definition['options'] ?? array() ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array(); $field['allow_null'] = 1; }
 				if ( 'multiselect' === $definition['type'] && ! empty( $field['choices'] ) ) { $field['type'] = 'select'; $field['multiple'] = 1; $field['ui'] = 1; }
+				if ( 'richtext' === $definition['type'] ) { $field['tabs'] = 'visual'; $field['toolbar'] = 'basic'; $field['media_upload'] = 0; }
 				if ( ! empty( $definition['multiline'] ) ) { $field['type'] = 'textarea'; $field['rows'] = 4; $field['new_lines'] = ''; $field['instructions'] = $definition['instructions'] ?? ''; }
 				if ( 'date' === $definition['type'] ) { $field['display_format'] = 'Y-m-d'; $field['return_format'] = 'Y-m-d'; }
 				if ( 'time' === $definition['type'] ) { $field['display_format'] = 'H:i:s'; $field['return_format'] = 'H:i:s'; }
@@ -48,11 +55,13 @@ final class Acf {
 	}
 	public static function prepare( $field ) {
 		if ( ! isset( self::$fields[ $field['key'] ?? '' ] ) ) { return $field; }
-		$definition = Schema::get( $field['msc_type'] )['fields'][ $field['msc_name'] ];
+		$schema = Schema::get( $field['msc_type'] );
+		$definition = $schema['fields'][ $field['msc_name'] ];
+		if ( self::$editing && in_array( $field['msc_name'], array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) ), true ) ) { return false; }
 		if ( self::$editing && in_array( $definition['type'], array( 'relationship', 'relationship_list' ), true ) && ! Schema::enabled( $definition['target'] ) ) { return false; }
 		if ( ! empty( $definition['taxonomy'] ) ) {
 			$current = self::$editing ? ( self::$global ? self::$editing['global'] : self::$editing['data'] )[ $field['msc_name'] ] ?? array() : $field['value'] ?? array();
-			$choices = Taxonomies::choices( $definition, $current ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array();
+			$choices = Taxonomies::fixed_choices( $definition, $current ) ?? Taxonomies::choices( $definition, $current ); $field['choices'] = $choices ? array_combine( $choices, $choices ) : array();
 		}
 		return $field;
 	}
@@ -109,6 +118,7 @@ final class Acf {
 		if ( ! is_string( $publication ) || ! in_array( $publication, array( '', 'site', 'global' ), true ) ) { throw new \InvalidArgumentException( 'Invalid publication action.' ); }
 		if ( $publication ) { Publication::require( $publication, $r ); }
 		$values = array(); $reset = array();
+		$schema = Schema::get( $r['type'] );
 		foreach ( (array) ( $request['acf'] ?? array() ) as $key => $raw ) {
 			$field = self::$fields[ $key ] ?? null;
 			if ( ! $field || $field['msc_type'] !== $r['type'] ) { throw new \InvalidArgumentException( 'Unsupported or mismatched shared ACF field.' ); }
@@ -120,6 +130,14 @@ final class Acf {
 				if ( 'global' === $scope && 'relationship' === $definition['type'] && ! $raw && ! empty( $r['data'][ $name ] ) && ! msc_local_post_id( $r['data'][ $name ] ) ) { throw new \InvalidArgumentException( 'Related record is unavailable on this site. Use the Shared Content UUID editor.' ); }
 				$values[ $name ] = self::from_acf( $field, $raw );
 			}
+		}
+		$credit_keys = CreditEditor::keys( $schema );
+		foreach ( (array) ( $request['credits'] ?? array() ) as $name => $raw ) {
+			if ( ! in_array( $name, $credit_keys, true ) || ! is_string( $raw ) ) { throw new \InvalidArgumentException( 'Invalid cast or crew field.' ); }
+			$definition = $schema['fields'][ $name ];
+			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
+			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; continue; }
+			$values[ $name ] = Schema::sanitize( $definition, 'relationship_list' === $definition['type'] ? json_decode( $raw, true, 32, JSON_THROW_ON_ERROR ) : $raw );
 		}
 		$save = static function () use ( $r, $values, $reset, $request, $scope ) { return 'global' === $scope ? Plugin::store()->update( $r['id'], $values, (int) ( $request['version'] ?? 0 ) ) : Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) ); };
 		if ( ! $publication ) { return $save(); }
@@ -136,10 +154,12 @@ final class Acf {
 	public static function override_control( array $field ): void {
 		if ( ! self::$editing || ! isset( self::$fields[ $field['key'] ?? '' ] ) ) { return; }
 		$name = $field['msc_name'];
-		if ( self::$global ) { echo '<p class="description">Shared value: this save updates every inheriting site.</p>'; return; }
+		if ( self::$global ) { return; }
 		if ( false === ( Schema::get( $field['msc_type'] )['fields'][ $name ]['override'] ?? true ) ) { echo '<p>Network locked; this value cannot be overridden.</p>'; return; }
 		echo '<label><input type="checkbox" name="override[' . esc_attr( $name ) . ']" value="1" ' . checked( array_key_exists( $name, self::$editing['overrides'] ), true, false ) . '> Override on this site, including an intentionally empty value. Uncheck to inherit.</label>';
-		if ( in_array( $field['type'], array( 'msc_media' ), true ) ) { echo '<details><summary>Global image preview</summary><div class="msc-media-previews">' . Media::previews( self::$editing['global'][ $name ] ?? array(), ! empty( $field['msc_multiple'] ) ) . '</div></details>'; } else { echo '<p class="description">Current global value: ' . esc_html( wp_json_encode( self::$editing['global'][ $name ] ?? '' ) ) . '</p>'; }
+		if ( 'msc_media' === $field['type'] ) { echo '<details><summary>Global image preview</summary><div class="msc-media-previews">' . Media::previews( self::$editing['global'][ $name ] ?? array(), ! empty( $field['msc_multiple'] ) ) . '</div></details>'; }
+		elseif ( 'wysiwyg' === $field['type'] ) { echo '<details><summary>Global value</summary>' . wp_kses_post( wpautop( self::$editing['global'][ $name ] ?? '' ) ) . '</details>'; }
+		else { echo '<p class="description">Current global value: ' . esc_html( wp_json_encode( self::$editing['global'][ $name ] ?? '' ) ) . '</p>'; }
 	}
 	public static function page(): void {
 		if ( ! function_exists( 'acf_form' ) ) { wp_die( 'Activate Advanced Custom Fields to use this editor.' ); }
@@ -148,8 +168,8 @@ final class Acf {
 		self::$global = Admin::global_scope( $_GET['scope'] ?? '' );
 		try { Permissions::require( self::$global ? 'msc_edit_global' : 'msc_override_local', $r['type'] ); } catch ( \Throwable $e ) { wp_die( esc_html( $e->getMessage() ) ); }
 		self::$editing = $r;
-		echo '<div class="wrap"><h1>' . esc_html( Schema::get( $r['type'] )['label'] ) . ' — ACF Shared Fields</h1><h2>' . esc_html( $r['data']['title'] ?? '' ) . '</h2><p><strong>' . ( self::$global ? 'GLOBAL EDITING — Changes affect every inheriting site.' : 'LOCAL EDITING — Check Override to customize a field; uncheck to reset it.' ) . '</strong></p>';
-		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( self::$global ? 'global' : 'local' ) ) ) . '">All fields and publishing</a></p><p>Person links, categories and image previews are available below. Native title/body and complex JSON fields use All fields and publishing.</p>';
+		echo '<div class="wrap msc msc-record-editor"><h1>' . esc_html( Schema::get( $r['type'] )['label'] ) . ' — ACF Shared Fields</h1><h2>' . esc_html( $r['data']['title'] ?? '' ) . '</h2><p><strong>' . ( self::$global ? 'GLOBAL EDITING — Changes affect every inheriting site.' : 'LOCAL EDITING — Check Override to customize a field; uncheck to reset it.' ) . '</strong></p>';
+		echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc-acf&record=' . $r['uuid'] . '&scope=' . ( self::$global ? 'local' : 'global' ) ) ) . '">Switch to ' . ( self::$global ? 'local overrides' : 'global editing' ) . '</a> <a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] . '&mode=' . ( self::$global ? 'global' : 'local' ) ) ) . '">All fields and publishing</a></p>';
 		EpisodeAdmin::context( $r, self::$global ); ComicAdmin::context( $r, self::$global );
 		PersonReview::notice( $r );
 		$status = get_post_status_object( get_post_status( (int) $r['mapping']['post_id'] ) );
@@ -157,6 +177,7 @@ final class Acf {
 		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. See Site synchronization below for global delivery and local overrides.</p></div>'; }
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
+		CreditEditor::control( Schema::get( $r['type'] ), self::$global ? $r['global'] : $r['data'], $r['overrides'], self::$global, 'credits' );
 		acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'field_groups' => array( 'group_msc_' . $r['type'] ), 'form' => false, 'honeypot' => false ) );
 		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' );
 		if ( current_user_can( 'msc_publish_local' ) && 'active' === $r['state'] ) {

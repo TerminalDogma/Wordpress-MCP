@@ -48,3 +48,52 @@
 .msc-field-picker .description:empty, .msc-field-picker-selected:empty { margin: 0; }
 .msc-field-picker-selected li { display: flex; align-items: baseline; gap: .75em; }
 .msc-field-picker-menu.ui-autocomplete { max-height: 18rem; overflow-y: auto; z-index: 1000; }
+
+.msc-record-editor { --msc-line: #dcdcde; --msc-soft: #f6f7f7; --msc-accent: var(--wp-admin-theme-color, #2271b1); }
+.msc-record-editor .msc-editor-section, .msc-credit-editor {
+    box-sizing: border-box;
+    margin: 18px 0;
+    padding: 18px 22px;
+    background: #fff;
+    border: 1px solid var(--msc-line, #dcdcde);
+    border-radius: 8px;
+}
+.msc-editor-section > h2, .msc-credit-editor > h2 { margin: 0 0 8px; font-size: 17px; }
+.msc-record-editor .msc-editor-section .msc-fields { background: transparent; border: 0; margin: 0; }
+.msc-editor-section .msc-fields th { padding-left: 0; }
+.msc-editor-section .msc-fields td { padding-right: 0; }
+.msc-editor-section .msc-fields tr + tr { border-top: 1px solid #f0f0f1; }
+.msc-record-editor .acf-fields.-border { border-radius: 8px; }
+.msc-record-editor .wp-editor-wrap { max-width: 820px; }
+.msc-record-editor .msc-field-picker-selected { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
+.msc-record-editor .msc-field-picker-selected:empty { margin: 0; }
+.msc-record-editor .msc-field-picker-selected li,
+.msc-record-editor .select2-container .select2-selection--multiple .select2-selection__choice {
+    background: #edf4fa;
+    border: 1px solid #c6d9ea;
+    border-radius: 5px;
+    color: #1b354c;
+}
+.msc-record-editor .msc-field-picker-selected li { align-items: center; padding: 3px 4px 3px 9px; margin: 0; gap: 6px; }
+.msc-chip-remove { border: 0; border-radius: 3px; background: transparent; color: #254967; cursor: pointer; font-size: 17px; line-height: 1; width: 24px; height: 24px; }
+.msc-chip-remove:hover, .msc-chip-remove:focus-visible { background: #d2e5f3; }
+.msc-credit-search { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+.msc-credit-search label, .msc-credit-character { display: flex; flex-direction: column; font-weight: 600; gap: 4px; }
+.msc-credit-editor input[type="search"], .msc-credit-character input { width: min(100%, 320px); }
+.msc-credit-list { display: grid; gap: 8px; margin: 0; }
+.msc-credit-list > li { background: var(--msc-soft, #f6f7f7); border: 1px solid var(--msc-line, #dcdcde); border-radius: 6px; padding: 10px 12px; margin: 0; }
+.msc-credit-roles { display: flex; flex-wrap: wrap; gap: 6px; }
+.msc-credit-roles label { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #d7dee5; border-radius: 4px; background: #fff; }
+.msc-credit-roles label:has(input:checked) { background: #edf4fa; border-color: #9cbdd8; color: #1b354c; }
+.msc-credit-roles input { margin: 0; }
+.msc-credit-character { margin-top: 10px; }
+.msc-credit-character[hidden] { display: none; }
+.msc-credit-editor [role="status"]:empty { margin: 0; }
+.msc-credit-legacy, .msc-credit-overrides { margin-top: 12px; }
+.msc-credit-overrides label { display: inline-block; margin: 8px 14px 0 0; }
+.msc-credit-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.msc-credit-assigned { display: flex; flex-wrap: wrap; gap: 5px; }
+.msc-credit-assigned span { padding: 2px 7px; border-radius: 4px; background: #e6eff8; color: #1b354c; font-size: 12px; }
+.msc-credit-role-panel { margin-top: 6px; }
+.msc-credit-role-panel summary { width: fit-content; color: var(--msc-accent, #2271b1); }
+.msc-credit-role-panel .msc-credit-roles { margin-top: 8px; }

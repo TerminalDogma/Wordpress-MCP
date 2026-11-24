@@ -18,8 +18,8 @@ final class Taxonomies {
 			'msc_country' => array( 'Countries', 'country', array( 'United States', 'United Kingdom', 'Canada', 'Australia', 'France', 'Germany', 'India', 'Japan', 'South Korea' ) ),
 			'msc_language' => array( 'Languages', 'language', array( 'English', 'French', 'German', 'Hindi', 'Japanese', 'Korean', 'Spanish' ) ),
 			'msc_show_status' => array( 'TV Show Statuses', 'show-status', array( 'Upcoming', 'Returning Series', 'Ended', 'Canceled', 'In Production' ) ),
-			'msc_movie_status' => array( 'Movie Statuses', 'movie-status', array( 'Announced', 'In Production', 'Post Production', 'Released' ) ),
-			'msc_rating' => array( 'Content Ratings', 'content-rating', array( 'G', 'PG', 'PG-13', 'R', 'NC-17', 'Not Rated' ) ),
+			'msc_movie_status' => array( 'Movie Statuses', 'movie-status', array( 'Announced', 'In Development', 'Pre-Production', 'In Production', 'Post Production', 'Completed', 'Release Scheduled', 'Festival Premiere', 'In Theaters', 'Limited Theatrical Release', 'Available Digitally', 'Streaming', 'Available on Physical Media', 'Delayed', 'Canceled' ) ),
+			'msc_rating' => array( 'Content Ratings', 'content-rating', array( 'G', 'PG', 'PG-13', 'R', 'NC-17', 'Not Rated', 'Unrated' ) ),
 			'msc_profession' => array( 'Professions', 'profession', array( 'Actor', 'Director', 'Writer', 'Producer', 'Creator', 'Composer', 'Cinematographer' ) ),
 		);
 	}
@@ -54,6 +54,14 @@ final class Taxonomies {
 		$choices = array_merge( $definition[2], $custom[ $key ] ?? array(), is_wp_error( $terms ) ? array() : $terms, (array) $current );
 		$choices = array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $choices ), 'strlen' ) ) );
 		natcasesort( $choices ); return array_values( $choices );
+	}
+	/** Bounded editorial menus. Existing imported values remain selectable on their own records. */
+	public static function fixed_choices( array $field, $current = '' ): ?array {
+		$key = $field['taxonomy'] ?? '';
+		if ( ! in_array( $key, array( 'msc_movie_status', 'msc_rating' ), true ) || ! in_array( $field['type'], array( 'text', 'select' ), true ) ) { return null; }
+		$custom = get_network_option( get_current_network_id(), 'msc_category_choices', array() );
+		$options = array_values( array_unique( $field['options'] ?? array_merge( self::definitions()[ $key ][2], $custom[ $key ] ?? array() ) ) );
+		return is_string( $current ) && '' !== $current ? array_values( array_unique( array_merge( $options, array( $current ) ) ) ) : $options;
 	}
 	public static function add_choice( string $taxonomy, string $name ): void {
 		if ( ! current_user_can( 'msc_manage_schemas' ) ) { throw new \RuntimeException( 'Category permission denied.' ); }

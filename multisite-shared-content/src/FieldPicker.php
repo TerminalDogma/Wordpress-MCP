@@ -43,6 +43,12 @@ final class FieldPicker {
 			"SELECT uuid AS id, $title AS label FROM $table WHERE type=%s AND state='active' AND LOWER($title) LIKE %s ORDER BY (LOWER($title) LIKE %s) DESC, label, id LIMIT 30",
 			$type, '%' . $prefix, $prefix
 		), ARRAY_A );
-		wp_send_json( $matches ?: array() );
+		$matches = $matches ?: array();
+		foreach ( $matches as &$match ) {
+			$match['key'] = PersonIdentity::name( $match['label'] );
+			$match['label'] = Presentation::text( $match['label'] );
+		}
+		unset( $match );
+		wp_send_json( $matches );
 	}
 }

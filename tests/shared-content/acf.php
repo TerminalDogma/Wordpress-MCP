@@ -58,6 +58,21 @@ acf_at_msc($b,static function()use($episode,$id){
 	acf_check_msc(true===update_field('msc_parent_show',$parent,$post),'ACF Post Object write accepts the current site representation');
 	acf_check_msc(msc_get_global($id,'title')==='ACF Adapter Show'&&msc_get_field($episode['id'],'parent_show')===Plugin::store()->get($id)['uuid'],'ACF relationship write stores the permanent network UUID');
 });
+acf_at_msc( $a, static function () use ( $id ) {
+	$store = Plugin::store();
+	$person = $store->create( 'msc_person', array( 'title' => 'ACF Combined Credit' ) );
+	$credit = wp_json_encode( array( $person['uuid'] ) );
+	$description = '<p>A <strong>formatted</strong> description.</p>';
+	$request = acf_request_msc( $store->resolved( $id ), 'global', array( Acf::key( 'msc_show', 'content' ) => $description ) );
+	$request['credits'] = array( 'actors' => $credit, 'directors' => $credit );
+	Acf::save( $request );
+	acf_check_msc( array( $person['uuid'] ) === msc_get_global( $id, 'actors' ) && msc_get_global( $id, 'actors' ) === msc_get_global( $id, 'directors' ), 'Unified credit submissions reuse one Person across multiple roles' );
+	acf_check_msc( $description === msc_get_global( $id, 'content' ), 'ACF visual description saves formatted post content' );
+	$request = acf_request_msc( $store->resolved( $id ), 'local', array(), array( 'directors' => 1 ) );
+	$request['credits'] = array( 'directors' => '[]' );
+	Acf::save( $request );
+	acf_check_msc( array() === msc_get_field( $id, 'directors' ) && array( $person['uuid'] ) === msc_get_field( $id, 'actors' ), 'One local role can be cleared while another inherits the same Person' );
+} );
 $editor=wp_insert_user(array('user_login'=>'acf-local-'.wp_generate_password(8,false),'user_pass'=>wp_generate_password()));add_user_to_blog($a,$editor,'editor');wp_set_current_user($editor);
 acf_at_msc($a,static function()use($id){$request=acf_request_msc(Plugin::store()->resolved($id),'global',array(Acf::key('msc_show','network')=>'Unauthorized'));acf_reject_msc(static fn()=>Acf::save($request),'Local editor cannot use the ACF global form');});
 wp_set_current_user(1);
