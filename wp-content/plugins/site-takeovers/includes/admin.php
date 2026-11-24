@@ -12,9 +12,13 @@ final class Admin {
             $screen = get_current_screen();
             if ( Plugin::TYPE !== ( $screen->post_type ?? '' ) || 'post' !== $screen->base ) { return; }
             wp_enqueue_media();
-            wp_enqueue_script( 'site-takeovers-admin', plugins_url( 'assets/admin.js', dirname( __DIR__ ) . '/site-takeovers.php' ), array( 'media-editor' ), Plugin::VERSION, true );
+            $plugin = dirname( __DIR__ ) . '/site-takeovers.php';
+            wp_enqueue_style( 'site-takeovers-admin', plugins_url( 'assets/admin.css', $plugin ), array(), Plugin::VERSION );
+            wp_enqueue_script( 'site-takeovers-admin', plugins_url( 'assets/admin.js', $plugin ), array( 'media-editor', 'jquery-ui-autocomplete' ), Plugin::VERSION, true );
+            wp_localize_script( 'site-takeovers-admin', 'satAdmin', array( 'nonce' => wp_create_nonce( 'sat_lookup_' . get_current_blog_id() ) ) );
         } );
         add_action( 'save_post_' . Plugin::TYPE, array( self::class, 'save' ) );
+        add_action( 'wp_ajax_sat_lookup', array( self::class, 'lookup' ) );
         add_action( 'admin_notices', static function (): void {
             if ( Plugin::TYPE === ( get_current_screen()->post_type ?? '' ) && isset( $_GET['sat_period_error'] ) ) {
                 wp_admin_notice( 'Enter valid dates and times with the end later than the start. The previous campaign settings are still in effect.', array( 'type' => 'error' ) );
@@ -39,12 +43,64 @@ final class Admin {
             }
             if ( 'sat_scope' !== $column ) { return; }
             if ( 'pages' === $scope ) {
-                $count = count( $saved['targets'] );
+                $count = count( $saved['targets'] ?? array() );
                 echo esc_html( sprintf( _n( '%d page', '%d pages', $count ), $count ) );
+            } elseif ( 'tags' === $scope ) {
+                $count = count( $saved['tags'] ?? array() );
+                echo esc_html( sprintf( _n( '%d tag', '%d tags', $count ), $count ) );
             } else {
                 echo 'site' === $scope ? 'Entire site' : 'Off';
             }
         }, 10, 2 );
+    }
+
+    private static function post_label( \WP_Post $post ): string {
+        return html_entity_decode( get_the_title( $post ) ?: '(Untitled)', ENT_QUOTES | ENT_HTML5, 'UTF-8' )
+            . ' — ' . ( get_post_type_object( $post->post_type )->labels->singular_name ?? $post->post_type );
+    }
+
+    public static function lookup(): void {
+        check_ajax_referer( 'sat_lookup_' . get_current_blog_id(), 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( null, 403 ); }
+        $value = $_GET['term'] ?? '';
+        $search = is_string( $value ) ? mb_substr( trim( sanitize_text_field( wp_unslash( $value ) ) ), 0, 100 ) : '';
+        if ( mb_strlen( $search ) < 2 ) { wp_send_json( array() ); }
+
+        if ( 'tags' === ( $_GET['kind'] ?? '' ) ) {
+            $terms = get_terms( array( 'taxonomy' => 'post_tag', 'search' => $search, 'hide_empty' => false, 'number' => 12 ) );
+            $items = is_wp_error( $terms ) ? array() : array_map( static fn( \WP_Term $tag ): array => array( 'id' => $tag->term_id, 'label' => $tag->name ), $terms );
+        } else {
+            $posts = get_posts( array( 'post_type' => Plugin::public_types(), 'post_status' => 'publish', 'has_password' => false,
+                's' => $search, 'search_columns' => array( 'post_title' ), 'numberposts' => 12, 'orderby' => 'relevance',
+            ) );
+            $items = array_map( static fn( \WP_Post $post ): array => array(
+                'id' => $post->ID, 'label' => self::post_label( $post ), 'detail' => $post->post_name,
+            ), $posts );
+        }
+        wp_send_json( $items );
+    }
+
+    private static function picker( string $scope, array $ids ): void {
+        $posts = 'pages' === $scope;
+        $input = $posts ? 'sat[post_ids][]' : 'sat[tags][]';
+        ?>
+        <div data-sat-picker="<?php echo esc_attr( $scope ); ?>" data-sat-input="<?php echo esc_attr( $input ); ?>">
+            <input class="regular-text" id="sat-search-<?php echo esc_attr( $scope ); ?>" type="search" autocomplete="off" placeholder="<?php echo esc_attr( $posts ? 'Type an article or page title' : 'Type a tag name' ); ?>">
+            <p class="description"><?php echo esc_html( $posts ? 'Type at least two letters, then choose a result. You can add more than one.' : 'Choose one or more existing tags. A page or article qualifies when it has any selected tag.' ); ?></p>
+            <p class="description" data-sat-status role="status"></p>
+            <ul class="sat-selected">
+                <?php foreach ( $ids as $id ) {
+                    $item = $posts ? get_post( $id ) : get_term( $id, 'post_tag' );
+                    if ( ! $item || is_wp_error( $item ) ) { continue; }
+                    $label = $posts ? self::post_label( $item ) : $item->name;
+                    ?>
+                    <li><input type="hidden" name="<?php echo esc_attr( $input ); ?>" value="<?php echo esc_attr( $id ); ?>"><span><?php echo esc_html( $label ); ?></span>
+                        <button class="button-link-delete" type="button" data-sat-remove-target aria-label="<?php echo esc_attr( 'Remove ' . $label ); ?>">Remove</button>
+                    </li>
+                <?php } ?>
+            </ul>
+        </div>
+        <?php
     }
 
     public static function save( int $id ): void {
@@ -86,23 +142,23 @@ final class Admin {
             <tr>
                 <th scope="row"><label for="sat-scope">Show on</label></th>
                 <td><select name="sat[scope]" id="sat-scope">
-                    <?php foreach ( array( 'off' => 'Off', 'site' => 'Entire site', 'pages' => 'Selected pages' ) as $key => $label ) { ?>
+                    <?php foreach ( array( 'off' => 'Off', 'site' => 'Entire site', 'pages' => 'Selected pages', 'tags' => 'Tagged pages' ) as $key => $label ) { ?>
                         <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $key, $scope ); ?>><?php echo esc_html( $label ); ?></option>
                     <?php } ?>
-                </select><p class="description">Publish to turn on a takeover. A selected-page campaign takes precedence over an entire-site campaign.</p></td>
+                </select><p class="description">Publish to turn on a takeover. Selected pages take precedence over tagged pages, then entire-site campaigns.</p></td>
             </tr>
-            <tr>
-                <th scope="row"><label for="sat-targets">Selected page URLs or IDs</label></th>
+            <tr data-sat-targets="pages">
+                <th scope="row"><label for="sat-search-pages">Find articles and pages</label></th>
                 <td>
-                    <textarea id="sat-targets" name="sat[targets]" class="large-text" rows="4"><?php echo esc_textarea( implode( "\n", $targets ) ); ?></textarea>
-                    <p class="description">Enter one public page, post or catalog permalink or post ID per line. Targets belong to this site.</p>
-                    <?php if ( 'pages' === $scope && ! $targets ) { ?><p><strong>Enter a valid target to display this campaign.</strong></p><?php } ?>
-                    <?php if ( $targets ) { ?><ul>
-                        <?php foreach ( $targets as $target ) { if ( ! get_post( $target ) ) { continue; } ?>
-                            <li><a href="<?php echo esc_url( get_permalink( $target ) ); ?>"><?php echo esc_html( get_the_title( $target ) ); ?></a></li>
-                        <?php } ?>
-                    </ul><?php } ?>
+                    <?php self::picker( 'pages', $targets ); ?>
+                    <details><summary>Add by URL or ID</summary>
+                        <textarea aria-label="Additional page URLs or IDs" name="sat[targets]" class="large-text" rows="3" placeholder="One URL or ID from this site per line"></textarea>
+                    </details>
                 </td>
+            </tr>
+            <tr data-sat-targets="tags">
+                <th scope="row"><label for="sat-search-tags">Find tags</label></th>
+                <td><?php self::picker( 'tags', $data['tags'] ?? array() ); ?></td>
             </tr>
             <?php foreach ( Plugin::COLORS as $key => list( $label, $default ) ) { ?>
                 <tr><th scope="row"><label for="sat-color-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>

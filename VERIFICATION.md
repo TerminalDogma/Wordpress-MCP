@@ -1,3 +1,7 @@
+# Site Takeovers 1.3.0 verification
+
+Chromium verified live title and tag search in the campaign editor, keyboard selection, target removal, URL entry, saved selections, and matching preview links. Tagged WordPress posts and Pages matched either of two tags. Checks covered draft and password-protected search exclusions, tag archives, site isolation, nonce enforcement, and precedence from selected pages through tags to the site-wide campaign.
+
 # Site Takeovers 1.2.1 verification
 
 Chromium verified scrolling side ads on the Doomsday and A New Hope campaigns. Both ads stay in their gutters, stop above the footer, and allow tall creatives to scroll into view on short desktop windows. Checks covered the WordPress admin bar, mobile layout, and the top banner’s normal scrolling.

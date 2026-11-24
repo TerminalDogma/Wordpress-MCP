@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Takeovers
  * Description: Site-wide and page-specific advertising skins with banner and side placements.
- * Version: 1.2.1
+ * Version: 1.3.0
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * License: GPL-2.0-or-later
@@ -17,7 +17,7 @@ require_once __DIR__ . '/includes/schedule.php';
 final class Plugin {
     public const TYPE = 'sat_campaign';
     public const META = '_sat_campaign';
-    public const VERSION = '1.2.1';
+    public const VERSION = '1.3.0';
     public const PLACEMENTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad' );
     public const SLOTS = self::PLACEMENTS + array( 'background' => 'Page background image', 'logo' => 'Campaign logo' );
     public const COLORS = array(
@@ -48,6 +48,7 @@ final class Plugin {
     }
 
     public static function register(): void {
+        register_taxonomy_for_object_type( 'post_tag', 'page' );
         $capabilities = array_fill_keys( array(
             'edit_posts', 'edit_others_posts', 'edit_published_posts', 'edit_private_posts', 'create_posts',
             'delete_posts', 'delete_others_posts', 'delete_private_posts', 'delete_published_posts',
@@ -74,6 +75,12 @@ final class Plugin {
         return is_array( $saved ) ? $saved : array();
     }
 
+    public static function public_types(): array {
+        $types = array_filter( get_post_types( array(), 'objects' ), 'is_post_type_viewable' );
+        unset( $types['attachment'] );
+        return array_keys( $types );
+    }
+
     private static function target_id( string $value ): int {
         if ( ctype_digit( $value ) ) { return (int) $value; }
         $url = self::url( $value );
@@ -93,21 +100,25 @@ final class Plugin {
     public static function save( int $id, array $input ): void {
         $scope = $input['scope'] ?? 'off';
         $settings = array(
-            'scope' => in_array( $scope, array( 'off', 'site', 'pages' ), true ) ? $scope : 'off',
-            'targets' => array(), 'colors' => array(), 'art' => array(), 'links' => array(),
+            'scope' => in_array( $scope, array( 'off', 'site', 'pages', 'tags' ), true ) ? $scope : 'off',
+            'targets' => array(), 'tags' => array(), 'colors' => array(), 'art' => array(), 'links' => array(),
             'window' => Schedule::from_input( (array) ( $input['window'] ?? array() ) ),
         );
         $targets = $input['targets'] ?? '';
-        if ( is_scalar( $targets ) ) {
-            foreach ( preg_split( '/\R/u', trim( (string) $targets ) ) ?: array() as $line ) {
-                $target = trim( $line );
-                if ( '' === $target ) { continue; }
-                $post_id = self::target_id( $target );
-                $post = $post_id ? get_post( $post_id ) : null;
-                if ( $post && is_post_type_viewable( $post->post_type ) ) { $settings['targets'][ $post_id ] = $post_id; }
-            }
+        $manual = is_scalar( $targets ) ? preg_split( '/\R/u', (string) $targets ) : $targets;
+        foreach ( array_merge( (array) ( $input['post_ids'] ?? array() ), (array) $manual ) as $value ) {
+            if ( ! is_scalar( $value ) || '' === trim( (string) $value ) ) { continue; }
+            $post_id = self::target_id( trim( (string) $value ) );
+            $post = $post_id ? get_post( $post_id ) : null;
+            if ( $post && is_post_type_viewable( $post->post_type ) ) { $settings['targets'][ $post_id ] = $post_id; }
         }
         $settings['targets'] = array_values( $settings['targets'] );
+        foreach ( (array) ( $input['tags'] ?? array() ) as $value ) {
+            if ( ! is_scalar( $value ) || ! ctype_digit( (string) $value ) || (int) $value < 1 ) { continue; }
+            $tag = get_term( (int) $value, 'post_tag' );
+            if ( $tag instanceof \WP_Term ) { $settings['tags'][ $tag->term_id ] = (int) $tag->term_id; }
+        }
+        $settings['tags'] = array_values( $settings['tags'] );
         foreach ( self::COLORS as $key => list( , $default ) ) {
             $color = $input['colors'][ $key ] ?? '';
             $settings['colors'][ $key ] = is_string( $color ) ? sanitize_hex_color( $color ) ?: $default : $default;
@@ -127,8 +138,12 @@ final class Plugin {
     }
 
     private static function matches( array $data, int $target ): bool {
-        $scope = $data['scope'] ?? 'off';
-        return 'site' === $scope || ( 'pages' === $scope && $target && in_array( $target, $data['targets'] ?? array(), true ) );
+        return match ( $data['scope'] ?? 'off' ) {
+            'site' => true,
+            'pages' => $target && in_array( $target, $data['targets'] ?? array(), true ),
+            'tags' => $target && ! empty( $data['tags'] ) && has_term( $data['tags'], 'post_tag', $target ),
+            default => false,
+        };
     }
 
     public static function preview_url( int $id ): string {
@@ -138,6 +153,14 @@ final class Plugin {
             if ( $url ) { break; }
             $post = get_post( $target );
             if ( $post && 'publish' === $post->post_status && ! $post->post_password && self::matches( $data, $target ) ) { $url = get_permalink( $post ); }
+        }
+        if ( 'tags' === ( $data['scope'] ?? '' ) && ! empty( $data['tags'] ) ) {
+            $types = array_intersect( self::public_types(), get_taxonomy( 'post_tag' )->object_type );
+            $posts = $types ? get_posts( array(
+                'post_type' => array_values( $types ), 'post_status' => 'publish', 'has_password' => false,
+                'tag__in' => $data['tags'], 'numberposts' => 1, 'fields' => 'ids',
+            ) ) : array();
+            if ( $posts ) { $url = get_permalink( $posts[0] ); }
         }
         return $url ? add_query_arg( array( 'sat_preview' => $id, 'sat_preview_nonce' => wp_create_nonce( 'sat_preview_' . get_current_blog_id() . '_' . $id ) ), $url ) : '';
     }
@@ -175,7 +198,7 @@ final class Plugin {
             'post_type' => self::TYPE, 'post_status' => 'publish', 'numberposts' => -1,
             'orderby' => array( 'modified' => 'DESC', 'ID' => 'DESC' ),
         ) );
-        $site = $page = null;
+        $live = array();
         $now = time();
         foreach ( $campaigns as $post ) {
             $data = self::read( (int) $post->ID );
@@ -185,10 +208,9 @@ final class Plugin {
             if ( 'Ended' !== $state && ( isset( $window['start'] ) || isset( $window['end'] ) ) ) { self::$time_sensitive = true; }
             if ( 'Running' !== $state ) { continue; }
             $data['title'] = get_the_title( $post );
-            if ( 'pages' === $data['scope'] ) { $page ??= $data; }
-            else { $site ??= $data; }
+            $live[ $data['scope'] ] ??= $data;
         }
-        return self::$active = $page ?? $site;
+        return self::$active = $live['pages'] ?? $live['tags'] ?? $live['site'] ?? null;
     }
 
     private static function has_rails( array $data ): bool {

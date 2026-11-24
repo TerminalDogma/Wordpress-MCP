@@ -24,7 +24,9 @@ For commercial score display, Rotten Tomatoes® provides licensing and attributi
 
 ### Advertising takeovers
 
-In the site's dashboard, open **Ad Takeovers → Add Ad Takeover**. Pick **Entire site** or **Selected pages**, then choose Media Library artwork, destinations and a palette. The optional wallpaper covers the page background and the campaign logo appears in each ad. Page-specific campaigns override the site campaign. Publish to display it, or choose **Off** to suspend it. On wide screens the side ads follow the reader’s scroll and stop above the footer. The top banner also appears on narrow screens.
+In the site's dashboard, open **Ad Takeovers → Add Ad Takeover**. Choose **Entire site**, **Selected pages**, or **Tagged pages**. For selected pages, type a few letters of a published title and choose it from the dropdown. For tagged pages, choose one or more WordPress tags. A published article or page qualifies when it has any of those tags. Individual page selections take precedence over tags, followed by entire-site campaigns.
+
+Choose Media Library artwork, destinations and a palette. The optional wallpaper covers the page background and the campaign logo appears in each ad. Publish to display it, or choose **Off** to suspend it. On wide screens the side ads follow the reader’s scroll and stop above the footer. The top banner also appears on narrow screens.
 
 In **Publishing period**, enter a start, an end, or both using the site timezone. Publish the campaign to arm the schedule, and use **Preview saved takeover** to check it as an administrator. Existing campaigns with blank dates keep their usual behavior. If a CDN or server serves cached pages before WordPress runs, exclude takeover URLs from that cache when scheduling ads.
 
@@ -32,7 +34,7 @@ Run `sh bin/shared-content.sh takeover-demo` with Docker Desktop running to inst
 
 Run `sh bin/shared-content.sh star-wars-demo` to refresh Site A’s A New Hope movie and install its separate 50th-anniversary takeover. The sample runs February 12 through February 21, 2027, in the site timezone. The command prints the campaign editor link and the movie URL. The movie lists the February 19 theatrical re-release in its release history. [StarWars.com announcement](https://www.starwars.com/news/star-wars-50th-anniversary-theatrical-release)
 
-The manual WordPress installer `site-takeovers-1.2.1.zip` is built by `python3 tools/package-msc.py`.
+The manual WordPress installer `site-takeovers-1.3.0.zip` is built by `python3 tools/package-msc.py`.
 
 YouTube trailers use their individual video thumbnails automatically. Vimeo trailers show their own player preview. Movie genre labels remove a trailing “film” and use title case on the page.
 

@@ -1,0 +1,6 @@
+#sat-placement [data-sat-targets][hidden] { display: none; }
+#sat-placement .sat-selected:empty, #sat-placement [data-sat-status]:empty { margin: 0; }
+#sat-placement .sat-selected li { display: flex; align-items: baseline; gap: .75em; }
+#sat-placement details textarea { margin-top: .5em; }
+.sat-suggestions.ui-autocomplete { max-height: 18rem; overflow-y: auto; z-index: 1000; }
+.sat-suggestions small { display: block; font-size: .85em; opacity: .8; }
