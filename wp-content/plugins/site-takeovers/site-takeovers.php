@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Site Takeovers
  * Description: Site-wide and page-specific advertising skins with banner and side placements.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Requires at least: 6.9
  * Requires PHP: 8.2
  * License: GPL-2.0-or-later
@@ -17,7 +17,7 @@ require_once __DIR__ . '/includes/schedule.php';
 final class Plugin {
     public const TYPE = 'sat_campaign';
     public const META = '_sat_campaign';
-    public const VERSION = '1.2.0';
+    public const VERSION = '1.2.1';
     public const PLACEMENTS = array( 'banner' => 'Top banner', 'left' => 'Left side ad', 'right' => 'Right side ad' );
     public const SLOTS = self::PLACEMENTS + array( 'background' => 'Page background image', 'logo' => 'Campaign logo' );
     public const COLORS = array(
@@ -208,6 +208,9 @@ final class Plugin {
         $data = self::active();
         if ( ! $data ) { return; }
         wp_enqueue_style( 'site-takeovers', plugins_url( 'assets/takeovers.css', __FILE__ ), array(), self::VERSION );
+        if ( self::has_rails( $data ) ) {
+            wp_enqueue_script( 'site-takeovers-rails', plugins_url( 'assets/rails.js', __FILE__ ), array(), self::VERSION, true );
+        }
         $vars = '';
         foreach ( self::COLORS as $key => list( , $default ) ) {
             $color = sanitize_hex_color( $data['colors'][ $key ] ?? '' ) ?: $default;
@@ -238,7 +241,9 @@ final class Plugin {
                     'loading' => 'eager', 'decoding' => 'async',
                 ) );
                 if ( ! $image ) { continue; }
+                $is_rail = 'banner' !== $slot;
                 ?>
+                <?php if ( $is_rail ) { ?><div class="sat-rail-track sat-rail-track-<?php echo esc_attr( $slot ); ?>"><?php } ?>
                 <div class="sat-slot sat-<?php echo esc_attr( $slot ); ?>">
                     <span class="sat-label">Advertisement</span>
                     <?php if ( $destination ) { ?><a class="sat-creative" href="<?php echo esc_url( $destination ); ?>" rel="sponsored"><?php } else { ?><div class="sat-creative"><?php } ?>
@@ -256,6 +261,7 @@ final class Plugin {
                         <?php } ?>
                     <?php echo $destination ? '</a>' : '</div>'; ?>
                 </div>
+                <?php if ( $is_rail ) { ?></div><?php } ?>
             <?php } ?>
         </aside>
         <?php

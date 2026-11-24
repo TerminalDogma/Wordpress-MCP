@@ -124,16 +124,24 @@ body.sat-active {
     color: #f6faeb;
 }
 .sat-creative:hover .sat-cta { background: #e3ebc5; color: #16261d; }
-.sat-left, .sat-right { display: none; }
+.sat-rail-track { display: none; }
 
 @media (min-width: 1120px) {
     body.sat-active.sat-has-rails {
         --sat-width: min(1120px, calc(100vw - 2 * (var(--sat-rail) + var(--sat-gap) + 18px)));
     }
     .sat-active.sat-has-rails:not([data-identity]) { padding-inline: calc(var(--sat-rail) + var(--sat-gap) + 18px); }
-    .sat-left, .sat-right { display: block; position: absolute; top: 12px; width: var(--sat-rail); }
-    .sat-left { right: calc(100% + var(--sat-gap)); }
-    .sat-right { left: calc(100% + var(--sat-gap)); }
+    .sat-rail-track {
+        display: block;
+        position: absolute;
+        top: 12px;
+        width: var(--sat-rail);
+        height: var(--sat-track-height, auto);
+        pointer-events: none;
+    }
+    .sat-rail-track-left { right: calc(100% + var(--sat-gap)); }
+    .sat-rail-track-right { left: calc(100% + var(--sat-gap)); }
+    .sat-rail-track > .sat-slot { position: sticky; top: var(--sat-sticky-top, 12px); pointer-events: auto; }
     :is(.sat-left, .sat-right) .sat-creative:has(.sat-copy)::before { background: linear-gradient(0deg, var(--sat-shade) 18%, color-mix(in srgb, var(--sat-shade) 85%, transparent) 39%, transparent 80%); }
     .sat-right .sat-image { object-position: 62% center; }
     :is(.sat-left, .sat-right) .sat-copy {

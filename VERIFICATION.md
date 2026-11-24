@@ -1,4 +1,8 @@
-# Site Takeovers 1.2.0 verification
+# Site Takeovers 1.2.1 verification
+
+Chromium verified scrolling side ads on the Doomsday and A New Hope campaigns. Both ads stay in their gutters, stop above the footer, and allow tall creatives to scroll into view on short desktop windows. Checks covered the WordPress admin bar, mobile layout, and the top banner’s normal scrolling.
+
+## Site Takeovers 1.2.0 verification
 
 The scheduling checks passed for site-timezone conversion, exact start and end boundaries, open-ended periods, invalid dates, nonexistent daylight-saving times, and end times at or before the start. Chromium saved the publishing period through the real editor, checked the public page before, during and after a period, confirmed site-wide and page-specific placement, and checked that only authorized previews showed the scheduled ad. The anniversary sample was restored to February 12 through February 21, 2027.
 
