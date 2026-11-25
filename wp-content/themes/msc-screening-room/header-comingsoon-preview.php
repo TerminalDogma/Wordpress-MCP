@@ -1,7 +1,11 @@
 <?php
 $preview_parent = (int) wp_get_post_parent_id( get_queried_object_id() ) ?: get_queried_object_id();
 $preview_url = get_permalink( $preview_parent );
-$preview_b = in_array( get_post_meta( $preview_parent, '_msc_comingsoon_palette', true ), array( 'b', 'violet' ), true );
+$preview_variant = match ( get_post_meta( $preview_parent, '_msc_comingsoon_palette', true ) ) {
+	'b', 'violet' => 'b',
+	'c' => 'c',
+	default => '',
+};
 $movies_url = ( $args['movies'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#movies' : msc_news_category_url( 'Movies' );
 $tv_url = ( $args['tv'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#tv' : msc_news_category_url( 'TV' );
 add_filter( 'wp_robots', static function ( array $robots ): array {
@@ -10,8 +14,11 @@ add_filter( 'wp_robots', static function ( array $robots ): array {
 	return $robots;
 }, 100 );
 wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.3.0' );
-if ( $preview_b ) {
+if ( 'b' === $preview_variant ) {
 	wp_enqueue_style( 'cs-editorial-preview-b', get_template_directory_uri() . '/assets/comingsoon/preview-b.css', array( 'cs-editorial-preview' ), '1.1.0' );
+}
+if ( 'c' === $preview_variant ) {
+	wp_enqueue_style( 'cs-editorial-preview-c', get_template_directory_uri() . '/assets/comingsoon/preview-c.css', array( 'cs-editorial-preview' ), '1.0.0' );
 }
 ?>
 <!doctype html>
@@ -21,14 +28,14 @@ if ( $preview_b ) {
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<?php wp_head(); ?>
 </head>
-<body <?php body_class( $preview_b ? 'cs-editorial cs-editorial--preview-b' : 'cs-editorial' ); ?> data-identity="a">
+<body <?php body_class( $preview_variant ? 'cs-editorial cs-editorial--preview-' . $preview_variant : 'cs-editorial' ); ?> data-identity="a">
 <?php wp_body_open(); ?>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="cs-masthead">
 	<div class="cs-utility">
 		<div class="cs-frame">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">← ComingSoon home</a>
-			<span><?php echo $preview_b ? 'Homepage preview B' : 'Homepage preview'; ?></span>
+			<span><?php echo esc_html( trim( 'Homepage preview ' . strtoupper( $preview_variant ) ) ); ?></span>
 		</div>
 	</div>
 	<div class="cs-frame cs-brand-row">

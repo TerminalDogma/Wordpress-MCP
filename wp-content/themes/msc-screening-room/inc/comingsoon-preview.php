@@ -37,14 +37,14 @@ function msc_cs_preview_card( WP_Post $story, string $style, bool $hidden = fals
 	?>
 	<article class="cs-card cs-card--<?php echo esc_attr( $style ); ?>"<?php if ( $feed ) { ?> data-cs-format="<?php echo esc_attr( msc_cs_preview_format( $story ) ); ?>"<?php } ?><?php if ( $hidden ) { ?> hidden<?php } ?>>
 		<a class="cs-card-link" href="<?php echo esc_url( get_permalink( $story ) ); ?>">
-			<?php if ( ! in_array( $style, array( 'brief', 'desk-brief', 'feed' ), true ) ) { msc_cs_preview_art( $story, 'lead' === $style ); } ?>
+			<?php if ( ! in_array( $style, array( 'brief', 'desk-brief', 'grid-brief', 'feed' ), true ) ) { msc_cs_preview_art( $story, in_array( $style, array( 'lead', 'grid-lead' ), true ) ); } ?>
 			<div class="cs-card-copy">
 				<p class="cs-label"><?php echo esc_html( msc_cs_preview_meta( $story, 'label' ) ); ?>
-					<?php if ( 'brief' === $style || $feed ) { ?><time datetime="<?php echo esc_attr( get_post_time( DATE_W3C, true, $story ) ); ?>"><?php echo esc_html( get_the_time( $feed ? 'M j · g:i a' : 'g:i a', $story ) ); ?></time><?php } ?>
+					<?php if ( in_array( $style, array( 'brief', 'grid-news', 'feed' ), true ) ) { ?><time datetime="<?php echo esc_attr( get_post_time( DATE_W3C, true, $story ) ); ?>"><?php echo esc_html( get_the_time( 'brief' === $style ? 'g:i a' : 'M j · g:i a', $story ) ); ?></time><?php } ?>
 				</p>
 				<h3><?php echo esc_html( get_the_title( $story ) ); ?></h3>
-				<?php if ( $deck && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'recap-feature', 'recap-item', 'watch-feature', 'interview-feature', 'trailer-feature', 'feed' ), true ) ) { ?><p class="cs-deck"><?php echo esc_html( $deck ); ?></p><?php } ?>
-				<?php if ( $byline && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'interview-feature' ), true ) ) { ?><p class="cs-byline">By <?php echo esc_html( $byline ); ?></p><?php } ?>
+				<?php if ( $deck && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'recap-feature', 'recap-item', 'watch-feature', 'interview-feature', 'trailer-feature', 'grid-news', 'grid-review', 'feed' ), true ) ) { ?><p class="cs-deck"><?php echo esc_html( $deck ); ?></p><?php } ?>
+				<?php if ( $byline && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'interview-feature', 'grid-lead', 'grid-review' ), true ) ) { ?><p class="cs-byline">By <?php echo esc_html( $byline ); ?></p><?php } ?>
 			</div>
 		</a>
 	</article>

@@ -5,18 +5,24 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 	WP_CLI::error( 'Run this on ComingSoon (Site A) with the Screening Room theme active.' );
 }
 
-$install_b = 'b' === ( $args[0] ?? '' );
-\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $install_b ): void {
+$variant_key = $args[0] ?? '';
+if ( ! in_array( $variant_key, array( '', 'b', 'c' ), true ) ) { WP_CLI::error( 'Choose preview b or c.' ); }
+\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $variant_key ): void {
 	$slug = 'homepage-preview';
 	$marker = '_msc_comingsoon_preview';
 	$existing = get_page_by_path( $slug, OBJECT, array( 'page' ) );
 	if ( $existing ? ! in_array( get_post_meta( $existing->ID, $marker, true ), array( 'building', 'home' ), true ) : url_to_postid( home_url( '/' . $slug . '/' ) ) ) {
 		WP_CLI::error( 'A page already uses /' . $slug . '/. It was left intact.' );
 	}
-	$variant_slug = 'homepage-preview-b';
-	$variant = $install_b ? get_page_by_path( $variant_slug, OBJECT, array( 'page' ) ) : null;
-	if ( $install_b && ( $variant ? ! in_array( get_post_meta( $variant->ID, '_msc_comingsoon_palette', true ), array( 'b', 'violet' ), true ) || 'home' !== get_post_meta( $variant->ID, $marker, true ) : url_to_postid( home_url( '/' . $variant_slug . '/' ) ) ) ) {
-		WP_CLI::error( 'A page already uses /' . $variant_slug . '/. It was left intact.' );
+	$variant = null;
+	$variant_slug = $slug . '-' . $variant_key;
+	if ( $variant_key ) {
+		$variant = get_page_by_path( $variant_slug, OBJECT, array( 'page' ) );
+		$variants = 'b' === $variant_key ? array( 'b', 'violet' ) : array( $variant_key );
+		$occupied = $variant
+			? 'home' !== get_post_meta( $variant->ID, $marker, true ) || ! in_array( get_post_meta( $variant->ID, '_msc_comingsoon_palette', true ), $variants, true )
+			: url_to_postid( home_url( '/' . $variant_slug . '/' ) );
+		if ( $occupied ) { WP_CLI::error( 'A page already uses /' . $variant_slug . '/. It was left intact.' ); }
 	}
 
 	$insert = static function ( array $page ): int {
@@ -140,24 +146,25 @@ $install_b = 'b' === ( $args[0] ?? '' );
 		if ( is_wp_error( $result ) ) { WP_CLI::error( $result->get_error_message() ); }
 		update_post_meta( $parent, $marker, 'home' );
 	}
-	if ( ! $install_b ) {
+	if ( ! $variant_key ) {
 		WP_CLI::success( 'ComingSoon homepage preview: ' . get_permalink( $parent ) );
 		return;
 	}
+	$variant_label = strtoupper( $variant_key );
 	$variant_id = $variant ? $variant->ID : $insert( array(
-		'post_title' => 'ComingSoon Homepage Preview B',
+		'post_title' => 'ComingSoon Homepage Preview ' . $variant_label,
 		'post_name' => $variant_slug,
 		'post_status' => 'publish',
 		'page_template' => 'page-comingsoon-preview.php',
 		'meta_input' => array(
 			$marker => 'home',
 			'_msc_comingsoon_story_source' => $parent,
-			'_msc_comingsoon_palette' => 'b',
+			'_msc_comingsoon_palette' => $variant_key,
 		),
 	) );
 	if ( $variant ) {
 		update_post_meta( $variant_id, '_msc_comingsoon_story_source', $parent );
-		update_post_meta( $variant_id, '_msc_comingsoon_palette', 'b' );
+		update_post_meta( $variant_id, '_msc_comingsoon_palette', $variant_key );
 	}
-	WP_CLI::success( 'ComingSoon homepage preview B: ' . get_permalink( $variant_id ) );
+	WP_CLI::success( 'ComingSoon homepage preview ' . $variant_label . ': ' . get_permalink( $variant_id ) );
 } );

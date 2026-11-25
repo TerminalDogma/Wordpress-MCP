@@ -14,6 +14,10 @@ The preview uses a dedicated Page template at `/site-a/homepage-preview/` and li
 
 Preview B uses red `#ED514C` for the masthead and Movies lettering, yellow `#E7ED4C` for highlights, and sky blue `#4CA5ED` for TV and navigation accents. Its stylesheet loads on `/site-a/homepage-preview-b/`. Both previews use the same layout and story pages. Run `sh bin/shared-content.sh comingsoon-preview-b` to create the comparison page and seed any missing sample stories.
 
+Preview C uses Polygon’s cover-led story grouping, compact headline modules, and coverage organized around guides. Firecrawl’s November 25, 2026 capture showed four featured covers followed by Popular News, a topical review collection, and a guides module. Branding data reported Montserrat and magenta accents. The signed reference screenshot returned HTTP 403. [Polygon homepage](https://www.polygon.com/)
+
+ComingSoon’s adaptation uses its own logo and original story art with an Archivo headline grid, a clipped lead image, an Editors’ Picks strip, and a What to Watch rail next to the latest-news list. It retains the red, yellow, and sky-blue accents from Preview B, with a charcoal masthead and a light blue guide panel. The four-story feature grid reflows into a stacked lead and supporting tiles on phones. Movies and TV have separate desks, and The Feed carries all 28 stories. Run `sh bin/shared-content.sh comingsoon-preview-c` to install `/site-a/homepage-preview-c/`.
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |

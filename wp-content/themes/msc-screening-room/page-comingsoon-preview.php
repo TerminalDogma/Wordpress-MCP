@@ -3,6 +3,7 @@
 require_once __DIR__ . '/inc/comingsoon-preview.php';
 
 $preview_page = get_queried_object_id();
+$preview_c = 'c' === get_post_meta( $preview_page, '_msc_comingsoon_palette', true );
 $story_source = (int) get_post_meta( $preview_page, '_msc_comingsoon_story_source', true );
 if ( ! $story_source || 'home' !== get_post_meta( $story_source, '_msc_comingsoon_preview', true ) || 'publish' !== get_post_status( $story_source ) || post_password_required( $story_source ) ) {
 	$story_source = $preview_page;
@@ -43,6 +44,9 @@ get_header( 'comingsoon-preview', array(
 ) );
 ?>
 <main id="main">
+	<?php if ( $preview_c ) {
+		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
+	} else { ?>
 	<div class="cs-frame">
 		<h1 class="screen-reader-text">ComingSoon homepage preview</h1>
 		<div class="cs-edition">
@@ -93,6 +97,7 @@ get_header( 'comingsoon-preview', array(
 		?>
 	</div>
 	<?php } ?>
-	<?php if ( $stories ) { get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( get_queried_object_id() ) ) ); } ?>
+	<?php } ?>
+	<?php if ( $stories ) { get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ) ) ); } ?>
 </main>
 <?php get_footer( 'comingsoon-preview' ); ?>
