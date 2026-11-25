@@ -1,12 +1,14 @@
 <?php
 $preview_parent = (int) wp_get_post_parent_id( get_queried_object_id() ) ?: get_queried_object_id();
 $preview_url = get_permalink( $preview_parent );
+$movies_url = ( $args['movies'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#movies' : msc_news_category_url( 'Movies' );
+$tv_url = ( $args['tv'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#tv' : msc_news_category_url( 'TV' );
 add_filter( 'wp_robots', static function ( array $robots ): array {
 	unset( $robots['index'] );
 	$robots['noindex'] = true;
 	return $robots;
 }, 100 );
-wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.1.0' );
+wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.2.0' );
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -35,8 +37,8 @@ wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/asset
 		<div class="cs-frame cs-nav-row">
 			<nav aria-label="Preview navigation" class="cs-nav">
 				<a href="<?php echo esc_url( $preview_url . '#latest' ); ?>">Latest</a>
-				<a href="<?php echo esc_url( msc_news_category_url( 'Movies' ) ); ?>">Movies</a>
-				<a href="<?php echo esc_url( msc_news_category_url( 'TV' ) ); ?>">TV</a>
+				<a href="<?php echo esc_url( $movies_url ); ?>">Movies</a>
+				<a href="<?php echo esc_url( $tv_url ); ?>">TV</a>
 				<a href="<?php echo esc_url( $preview_url . '#the-feed' ); ?>">The Feed</a>
 				<a href="<?php echo esc_url( $preview_url . '#what-to-watch' ); ?>">What to Watch</a>
 				<?php if ( \MSC\Reviews::enabled() ) { ?><a href="<?php echo esc_url( get_post_type_archive_link( 'msc_review' ) ); ?>">Reviews</a><?php } ?>

@@ -18,11 +18,24 @@ $lead = $sections['lead'][0] ?? null;
 $spotlight = array_slice( $sections['spotlight'] ?? array(), 0, 2 );
 $latest = $sections['latest'] ?? array();
 $picks = $sections['watch'] ?? array();
+$recaps = $sections['recaps'] ?? array();
+$movie_reviews = array();
+$tv_review = null;
+foreach ( $sections['criticism'] ?? array() as $story ) {
+	if ( 'TV Review' === msc_cs_preview_meta( $story, 'label' ) ) {
+		$tv_review ??= $story;
+	} else {
+		$movie_reviews[] = $story;
+	}
+}
 
 if ( $stories ) {
 	wp_enqueue_script( 'cs-editorial-feed', get_template_directory_uri() . '/assets/comingsoon/feed.js', array(), '1.1.0', true );
 }
-get_header( 'comingsoon-preview' );
+get_header( 'comingsoon-preview', array(
+	'movies' => (bool) $movie_reviews,
+	'tv' => (bool) ( $tv_review || $recaps ),
+) );
 ?>
 <main id="main">
 	<div class="cs-frame">
@@ -48,6 +61,9 @@ get_header( 'comingsoon-preview' );
 		</div>
 		<?php } ?>
 	</div>
+	<?php
+	get_template_part( 'parts/comingsoon-channels', null, compact( 'movie_reviews', 'tv_review', 'latest', 'recaps' ) );
+	?>
 	<?php if ( $picks ) { ?>
 	<section id="what-to-watch" class="cs-watch" aria-labelledby="cs-watch-title">
 		<div class="cs-frame">
@@ -55,20 +71,17 @@ get_header( 'comingsoon-preview' );
 				<h2 id="cs-watch-title">What to Watch</h2>
 				<a href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">Browse upcoming releases <span aria-hidden="true">→</span></a>
 			</div>
-			<div class="cs-watch-grid<?php echo count( $picks ) >= 4 ? ' cs-watch-grid--four' : ''; ?>"><?php foreach ( $picks as $story ) { msc_cs_preview_card( $story, 'pick' ); } ?></div>
+			<div class="cs-watch-layout">
+				<?php msc_cs_preview_card( $picks[0], 'watch-feature' ); ?>
+				<?php if ( count( $picks ) > 1 ) { ?>
+					<div class="cs-watch-list"><?php foreach ( array_slice( $picks, 1 ) as $story ) { msc_cs_preview_card( $story, 'watch-item' ); } ?></div>
+				<?php } ?>
+			</div>
 		</div>
 	</section>
 	<?php } ?>
-	<?php if ( array_intersect( array_keys( $sections ), array( 'recaps', 'criticism', 'features', 'trailers' ) ) ) { ?>
+	<?php if ( ! empty( $sections['features'] ) || ! empty( $sections['trailers'] ) ) { ?>
 	<div class="cs-frame cs-desks">
-		<?php if ( ! empty( $sections['recaps'] ) || ! empty( $sections['criticism'] ) ) { ?>
-		<div class="cs-desks-split">
-			<?php
-			msc_cs_preview_desk( 'tv-recaps', 'TV Recaps', $sections['recaps'] ?? array() );
-			msc_cs_preview_desk( 'criticism', 'Reviews & Criticism', $sections['criticism'] ?? array() );
-			?>
-		</div>
-		<?php } ?>
 		<?php
 		msc_cs_preview_desk( 'interviews-features', 'Interviews & Features', $sections['features'] ?? array() );
 		msc_cs_preview_desk( 'trailers-first-looks', 'Trailers & First Looks', $sections['trailers'] ?? array() );

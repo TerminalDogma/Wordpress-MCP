@@ -4,9 +4,11 @@
 
 Firecrawl captured [Vulture’s homepage](https://www.vulture.com/) on November 25, 2026. The page text showed a mix of prominent criticism and features, a named news feed, recaps and streaming coverage. Branding data identified the Miller Text serif headline family, a white base, a red link accent and square edges. The signed screenshot returned HTTP 403, so the implementation draws on the available page structure and branding data.
 
-The preview uses the existing ComingSoon wordmark, deep navy `#102730`, blue `#075C87`, pale paper `#FBFAF6` and a yellow `#E7ED4C` rule. Georgia headlines create a magazine-style hierarchy alongside the bundled Archivo interface font. The 1,264px desktop container pairs a concise Latest column with one large feature and a smaller two-story In Focus column. A separate What to Watch band connects the sample coverage to the existing release calendar. The layout reflows at 1,060px and 680px. All story art is original and bundled as optimized WebP files.
+Vulture’s Movies page leads with criticism and mixes story formats in a dated list. Its TV page gives interviews and show discovery their own modules. Both identify Elderkin as their display family. The same 403 affected their signed screenshots. [Movies](https://www.vulture.com/movies/) · [TV](https://www.vulture.com/tv/)
 
-The lower half gives TV Recaps and Reviews & Criticism separate columns, followed by image-led sections for interviews, features, trailers and first looks. A chronological feed groups stories by editorial format. Format filters and the full-list link work without JavaScript, and JavaScript updates the same view in place.
+The preview uses ComingSoon’s wordmark, bundled Archivo, and Georgia headlines. The lead overlays a full-bleed still alongside a compact Latest column. Movies uses a tilted yellow `#DEEC42` marquee, a review with overlapping copy, and a vertical list of film coverage. TV uses a blue `#073D50` to `#086379` banner, a wide split feature, and a recap strip. What to Watch pairs one wide recommendation with compact thumbnail rows. Interviews uses a portrait-led feature, while trailers use three equal frames. These treatments use original bundled WebP artwork. The layouts reflow at 940px and 680px.
+
+The chronological feed groups stories by editorial format. Format filters and the full-list link work without JavaScript, and JavaScript updates the same view in place.
 
 The preview uses a dedicated Page template at `/site-a/homepage-preview/` and links to 28 sample stories under the same path. From an existing local multisite checkout, run `sh bin/shared-content.sh comingsoon-preview` to add the stories. Re-running the installer preserves existing page content and the configured homepage.
 

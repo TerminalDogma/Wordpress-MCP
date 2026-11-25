@@ -25,7 +25,7 @@ function msc_cs_preview_art( WP_Post $story, bool $priority = false ): void {
 	$base = get_template_directory_uri() . '/assets/comingsoon/';
 	$attrs = ' width="508" height="508"';
 	if ( 'meridian' === $art ) {
-		$attrs = ' width="1440" height="960" srcset="' . esc_attr( $base . 'meridian-small.webp 760w, ' . $base . 'meridian.webp 1440w' ) . '" sizes="(max-width: 700px) 94vw, 680px"';
+		$attrs = ' width="1440" height="960" srcset="' . esc_attr( $base . 'meridian-small.webp 760w, ' . $base . 'meridian.webp 1440w' ) . '" sizes="(max-width: 680px) 94vw, (max-width: 1200px) 70vw, 900px"';
 	}
 	echo '<img class="cs-art cs-art--' . esc_attr( $art ) . '" src="' . esc_url( $base . $art . '.webp' ) . '" alt="" decoding="async" ' . ( $priority ? 'fetchpriority="high"' : 'loading="lazy"' ) . $attrs . '>';
 }
@@ -43,10 +43,10 @@ function msc_cs_preview_card( WP_Post $story, string $style, bool $hidden = fals
 					<?php if ( 'brief' === $style || $feed ) { ?><time datetime="<?php echo esc_attr( get_post_time( DATE_W3C, true, $story ) ); ?>"><?php echo esc_html( get_the_time( $feed ? 'M j · g:i a' : 'g:i a', $story ) ); ?></time><?php } ?>
 				</p>
 				<h3><?php echo esc_html( get_the_title( $story ) ); ?></h3>
-				<?php if ( $deck && in_array( $style, array( 'lead', 'pick', 'review-lead', 'desk', 'feed' ), true ) ) { ?><p class="cs-deck"><?php echo esc_html( $deck ); ?></p><?php } ?>
+				<?php if ( $deck && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'recap', 'watch-feature', 'interview-feature', 'desk', 'feed' ), true ) ) { ?><p class="cs-deck"><?php echo esc_html( $deck ); ?></p><?php } ?>
+				<?php if ( $byline && in_array( $style, array( 'lead', 'movie-feature', 'tv-feature', 'interview-feature' ), true ) ) { ?><p class="cs-byline">By <?php echo esc_html( $byline ); ?></p><?php } ?>
 			</div>
 		</a>
-		<?php if ( 'lead' === $style && $byline ) { ?><p class="cs-byline">By <?php echo esc_html( $byline ); ?></p><?php } ?>
 	</article>
 	<?php
 }
@@ -58,7 +58,7 @@ function msc_cs_preview_desk( string $id, string $title, array $stories ): void 
 		<h2 id="<?php echo esc_attr( $id . '-title' ); ?>" class="cs-desk-title"><?php echo esc_html( $title ); ?></h2>
 		<div class="cs-desk-grid">
 			<?php foreach ( $stories as $index => $story ) {
-				$style = 'criticism' === $id ? ( 0 === $index ? 'review-lead' : 'desk-brief' ) : 'desk';
+				$style = 'interviews-features' === $id ? ( 0 === $index ? 'interview-feature' : 'desk-brief' ) : 'desk';
 				msc_cs_preview_card( $story, $style );
 			} ?>
 		</div>
