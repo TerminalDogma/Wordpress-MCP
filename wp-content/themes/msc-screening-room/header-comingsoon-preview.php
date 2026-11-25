@@ -8,7 +8,7 @@ add_filter( 'wp_robots', static function ( array $robots ): array {
 	$robots['noindex'] = true;
 	return $robots;
 }, 100 );
-wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.2.0' );
+wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.3.0' );
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
