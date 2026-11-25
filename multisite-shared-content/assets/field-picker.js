@@ -1,5 +1,13 @@
 (() => {
     const $ = window.jQuery;
+    document.addEventListener('invalid', event => {
+        if (!event.target.closest('.msc-record-editor')) return;
+        let panel = event.target.closest('details');
+        while (panel) {
+            panel.open = true;
+            panel = panel.parentElement.closest('details');
+        }
+    }, true);
     window.mscLookupFields = (type, term) => $.getJSON(window.ajaxurl, {action: 'msc_field_picker', nonce: mscFieldPicker.nonce, type, term});
     document.querySelectorAll('.msc-field-picker').forEach(picker => {
         const config = JSON.parse(picker.dataset.picker);

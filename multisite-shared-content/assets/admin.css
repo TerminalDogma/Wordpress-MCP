@@ -97,3 +97,31 @@
 .msc-credit-role-panel { margin-top: 6px; }
 .msc-credit-role-panel summary { width: fit-content; color: var(--msc-accent, #2271b1); }
 .msc-credit-role-panel .msc-credit-roles { margin-top: 8px; }
+
+.msc-editor-section > summary { font-size: 17px; }
+.msc-editor-section[open] > summary { margin-bottom: 12px; }
+.msc-editor-section > .acf-form-fields > .acf-field:first-child { border-top: 0; }
+.msc-editor-section > .acf-form-fields > .acf-field { padding-inline: 0; }
+.msc-structured-rows { display: grid; gap: 12px; }
+.msc-structured-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    align-items: end;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 10px 12px 12px;
+    margin: 0;
+    min-inline-size: 0;
+    border: 1px solid var(--msc-line, #dcdcde);
+    border-radius: 6px;
+    background: var(--msc-soft, #f6f7f7);
+}
+.msc-structured-row legend { font-weight: 600; }
+.msc-structured-row label { display: grid; gap: 4px; margin: 0; font-weight: 500; }
+.msc-structured-row input:not([type=checkbox]), .msc-structured-row select, .msc-structured-row textarea { width: 100%; }
+.msc-structured-row > details, .msc-structured-value:has(details) { grid-column: 1 / -1; }
+.msc-structured-row .button { justify-self: start; }
+.msc-structured-rows:not(:empty) + .button { margin-top: 10px; }
+.msc-structured-preview { margin: 8px 0; overflow-wrap: anywhere; }
+.msc-structured-preview dt { font-weight: 600; }
+.msc-structured-preview dd { margin-bottom: 8px; }

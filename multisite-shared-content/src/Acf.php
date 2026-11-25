@@ -177,8 +177,16 @@ final class Acf {
 		if ( isset( $_GET['updated'] ) ) { echo '<div class="notice notice-success inline"><p>Shared fields saved. See Site synchronization below for global delivery and local overrides.</p></div>'; }
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
-		CreditEditor::control( Schema::get( $r['type'] ), self::$global ? $r['global'] : $r['data'], $r['overrides'], self::$global, 'credits' );
-		acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'field_groups' => array( 'group_msc_' . $r['type'] ), 'form' => false, 'honeypot' => false ) );
+		$schema = Schema::get( $r['type'] );
+		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
+		$visible = array_filter( $schema['fields'], static fn( $field, $name ) => isset( self::$fields[ self::key( $r['type'], $name ) ] ) && ! in_array( $name, $managed, true ), ARRAY_FILTER_USE_BOTH );
+		foreach ( EditorLayout::sections( $visible ) as $heading => list( $collapsed, $fields ) ) {
+			$container = EditorLayout::open( $heading, $collapsed );
+			$keys = array_map( static fn( $name ) => self::key( $r['type'], $name ), array_keys( $fields ) );
+			acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'fields' => $keys, 'form' => false, 'honeypot' => false, 'updated_message' => false ) );
+			echo '</' . $container . '>';
+		}
+		CreditEditor::control( $schema, self::$global ? $r['global'] : $r['data'], $r['overrides'], self::$global, 'credits' );
 		submit_button( self::$global ? 'Save shared fields globally' : 'Save local overrides' );
 		if ( current_user_can( 'msc_publish_local' ) && 'active' === $r['state'] ) {
 			echo '<div class="msc-acf-publish-actions"><button type="submit" class="button button-secondary" name="publication" value="site">Save and publish on this site</button>';

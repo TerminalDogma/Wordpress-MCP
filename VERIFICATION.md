@@ -1,3 +1,7 @@
+# Shared Content 2.11.1 verification
+
+Chromium checked the release, viewing, FAQ and identifier controls. Global and local saves retained nested metadata, source-specific row fields and integers beyond JavaScript’s safe number range. Aggregate scores and optional sections started closed, and Cast and crew appeared last in both editors. The grouped ACF form saved a collapsed score field and an open rating field together.
+
 # Shared Content 2.11.0 verification
 
 Chromium verified visual formatting in Description and Synopsis, genre selection chips, bounded rating and status menus, and a single Person row with multiple roles. Both admin forms saved the unified credits. The ACF form also verified a local-only credit change. The fixture retained its original legacy rating and status on an unrelated save and accepted specific release choices later. All 30 ACF adapter checks passed, including formatted content, global and local credits, and the authenticated save endpoint.

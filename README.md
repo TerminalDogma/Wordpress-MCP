@@ -40,6 +40,8 @@ YouTube trailers use their individual video thumbnails automatically. Vimeo trai
 
 In **Shared Content → Manage fields** and the ACF editor, use the visual editors for descriptions and synopses. Search categories by name and use the remove button on a selection to clear it. In **Cast and crew**, find a Person once and assign all of their roles on the same row, including an actor’s character. Movie ratings and release statuses use controlled menus. Network administrators can add choices under **Shared Content Network → Categories**.
 
+In **Manage fields**, add release dates, viewing links, questions and answers, and external IDs with labeled controls. Both editors put Cast and crew after the other fields. Aggregate review scores, optional editorial details and additional settings open on demand.
+
 Catalog archives now use designs suited to Movies, TV Shows, Games, People, Episodes and company/platform directories, with metadata instead of excerpts, scoped search/filtering and asynchronous pagination. See [the archive guide](docs/catalog-archives.md).
 
 Version 2.3 adds site-specific editorial Reviews with 1–10 half-point scores, verdicts and positives/negatives. Item images and score sections prioritize the site’s own published review, with Gold/Silver/Copper recommendations. Image badges show only published editorial reviews; aggregates appear on item pages. Games import Metacritic/OpenCritic from Wikipedia without API keys; Movies/TV keep OMDb. See [the review editing and score-source guide](docs/reviews.md).
