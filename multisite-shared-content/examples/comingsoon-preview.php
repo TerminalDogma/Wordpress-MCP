@@ -15,7 +15,7 @@ $install_b = 'b' === ( $args[0] ?? '' );
 	}
 	$variant_slug = 'homepage-preview-b';
 	$variant = $install_b ? get_page_by_path( $variant_slug, OBJECT, array( 'page' ) ) : null;
-	if ( $install_b && ( $variant ? 'violet' !== get_post_meta( $variant->ID, '_msc_comingsoon_palette', true ) || 'home' !== get_post_meta( $variant->ID, $marker, true ) : url_to_postid( home_url( '/' . $variant_slug . '/' ) ) ) ) {
+	if ( $install_b && ( $variant ? ! in_array( get_post_meta( $variant->ID, '_msc_comingsoon_palette', true ), array( 'b', 'violet' ), true ) || 'home' !== get_post_meta( $variant->ID, $marker, true ) : url_to_postid( home_url( '/' . $variant_slug . '/' ) ) ) ) {
 		WP_CLI::error( 'A page already uses /' . $variant_slug . '/. It was left intact.' );
 	}
 
@@ -152,9 +152,12 @@ $install_b = 'b' === ( $args[0] ?? '' );
 		'meta_input' => array(
 			$marker => 'home',
 			'_msc_comingsoon_story_source' => $parent,
-			'_msc_comingsoon_palette' => 'violet',
+			'_msc_comingsoon_palette' => 'b',
 		),
 	) );
-	if ( $variant ) { update_post_meta( $variant_id, '_msc_comingsoon_story_source', $parent ); }
+	if ( $variant ) {
+		update_post_meta( $variant_id, '_msc_comingsoon_story_source', $parent );
+		update_post_meta( $variant_id, '_msc_comingsoon_palette', 'b' );
+	}
 	WP_CLI::success( 'ComingSoon homepage preview B: ' . get_permalink( $variant_id ) );
 } );
