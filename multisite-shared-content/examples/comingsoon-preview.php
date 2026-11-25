@@ -100,6 +100,7 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 		),
 	);
 
+	$stories = array_merge( $stories, require __DIR__ . '/comingsoon-preview-stories.php' );
 	foreach ( $stories as $position => list( $name, $section, $label, $art, $byline, $title, $deck, $first, $second ) ) {
 		$found = get_page_by_path( $slug . '/' . $name, OBJECT, array( 'page' ) );
 		if ( $found ) {

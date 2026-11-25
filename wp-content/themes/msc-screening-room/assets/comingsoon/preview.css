@@ -263,3 +263,120 @@ body.cs-editorial {
     .cs-watch-grid { grid-template-columns: 1fr; gap: 21px; }
     .cs-footer .cs-frame { align-items: flex-start; flex-direction: column; gap: 3px; padding-block: 12px 17px; }
 }
+
+/* Editorial sections and the format-filtered feed. */
+.cs-watch-grid--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cs-desks { --cs-desk-gap: 24px; padding-block: 38px 47px; }
+.cs-desks-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+    gap: clamp(24px, 4vw, 56px);
+}
+.cs-desks-split + .cs-desk,
+.cs-desk + .cs-desk--trailers-first-looks { margin-top: 36px; }
+.cs-editorial .cs-desk-title {
+    margin: 0 0 19px;
+    padding-block: 12px 10px;
+    border-block: 2px solid var(--cs-ink);
+    border-bottom: 1px solid var(--cs-line);
+    font: 700 clamp(1.85rem, 3.1vw, 2.65rem)/1.03 var(--cs-serif);
+    letter-spacing: -.053em;
+}
+.cs-desk-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cs-desk-gap); }
+.cs-desk--tv-recaps .cs-desk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cs-desk--criticism .cs-desk-grid { display: block; }
+.cs-desk .cs-art { aspect-ratio: 1.85; }
+.cs-desk .cs-card-copy { padding-top: 11px; }
+.cs-desk .cs-card h3 { font-size: clamp(1.23rem, 1.75vw, 1.55rem); }
+.cs-desk .cs-deck { margin-top: 6px; font-size: .88rem; }
+.cs-desk .cs-card--review-lead .cs-art { aspect-ratio: 2.32; }
+.cs-desk .cs-card--review-lead h3 { font-size: clamp(1.55rem, 2.45vw, 2.22rem); }
+.cs-desk .cs-card--desk-brief { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--cs-line); }
+.cs-desk .cs-art--hollis { object-position: 50% 43%; }
+.cs-desk .cs-art--western { object-position: 50% 17%; }
+.cs-desk .cs-art--switchboard { object-position: 50% 33%; }
+.cs-desk .cs-art--cinematographer { object-position: 50% 28%; }
+.cs-desk .cs-art--breakwater { object-position: 50% 28%; }
+.cs-feed {
+    background: #eef1eb;
+    border-top: 4px solid var(--cs-yellow);
+    padding-block: 28px 39px;
+    scroll-margin-top: 45px;
+}
+.cs-feed-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px 21px;
+    flex-wrap: wrap;
+    align-items: end;
+    padding-bottom: 13px;
+    border-bottom: 2px solid var(--cs-ink);
+}
+.cs-editorial .cs-feed-heading h2 {
+    margin: 0;
+    font: 700 clamp(2rem, 4vw, 3.15rem)/1 var(--cs-serif);
+    letter-spacing: -.058em;
+}
+.cs-feed-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+.cs-feed-filters a {
+    padding: 7px 10px;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+.cs-feed-filters a:hover { border-color: var(--cs-ink); }
+.cs-feed-filters [aria-current] { background: var(--cs-ink); color: #fff; }
+.cs-feed-list .cs-card { border-bottom: 1px solid var(--cs-line); }
+.cs-card--feed .cs-card-copy {
+    display: grid;
+    grid-template-columns: minmax(125px, 14%) minmax(0, 1fr);
+    align-items: start;
+    gap: 4px 18px;
+    padding-block: 15px;
+}
+.cs-card--feed .cs-label {
+    display: flex;
+    flex-direction: column;
+    grid-row: span 2;
+    margin: 3px 0 0;
+}
+.cs-editorial .cs-card--feed h3 { font-size: clamp(1.22rem, 2vw, 1.65rem); }
+.cs-card--feed .cs-deck { max-width: none; margin: 0; font-size: .86rem; }
+.cs-feed-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 19px;
+    padding: 8px 12px;
+    border: 1px solid var(--cs-ink);
+    font-size: .83rem;
+    font-weight: 700;
+}
+.cs-feed-more:hover { background: var(--cs-ink); color: #fff; }
+.cs-feed [hidden] { display: none; }
+
+@media (max-width: 1060px) {
+    .cs-watch-grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cs-desks { --cs-desk-gap: 17px; }
+}
+@media (max-width: 760px) {
+    .cs-desks-split { grid-template-columns: 1fr; gap: 27px; }
+    .cs-desk .cs-deck { font-size: .82rem; }
+}
+@media (max-width: 680px) {
+    .cs-desks { padding-block: 26px 31px; }
+    .cs-desks-split + .cs-desk,
+    .cs-desk + .cs-desk--trailers-first-looks { margin-top: 26px; }
+    .cs-desk-grid { grid-template-columns: 1fr; }
+    .cs-desk-grid .cs-card { padding-bottom: 14px; border-bottom: 1px solid var(--cs-line); }
+    .cs-desk-grid .cs-card--desk-brief { margin: 0; border-top: 0; }
+    .cs-watch-grid--four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
+    .cs-watch-grid--four .cs-card--pick h3 { font-size: 1.15rem; }
+    .cs-watch-grid--four .cs-deck { font-size: .78rem; }
+    .cs-feed { padding-block: 22px 29px; }
+    .cs-feed-filters { gap: 2px 5px; }
+    .cs-feed-filters a { padding: 6px 7px; }
+    .cs-card--feed .cs-card-copy { display: block; padding-block: 11px; }
+    .cs-card--feed .cs-label { flex-direction: row; margin: 0 0 4px; }
+    .cs-card--feed .cs-deck { margin-top: 4px; }
+}

@@ -6,7 +6,7 @@ add_filter( 'wp_robots', static function ( array $robots ): array {
 	$robots['noindex'] = true;
 	return $robots;
 }, 100 );
-wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.0.0' );
+wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/assets/comingsoon/preview.css', array( 'network-presentation' ), '1.1.0' );
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -37,6 +37,7 @@ wp_enqueue_style( 'cs-editorial-preview', get_template_directory_uri() . '/asset
 				<a href="<?php echo esc_url( $preview_url . '#latest' ); ?>">Latest</a>
 				<a href="<?php echo esc_url( msc_news_category_url( 'Movies' ) ); ?>">Movies</a>
 				<a href="<?php echo esc_url( msc_news_category_url( 'TV' ) ); ?>">TV</a>
+				<a href="<?php echo esc_url( $preview_url . '#the-feed' ); ?>">The Feed</a>
 				<a href="<?php echo esc_url( $preview_url . '#what-to-watch' ); ?>">What to Watch</a>
 				<?php if ( \MSC\Reviews::enabled() ) { ?><a href="<?php echo esc_url( get_post_type_archive_link( 'msc_review' ) ); ?>">Reviews</a><?php } ?>
 			</nav>
