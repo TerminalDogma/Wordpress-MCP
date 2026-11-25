@@ -1,5 +1,13 @@
 # Network presentation design
 
+## ComingSoon homepage preview
+
+Firecrawl captured [Vulture’s homepage](https://www.vulture.com/) on November 25, 2026. The page text showed a mix of prominent criticism and features, a named news feed, recaps and streaming coverage. Branding data identified the Miller Text serif headline family, a white base, a red link accent and square edges. The signed screenshot returned HTTP 403, so the implementation draws on the available page structure and branding data.
+
+The preview uses the existing ComingSoon wordmark, deep navy `#102730`, blue `#075C87`, pale paper `#FBFAF6` and a yellow `#E7ED4C` rule. Georgia headlines create a magazine-style hierarchy alongside the bundled Archivo interface font. The 1,264px desktop container pairs a concise Latest column with one large feature and a smaller two-story In Focus column. A separate What to Watch band connects the sample coverage to the existing release calendar. The layout reflows at 1,060px and 680px. All story art is original and bundled as optimized WebP files.
+
+The preview uses a dedicated Page template at `/site-a/homepage-preview/` and links to ten editable sample stories under the same path. From an existing local multisite checkout, run `sh bin/shared-content.sh comingsoon-preview` to create the pages. Re-running the installer preserves existing page content and the configured homepage.
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |
