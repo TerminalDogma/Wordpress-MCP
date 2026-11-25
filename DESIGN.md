@@ -12,6 +12,8 @@ The chronological feed groups stories by editorial format. Format filters and th
 
 The preview uses a dedicated Page template at `/site-a/homepage-preview/` and links to 28 sample stories under the same path. From an existing local multisite checkout, run `sh bin/shared-content.sh comingsoon-preview` to add the stories. Re-running the installer preserves existing page content and the configured homepage.
 
+Preview B uses violet `#6638D5` with ComingSoon yellow `#E7ED4C`, lavender `#EFE7FB` panels, and plum text. Its stylesheet loads on `/site-a/homepage-preview-b/`. Both previews use the same layout and story pages. Run `sh bin/shared-content.sh comingsoon-preview-b` to create the comparison page and seed any missing sample stories.
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |

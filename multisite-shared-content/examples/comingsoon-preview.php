@@ -5,12 +5,18 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 	WP_CLI::error( 'Run this on ComingSoon (Site A) with the Screening Room theme active.' );
 }
 
-\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function (): void {
+$install_b = 'b' === ( $args[0] ?? '' );
+\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $install_b ): void {
 	$slug = 'homepage-preview';
 	$marker = '_msc_comingsoon_preview';
 	$existing = get_page_by_path( $slug, OBJECT, array( 'page' ) );
 	if ( $existing ? ! in_array( get_post_meta( $existing->ID, $marker, true ), array( 'building', 'home' ), true ) : url_to_postid( home_url( '/' . $slug . '/' ) ) ) {
 		WP_CLI::error( 'A page already uses /' . $slug . '/. It was left intact.' );
+	}
+	$variant_slug = 'homepage-preview-b';
+	$variant = $install_b ? get_page_by_path( $variant_slug, OBJECT, array( 'page' ) ) : null;
+	if ( $install_b && ( $variant ? 'violet' !== get_post_meta( $variant->ID, '_msc_comingsoon_palette', true ) || 'home' !== get_post_meta( $variant->ID, $marker, true ) : url_to_postid( home_url( '/' . $variant_slug . '/' ) ) ) ) {
+		WP_CLI::error( 'A page already uses /' . $variant_slug . '/. It was left intact.' );
 	}
 
 	$insert = static function ( array $page ): int {
@@ -134,5 +140,21 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 		if ( is_wp_error( $result ) ) { WP_CLI::error( $result->get_error_message() ); }
 		update_post_meta( $parent, $marker, 'home' );
 	}
-	WP_CLI::success( 'ComingSoon homepage preview: ' . get_permalink( $parent ) );
+	if ( ! $install_b ) {
+		WP_CLI::success( 'ComingSoon homepage preview: ' . get_permalink( $parent ) );
+		return;
+	}
+	$variant_id = $variant ? $variant->ID : $insert( array(
+		'post_title' => 'ComingSoon Homepage Preview B',
+		'post_name' => $variant_slug,
+		'post_status' => 'publish',
+		'page_template' => 'page-comingsoon-preview.php',
+		'meta_input' => array(
+			$marker => 'home',
+			'_msc_comingsoon_story_source' => $parent,
+			'_msc_comingsoon_palette' => 'violet',
+		),
+	) );
+	if ( $variant ) { update_post_meta( $variant_id, '_msc_comingsoon_story_source', $parent ); }
+	WP_CLI::success( 'ComingSoon homepage preview B: ' . get_permalink( $variant_id ) );
 } );

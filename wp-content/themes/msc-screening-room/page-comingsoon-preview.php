@@ -2,9 +2,14 @@
 /** Template Name: ComingSoon Homepage Preview */
 require_once __DIR__ . '/inc/comingsoon-preview.php';
 
+$preview_page = get_queried_object_id();
+$story_source = (int) get_post_meta( $preview_page, '_msc_comingsoon_story_source', true );
+if ( ! $story_source || 'home' !== get_post_meta( $story_source, '_msc_comingsoon_preview', true ) || 'publish' !== get_post_status( $story_source ) || post_password_required( $story_source ) ) {
+	$story_source = $preview_page;
+}
 $stories = get_posts( array(
 	'post_type' => 'page',
-	'post_parent' => get_queried_object_id(),
+	'post_parent' => $story_source,
 	'post_status' => 'publish',
 	'has_password' => false,
 	'posts_per_page' => -1,
