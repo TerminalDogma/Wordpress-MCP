@@ -11,13 +11,8 @@ function msc_archive_meta( array $r ): array {
     if ( 'msc_movie' === $r['type'] && ! empty( $d['content_rating'] ) ) { $tags[] = $d['content_rating']; }
     if ( 'msc_show' === $r['type'] ) {
         if ( ! empty( $d['number_of_seasons'] ) ) { $facts[] = $d['number_of_seasons'] . ( 1 === (int) $d['number_of_seasons'] ? ' season' : ' seasons' ); }
-        $outlet = ( $d['network'] ?? '' ) ?: ( $d['streaming_service'] ?? '' );
-        if ( ! $outlet ) {
-            foreach ( $d['streaming_service_records'] ?? array() as $uuid ) {
-                $service = \MSC\Presentation::credit( $uuid, 'msc_streaming' );
-                if ( $service ) { $outlet = $service['title']; break; }
-            }
-        }
+        $outlet = ( $d['network'] ?? '' ) ?: ( \MSC\EntityCatalog::linked_names( $d, 'msc_tv_network' )[0] ?? '' );
+        if ( ! $outlet ) { $outlet = ( $d['streaming_service'] ?? '' ) ?: ( \MSC\EntityCatalog::linked_names( $d, 'msc_streaming' )[0] ?? '' ); }
         $tags = array_filter( array( $outlet, $d['status'] ?? '' ) );
     }
     if ( 'msc_game' === $r['type'] ) { $tags = (array) ( $d['platforms'] ?? array() ); }

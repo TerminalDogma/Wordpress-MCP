@@ -35,6 +35,41 @@ final class MovieEditorial {
         return is_array( $value ) ? array_values( array_filter( $value, 'is_array' ) ) : array();
     }
 
+    public static function combined_release_editor( string $type, array $schema, bool $global ): bool {
+        if ( 'msc_movie' !== $type ) { return false; }
+        foreach ( array( 'release_history', 'additional_release_dates' ) as $key ) {
+            $field = $schema['fields'][ $key ] ?? array();
+            if ( 'json' !== ( $field['type'] ?? '' ) || ! empty( $field['hidden'] ) || ( ! $global && false === ( $field['override'] ?? true ) ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static function release_history( array $data ): array {
+        return array_merge( self::rows( $data, 'release_history' ), self::rows( $data, 'additional_release_dates' ) );
+    }
+
+    public static function release_sources( array $data ): array {
+        return array_merge(
+            array_fill( 0, count( self::rows( $data, 'release_history' ) ), 'release_history' ),
+            array_fill( 0, count( self::rows( $data, 'additional_release_dates' ) ), 'additional_release_dates' )
+        );
+    }
+
+    public static function split_release_history( array $dates, array $sources ): array {
+        $fields = array( 'release_history' => array(), 'additional_release_dates' => array() );
+        if ( ! array_is_list( $dates ) || ! array_is_list( $sources ) || count( $dates ) !== count( $sources ) ) {
+            throw new \InvalidArgumentException( 'Invalid release history.' );
+        }
+        foreach ( $dates as $index => $date ) {
+            $source = $sources[ $index ];
+            if ( ! is_string( $source ) || ! array_key_exists( $source, $fields ) || ! is_array( $date ) ) { throw new \InvalidArgumentException( 'Invalid release history entry.' ); }
+            $fields[ $source ][] = $date;
+        }
+        return $fields;
+    }
+
     public static function watch( array $data ): array {
         $rows = array();
         foreach ( self::rows( $data, 'watch_options' ) as $row ) {
@@ -52,7 +87,7 @@ final class MovieEditorial {
 
     public static function releases( array $data ): array {
         $releases = array();
-        foreach ( array_merge( self::rows( $data, 'release_history' ), self::rows( $data, 'additional_release_dates' ) ) as $row ) {
+        foreach ( self::release_history( $data ) as $row ) {
             $date = ReleaseCalendar::date( $row['date'] ?? '' );
             if ( ! $date ) { continue; }
             $label = is_string( $row['label'] ?? null ) && trim( $row['label'] ) ? $row['label'] : 'Release';

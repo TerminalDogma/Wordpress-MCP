@@ -3,6 +3,15 @@ namespace MSC;
 
 /** Shared editing workflow for the full record form and the ACF form. */
 final class EditorLayout {
+	public static function label( string $type, string $key, array $field ): string {
+		$label = EntityCatalog::editor_label( $key, $field );
+		if ( 'msc_movie' === $type ) {
+			if ( 'excerpt' === $key && 'Synopsis' === $label ) { return 'Short summary'; }
+			if ( 'editorial_synopsis' === $key && 'Original spoiler-free synopsis' === $label ) { return 'Spoiler-free overview'; }
+		}
+		return $label;
+	}
+
 	public static function sections( array $fields ): array {
 		$sections = array(
 			'Overview' => array( false, array() ),

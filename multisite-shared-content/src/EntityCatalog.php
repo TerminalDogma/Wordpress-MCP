@@ -18,7 +18,12 @@ final class EntityCatalog {
         $out = array(); foreach ( self::definitions() as $type => $d ) { if ( array_intersect( $types, $d[5] ) ) { $out[] = $type; } } return $out;
     }
     public static function fields( string $type ): array {
-        $fields = array(); foreach ( self::definitions() as $target => $d ) { if ( in_array( $type, $d[5], true ) ) { $fields[ $d[3] ] = array( 'type' => 'relationship_list', 'target' => $target, 'label' => 'Linked ' . $d[0] ); } } return $fields;
+        $fields = array(); foreach ( self::definitions() as $target => $d ) { if ( in_array( $type, $d[5], true ) ) { $fields[ $d[3] ] = array( 'type' => 'relationship_list', 'target' => $target, 'label' => $d[0] ); } } return $fields;
+    }
+    public static function editor_label( string $key, array $field ): string {
+        $definition = self::definitions()[ $field['target'] ?? '' ] ?? null;
+        $label = $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) );
+        return $definition && $definition[3] === $key && 'Linked ' . $definition[0] === $label ? $definition[0] : $label;
     }
     public static function schemas( array $common ): array {
         $out = array(); foreach ( self::definitions() as $type => $d ) {
@@ -38,7 +43,22 @@ final class EntityCatalog {
     public static function legacy_fields( string $type ): array {
         $keys = array(); $schema = Schema::get( $type ); foreach ( self::definitions() as $d ) { if ( isset( $schema['fields'][ $d[3] ] ) && in_array( $type, $d[5], true ) ) { $keys[] = $d[4]; } } return $keys;
     }
-    private static function name( string $value ): string { return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', Presentation::text( $value ) ) ) ); }
+    public static function name( string $value ): string { return mb_strtolower( trim( preg_replace( '/\s+/u', ' ', Presentation::text( $value ) ) ) ); }
+    public static function splits_legacy_names( string $target ): bool { return in_array( $target, array( 'msc_studio', 'msc_distributor' ), true ); }
+    public static function legacy_names( string $target, $legacy, array $linked_names = array() ): array {
+        if ( is_array( $legacy ) ) { return array_values( array_filter( $legacy, static fn( $name ) => is_string( $name ) && '' !== trim( $name ) ) ); }
+        if ( ! is_string( $legacy ) || '' === trim( $legacy ) ) { return array(); }
+        if ( ! self::splits_legacy_names( $target ) || ! preg_match( '/[,;]/', $legacy ) || isset( $linked_names[ self::name( $legacy ) ] ) || self::named( $target, $legacy ) ) { return array( $legacy ); }
+        return array_values( array_filter( array_map( 'trim', explode( str_contains( $legacy, ';' ) ? ';' : ',', $legacy ) ), 'strlen' ) );
+    }
+    public static function linked_names( array $values, string $target ): array {
+        $names = array(); $field = self::definitions()[ $target ][3];
+        foreach ( (array) ( $values[ $field ] ?? array() ) as $uuid ) {
+            $entry = Presentation::credit( $uuid, $target );
+            if ( $entry ) { $names[] = $entry['title']; }
+        }
+        return $names;
+    }
     /** Ambiguous names stay text; an explicit UUID can resolve a namesake. */
     private static function named( string $type, string $name ): ?array {
         if ( ! Schema::enabled( $type ) ) { return null; } global $wpdb;
@@ -57,16 +77,12 @@ final class EntityCatalog {
                 $items[] = array_intersect_key( $credit, array_flip( array( 'title', 'url', 'uuid' ) ) ); $seen[ self::name( $credit['title'] ) ] = true;
             }
             $d = $definitions[ $field['target'] ?? '' ] ?? null; $legacy = $d && $d[3] === $key ? ( $record['data'][ $d[4] ] ?? array() ) : array();
-            foreach ( (array) $legacy as $value ) {
-                if ( ! is_string( $value ) || '' === trim( $value ) ) { continue; }
-                $match = self::named( $field['target'], $value );
-                $value = Presentation::text( $value );
-                $names = $match || is_array( $legacy ) || ! in_array( $d[4], array( 'production_companies', 'distributor' ), true ) ? array( $value ) : preg_split( '/\s*[,;]\s*/u', $value );
-                foreach ( $names as $name ) {
-                    if ( '' === trim( $name ) || isset( $seen[ self::name( $name ) ] ) ) { continue; } $seen[ self::name( $name ) ] = true;
-                    $r = ! empty( $record['overrides'][ $key ] ) || ! array_key_exists( $key, $record['overrides'] ?? array() ) ? ( $match ?? self::named( $field['target'], $name ) ) : null;
-                    $items[] = array( 'title' => $name, 'url' => $r ? Presentation::url( $r ) : '', 'uuid' => $r['uuid'] ?? '' );
-                }
+            foreach ( $legacy ? self::legacy_names( $field['target'], $legacy, $seen ) : array() as $name ) {
+                $normalized = self::name( $name );
+                if ( '' === $normalized || isset( $seen[ $normalized ] ) ) { continue; }
+                $seen[ $normalized ] = true;
+                $r = ! empty( $record['overrides'][ $key ] ) || ! array_key_exists( $key, $record['overrides'] ?? array() ) ? self::named( $field['target'], $name ) : null;
+                $items[] = array( 'title' => Presentation::text( $name ), 'url' => $r ? Presentation::url( $r ) : '', 'uuid' => $r['uuid'] ?? '' );
             }
             if ( $items ) { $rows[ $key ] = array( 'label' => $d && $d[3] === $key ? $d[0] : ( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) ), 'items' => $items ); }
         } return $rows;

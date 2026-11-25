@@ -34,12 +34,18 @@ final class StructuredField {
 		return null === $value ? array( 'type' => 'null' ) : array( 'type' => 'text', 'value' => (string) $value );
 	}
 
-	public static function control( string $key, string $name, string $id, array $value, bool $list ): void {
+	public static function control( string $key, string $name, string $id, array $value, bool $list, ?array $release_sources = null ): void {
 		$spec = self::spec( $key, $list );
 		$root = self::node( $value, in_array( $spec['mode'], array( 'identifiers', 'generic' ), true ) );
+		if ( null !== $release_sources ) {
+			foreach ( $root['items'] as $index => &$entry ) { $entry['releaseSource'] = $release_sources[ $index ]; }
+			unset( $entry );
+		}
 		$config = array( 'spec' => $spec, 'root' => $root, 'key' => $key );
 		echo '<div class="msc-structured" id="' . esc_attr( $id ) . '" role="group" aria-labelledby="' . esc_attr( $id . '-label' ) . '" data-structured="' . esc_attr( wp_json_encode( $config ) ) . '">';
-		echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( wp_json_encode( $value, JSON_PRESERVE_ZERO_FRACTION ) ) . '"><div class="msc-structured-body"></div></div>';
+		echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( wp_json_encode( $value, JSON_PRESERVE_ZERO_FRACTION ) ) . '">';
+		if ( null !== $release_sources ) { echo '<input type="hidden" name="release_history_sources" value="' . esc_attr( wp_json_encode( $release_sources ) ) . '">'; }
+		echo '<div class="msc-structured-body"></div></div>';
 	}
 
 	public static function preview( $value ): string {

@@ -79,6 +79,12 @@ final class Taxonomies {
 		foreach ( $schema['fields'] as $key => $field ) {
 			if ( ! empty( $field['taxonomy'] ) ) { $groups[ $field['taxonomy'] ] = array_merge( $groups[ $field['taxonomy'] ] ?? array(), (array) ( $values[ $key ] ?? array() ) ); }
 		}
+		foreach ( EntityCatalog::definitions() as $target => list( , , , $links, $names ) ) {
+			$taxonomy = $schema['fields'][ $names ]['taxonomy'] ?? '';
+			if ( $taxonomy && $target === ( $schema['fields'][ $links ]['target'] ?? '' ) && ! empty( $values[ $links ] ) ) {
+				$groups[ $taxonomy ] = array_merge( $groups[ $taxonomy ], EntityCatalog::linked_names( $values, $target ) );
+			}
+		}
 		foreach ( $groups as $taxonomy => $names ) {
 			$names = array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $names ), 'strlen' ) ) );
 			$result = wp_set_object_terms( $post, $names, $taxonomy, false );

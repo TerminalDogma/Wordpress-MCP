@@ -16,7 +16,10 @@
         const selected = new Map(config.selected.map(item => [item.id, item]));
         const list = picker.querySelector('ul');
         const status = picker.querySelector('[role="status"]');
-        const override = picker.closest('.msc-streaming-editor')?.querySelector('input[type="checkbox"]');
+        const entity = picker.closest('.msc-entity-editor');
+        const override = entity?.querySelector('input[type="checkbox"]');
+        const normalize = label => label.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+        const isName = id => id.startsWith('name:');
 
         function changed() {
             if (override) override.checked = true;
@@ -51,18 +54,30 @@
             minLength: config.target ? 2 : 0,
             delay: config.target ? 250 : 0,
             source({term}, respond) {
+                const query = normalize(term);
+                const choices = config.choices.filter(item => normalize(item.label).includes(query));
                 function show(matches) {
                     const items = matches.filter(item => !selected.has(item.id)).slice(0, 30);
                     if (input.val() === term && !items.length) status.textContent = 'No matching choices to add.';
                     respond(items);
                 }
                 if (!config.target) {
-                    const query = term.trim().toLocaleLowerCase();
-                    show(config.choices.filter(item => item.label.toLocaleLowerCase().includes(query)));
+                    show(choices);
                     return;
                 }
                 window.mscLookupFields(config.target, term)
-                    .done(show)
+                    .done(matches => {
+                        if (!entity) { show(matches); return; }
+                        const profileNames = new Set([...matches, ...selected.values()]
+                            .filter(item => !isName(item.id))
+                            .map(item => normalize(item.label)));
+                        const names = choices.filter(item => !profileNames.has(normalize(item.label)));
+                        if (config.allowName && query && !profileNames.has(query)
+                            && ![...selected.values()].some(item => normalize(item.label) === query)) {
+                            names.push({id: 'name:' + term.trim(), label: 'Use “' + term.trim() + '”', name: term.trim()});
+                        }
+                        show([...matches, ...names]);
+                    })
                     .fail(() => {
                         if (input.val() === term) status.textContent = 'Search unavailable. Try again.';
                         respond([]);
@@ -70,6 +85,13 @@
             },
             select(event, {item}) {
                 if (!config.multiple) selected.clear();
+                if (entity) {
+                    if (item.name) item = {...item, label: item.name};
+                    for (const existing of selected.values()) {
+                        if (isName(existing.id) && (normalize(existing.label) === normalize(item.label)
+                            || (config.singleName && isName(item.id)))) selected.delete(existing.id);
+                    }
+                }
                 selected.set(item.id, item);
                 input.val('');
                 status.textContent = '';

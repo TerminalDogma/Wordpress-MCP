@@ -1,3 +1,7 @@
+# Shared Content 2.11.3 verification
+
+Chromium checked catalog field labels and selectors in the Shared Content and ACF forms for Movies, TV Shows, Episodes, and Games. Both forms saved imported names and searchable profile links, including a distributor override that reset to the global values. Movie release history showed both sets of rows in one control and kept their original storage and source metadata. WordPress checks confirmed native taxonomy terms and the Sony-only game projection.
+
 # Shared Content 2.11.2 verification
 
 Chromium verified one Streaming Services picker in both editors, preservation of imported names, duplicate-name display, directory search, global saves, and clearing and resetting a local override. WordPress checks confirmed the stored values, TV archive tags, and calendar behavior for local overrides.

@@ -6,7 +6,7 @@ final class CatalogArchive {
     public const PAGE_SIZE = 20;
     private static ?array $current = null;
     private static array $related = array();
-    private const FIELDS = array( 'title', 'featured_image', 'poster', 'headshot', 'logo', 'release_date', 'premiere_date', 'release_dates', 'runtime', 'content_rating', 'genres', 'platforms', 'platform_ids', 'console_records', 'professions', 'country', 'network', 'streaming_service', 'streaming_service_records', 'status', 'release_status', 'number_of_seasons', 'number_of_episodes', 'parent_comic', 'issue_number', 'story_arc', 'arc_position', 'publisher', 'writers', 'artists', 'start_year', 'end_year', 'parent_show', 'season_number', 'episode_number', 'headquarters', 'founded_date', 'manufacturer', 'platform_kind' );
+    private const FIELDS = array( 'title', 'featured_image', 'poster', 'headshot', 'logo', 'release_date', 'premiere_date', 'release_dates', 'runtime', 'content_rating', 'genres', 'platforms', 'platform_ids', 'console_records', 'professions', 'country', 'network', 'tv_network_records', 'streaming_service', 'streaming_service_records', 'status', 'release_status', 'number_of_seasons', 'number_of_episodes', 'parent_comic', 'issue_number', 'story_arc', 'arc_position', 'publisher', 'writers', 'artists', 'start_year', 'end_year', 'parent_show', 'season_number', 'episode_number', 'headquarters', 'founded_date', 'manufacturer', 'platform_kind' );
     public static function spec( string $type ): array {
         $base = array( 'type' => $type, 'label' => Schema::get( $type )['label'], 'layout' => 'directory', 'description' => 'Browse profiles, key information and related titles.', 'facet' => 'country', 'facet_label' => 'Country', 'date' => '', 'noun' => 'profiles' );
         $types = array(
@@ -41,7 +41,7 @@ final class CatalogArchive {
                 $after = (int) $row['id']; $global = array_intersect_key( json_decode( $row['data'], true, 64, JSON_THROW_ON_ERROR ), $keys );
                 $r = array( 'id' => $after, 'uuid' => $row['uuid'], 'type' => $row['type'], 'state' => 'active', 'global' => $global, 'overrides' => $local[ $after ] ?? array(), 'mapping' => array( 'post_id' => (int) $row['post_id'] ), 'modified' => $row['post_modified_gmt'] ); $r['data'] = array_replace( $global, $r['overrides'] );
                 if ( ! GamePolicy::accepts( $r ) ) { continue; } $r = GamePolicy::project( $r );
-                if ( 'msc_game' === $r['type'] ) { $platforms = (array) ( $r['data']['platforms'] ?? array() ); foreach ( (array) ( $r['data']['console_records'] ?? array() ) as $uuid ) { $console = self::related( $uuid ); if ( $console && 'msc_console' === $console['type'] ) { $platforms[] = $console['data']['title']; } } $r['data']['platforms'] = array_values( array_unique( $platforms ) ); }
+                if ( 'msc_game' === $r['type'] ) { $r['data']['platforms'] = array_values( array_unique( array_merge( (array) ( $r['data']['platforms'] ?? array() ), EntityCatalog::linked_names( $r['data'], 'msc_console' ) ) ) ); }
                 $r['catalog_date'] = ReleaseCalendar::date( $r['data'][ self::spec( $r['type'] )['date'] ] ?? '' ); $result[] = $r;
             }
         } while ( count( $batch ) === 200 ); return $result;

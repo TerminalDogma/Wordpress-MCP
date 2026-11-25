@@ -45,12 +45,17 @@
     for (const control of document.querySelectorAll('[data-structured]')) {
         const {spec, root, key} = JSON.parse(control.dataset.structured);
         const hidden = control.querySelector('input[type="hidden"]');
+        const releaseSources = control.querySelector('input[name="release_history_sources"]');
         const body = control.querySelector('.msc-structured-body');
         const override = control.closest('td').querySelector(`input[name="override[${key}]"]`);
         let layout;
 
         function sync() {
             if (layout) layout.disabled = root.items.some(entry => !entry.draft);
+            if (releaseSources) {
+                releaseSources.value = JSON.stringify(root.items.filter(entry => !entry.draft)
+                    .map(entry => entry.releaseSource ?? 'release_history'));
+            }
             const value = encode(root);
             if (hidden.value === value) return;
             hidden.value = value;

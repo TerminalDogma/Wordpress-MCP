@@ -37,7 +37,9 @@ final class StreamingServices {
         // An empty relationship override suppresses inherited names, but a locally selected name still counts.
         if ( array_key_exists( 'streaming_service_records', $r['overrides'] ?? array() ) && empty( $r['overrides']['streaming_service_records'] ) && empty( $r['overrides']['streaming_service'] ) ) { return array_values( $out ); }
         $names = (array) ( $r['data']['streaming_service'] ?? array() );
-        if ( ! $names && in_array( $r['type'], array( 'msc_show', 'msc_episode' ), true ) ) { $names = (array) ( $r['data']['network'] ?? array() ); }
+        if ( ! $names && in_array( $r['type'], array( 'msc_show', 'msc_episode' ), true ) ) {
+            $names = array_merge( (array) ( $r['data']['network'] ?? array() ), EntityCatalog::linked_names( $r['data'], 'msc_tv_network' ) );
+        }
         foreach ( $names as $name ) {
             if ( ! is_string( $name ) ) { continue; } $matches = array();
             foreach ( $directory as $uuid => $service ) {

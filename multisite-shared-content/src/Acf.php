@@ -29,7 +29,7 @@ final class Acf {
 				$prose = 'richtext' === $definition['type'] && in_array( $definition['property'] ?? '', array( 'post_content', 'post_excerpt' ), true );
 				if ( ! empty( $definition['hidden'] ) || isset( $definition['property'] ) && ! $prose || ! isset( $types[ $definition['type'] ] ) ) { continue; }
 				$key = self::key( $type, $name );
-				$field = array( 'key' => $key, 'name' => 'msc_' . $name, 'label' => $definition['label'] ?? ucwords( str_replace( '_', ' ', $name ) ), 'type' => $types[ $definition['type'] ], 'msc_type' => $type, 'msc_name' => $name, 'required' => 0 );
+				$field = array( 'key' => $key, 'name' => 'msc_' . $name, 'label' => EditorLayout::label( $type, $name, $definition ), 'type' => $types[ $definition['type'] ], 'msc_type' => $type, 'msc_name' => $name, 'required' => 0 );
 				if ( ! empty( $definition['taxonomy'] ) ) {
 					$fixed = Taxonomies::fixed_choices( $definition );
 					$choices = $fixed ?? Taxonomies::choices( $definition );
@@ -112,6 +112,7 @@ final class Acf {
 	public static function save( array $request ): array {
 		$post = absint( $request['post_id'] ?? 0 ); $r = Plugin::store()->by_post( $post );
 		if ( ! $r || ! current_user_can( 'edit_post', $post ) || ! wp_verify_nonce( $request['nonce'] ?? '', 'msc_acf_' . $post ) ) { throw new \RuntimeException( 'Invalid request or permission denied.' ); }
+		if ( isset( $request['streaming_services'] ) ) { throw new \InvalidArgumentException( 'This editor was updated. Refresh the page before saving.' ); }
 		$scope = $request['scope'] ?? ''; if ( ! in_array( $scope, array( 'global', 'local' ), true ) ) { throw new \InvalidArgumentException( 'Choose global or local scope.' ); }
 		Permissions::require( 'global' === $scope ? 'msc_edit_global' : 'msc_override_local', $r['type'] );
 		$publication = $request['publication'] ?? '';
@@ -120,12 +121,13 @@ final class Acf {
 		$values = array(); $reset = array();
 		$schema = Schema::get( $r['type'] );
 		$global = 'global' === $scope;
-		$streaming = isset( $request['streaming_services'] ) ? StreamingEditor::keys( $schema, $global ) : array();
+		$entities = EntityEditor::submitted( EntityEditor::fields( $schema, $global ), $request );
+		$managed = array_merge( array_keys( $entities ), array_column( $entities, 'names' ) );
 		foreach ( (array) ( $request['acf'] ?? array() ) as $key => $raw ) {
 			$field = self::$fields[ $key ] ?? null;
 			if ( ! $field || $field['msc_type'] !== $r['type'] ) { throw new \InvalidArgumentException( 'Unsupported or mismatched shared ACF field.' ); }
 			$name = $field['msc_name']; $definition = Schema::get( $r['type'] )['fields'][ $name ];
-			if ( in_array( $name, $streaming, true ) ) { continue; }
+			if ( in_array( $name, $managed, true ) ) { continue; }
 			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; }
 			else {
@@ -142,9 +144,9 @@ final class Acf {
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; continue; }
 			$values[ $name ] = Schema::sanitize( $definition, 'relationship_list' === $definition['type'] ? json_decode( $raw, true, 32, JSON_THROW_ON_ERROR ) : $raw );
 		}
-		if ( $streaming ) {
+		if ( $entities ) {
 			$record = $global ? $r : Plugin::store()->resolved( $r['id'] );
-			StreamingEditor::changes( $request, $record, $global, $values, $reset );
+			EntityEditor::changes( $entities, $request, $record, $global, $values, $reset );
 		}
 		$save = static function () use ( $r, $values, $reset, $request, $scope ) { return 'global' === $scope ? Plugin::store()->update( $r['id'], $values, (int) ( $request['version'] ?? 0 ) ) : Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) ); };
 		if ( ! $publication ) { return $save(); }
@@ -185,19 +187,18 @@ final class Acf {
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
 		$schema = Schema::get( $r['type'] );
-		$streaming = StreamingEditor::keys( $schema, self::$global );
-		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
-		if ( $streaming ) { $managed[] = StreamingEditor::NAME; }
+		$entities = EntityEditor::fields( $schema, self::$global );
+		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ), array_column( $entities, 'names' ) );
 		$visible = array_filter( $schema['fields'], static fn( $field, $name ) => isset( self::$fields[ self::key( $r['type'], $name ) ] ) && ! in_array( $name, $managed, true ), ARRAY_FILTER_USE_BOTH );
 		foreach ( EditorLayout::sections( $visible ) as $heading => list( $collapsed, $fields ) ) {
 			$container = EditorLayout::open( $heading, $collapsed );
-			$streaming_field = $streaming ? $fields[ StreamingEditor::LINKS ] ?? null : null;
-			if ( $streaming_field ) { unset( $fields[ StreamingEditor::LINKS ] ); }
+			$combined = array_intersect_key( $fields, $entities );
+			$fields = array_diff_key( $fields, $combined );
 			$keys = array_map( static fn( $name ) => self::key( $r['type'], $name ), array_keys( $fields ) );
 			if ( $keys ) { acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'fields' => $keys, 'form' => false, 'honeypot' => false, 'updated_message' => false ) ); }
-			if ( $streaming_field ) {
-				echo '<div class="acf-field"><div class="acf-label"><label for="msc-streaming-services">Streaming Services</label></div><div class="acf-input">';
-				StreamingEditor::control( $streaming_field, $r, self::$global );
+			foreach ( $combined as $name => $field ) {
+				echo '<div class="acf-field"><div class="acf-label"><label for="msc-' . esc_attr( $name ) . '">' . esc_html( $entities[ $name ]['label'] ) . '</label></div><div class="acf-input">';
+				EntityEditor::control( $name, $field, $entities[ $name ], $r, self::$global );
 				echo '</div></div>';
 			}
 			echo '</' . $container . '>';

@@ -122,34 +122,46 @@ final class Admin {
 		echo '<div class="notice notice-' . ( $global ? 'warning' : 'info' ) . ' inline"><p><strong>' . ( $global ? 'GLOBAL EDITING — Saving changes shared information for every participating website.' : 'LOCAL EDITING — Only this website changes. Uncheck Override to reset a field to the latest global value.' ) . '</strong></p></div>';
 		self::form_start( $global ? 'global' : 'local' ); self::hidden( 'type', $type ); self::hidden( 'record', $r['uuid'] ?? '' ); self::hidden( 'version', $r['version'] ?? 0 ); self::hidden( 'local_version', $r['mapping']['local_version'] ?? 0 );
 		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
-		$streaming = StreamingEditor::keys( $schema, $global );
-		if ( $streaming ) { $managed[] = StreamingEditor::NAME; }
+		$entities = EntityEditor::fields( $schema, $global );
+		$managed = array_merge( $managed, array_column( $entities, 'names' ) );
+		$combined_release = MovieEditorial::combined_release_editor( $type, $schema, $global );
+		if ( $combined_release ) { $managed[] = 'additional_release_dates'; }
 		$fields = array_filter( $schema['fields'], static fn( $field, $key ) => empty( $field['hidden'] ) && ! in_array( $key, $managed, true ), ARRAY_FILTER_USE_BOTH );
 		foreach ( EditorLayout::sections( $fields ) as $heading => list( $collapsed, $fields ) ) {
 			$container = EditorLayout::open( $heading, $collapsed );
 			echo '<table class="form-table msc-fields"><tbody>';
 			foreach ( $fields as $key => $field ) {
-				if ( $streaming && StreamingEditor::LINKS === $key ) {
-					echo '<tr><th><label for="msc-streaming-services">Streaming Services</label></th><td>';
-					StreamingEditor::control( $field, $r ?? array(), $global );
+				if ( isset( $entities[ $key ] ) ) {
+					echo '<tr><th><label for="msc-' . esc_attr( $key ) . '">' . esc_html( $entities[ $key ]['label'] ) . '</label></th><td>';
+					EntityEditor::control( $key, $field, $entities[ $key ], $r ?? array(), $global );
 					echo '</td></tr>';
 					continue;
 				}
 				$value = $r ? ( $global ? ( $r['global'][ $key ] ?? '' ) : ( $r['data'][ $key ] ?? '' ) ) : ( 'parent_show' === $key ? sanitize_text_field( $_GET['parent'] ?? '' ) : ( Comics::defaults( $type )[ $key ] ?? '' ) );
+				$merged_dates = $combined_release && 'release_history' === $key;
+				if ( $merged_dates ) { $value = MovieEditorial::release_history( ( $global ? $r['global'] : $r['data'] ) ?? array() ); }
 				if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
-				$label = esc_html( $field['label'] ?? ucwords( str_replace( '_', ' ', $key ) ) );
+				$label = esc_html( EditorLayout::label( $type, $key, $field ) );
 				echo '<tr><th>' . ( StructuredField::uses( $key, $field ) ? '<span id="msc-' . esc_attr( $key ) . '-label">' . $label . '</span>' : '<label for="msc-' . esc_attr( $key ) . '">' . $label . '</label>' ) . '</th><td>';
 				if ( ! $global ) {
-					echo '<details><summary>Global value · ' . ( array_key_exists( $key, $r['overrides'] ) ? 'Overridden here' : 'Inherited' ) . '</summary>';
+					$overridden = array_key_exists( $key, $r['overrides'] ) || ( $merged_dates && array_key_exists( 'additional_release_dates', $r['overrides'] ) );
+					echo '<details><summary>Global value · ' . ( $overridden ? 'Overridden here' : 'Inherited' ) . '</summary>';
 					if ( in_array( $field['type'], array( 'media', 'media_list' ), true ) ) { echo '<div class="msc-media-previews">' . Media::previews( $r['global'][ $key ] ?? array(), 'media_list' === $field['type'] ) . '</div>'; }
 					elseif ( 'richtext' === $field['type'] ) { echo wp_kses_post( wpautop( $r['global'][ $key ] ?? '' ) ); }
-					elseif ( 'json' === $field['type'] || StructuredField::uses( $key, $field ) ) { echo StructuredField::preview( $r['global'][ $key ] ?? array() ); }
+					elseif ( 'json' === $field['type'] || StructuredField::uses( $key, $field ) ) { echo StructuredField::preview( $merged_dates ? MovieEditorial::release_history( $r['global'] ) : ( $r['global'][ $key ] ?? array() ) ); }
 					else { echo '<pre>' . esc_html( self::text( $r['global'][ $key ] ?? '' ) ) . '</pre>'; }
 					echo '</details>';
 					if ( false === ( $field['override'] ?? true ) ) { echo '<p>Network locked; local overrides disabled.</p></td></tr>'; continue; }
-					echo '<label><input type="checkbox" name="override[' . esc_attr( $key ) . ']" value="1" ' . checked( array_key_exists( $key, $r['overrides'] ), true, false ) . '> Override on this site (including an intentionally empty value)</label>';
+					echo '<label><input type="checkbox" name="override[' . esc_attr( $key ) . ']" value="1" ' . checked( $overridden, true, false ) . '> Override on this site (including an intentionally empty value)</label>';
 				}
-				self::input( $key, $field, $value ); echo '</td></tr>';
+				if ( $merged_dates ) {
+					self::hidden( 'release_history_original', wp_json_encode( $value, JSON_PRESERVE_ZERO_FRACTION ) );
+					$sources = MovieEditorial::release_sources( ( $global ? $r['global'] : $r['data'] ) ?? array() );
+					StructuredField::control( $key, 'fields[release_history]', 'msc-release_history', $value, false, $sources );
+				} else {
+					self::input( $key, $field, $value );
+				}
+				echo '</td></tr>';
 			}
 			echo '</tbody></table></' . $container . '>';
 		}
@@ -214,20 +226,40 @@ final class Admin {
 		try {
 			$id = sanitize_text_field( $_POST['record'] ?? '' ); $r = $id ? Plugin::store()->get( $id ) : null;
 			if ( in_array( $action, array( 'global', 'local' ), true ) ) {
+				if ( isset( $_POST['streaming_services'] ) ) { throw new \InvalidArgumentException( 'This editor was updated. Refresh the page before saving.' ); }
 				$type = $r['type'] ?? sanitize_key( $_POST['type'] ?? '' ); $schema = Schema::get( $type ); $values = array(); $reset = array();
 				$global = 'global' === $action;
-				$streaming = isset( $_POST['streaming_services'] ) ? StreamingEditor::keys( $schema, $global ) : array();
-				$legacy = CreditEditor::legacy( $schema );
+				$request = wp_unslash( array_intersect_key( $_POST, array( 'entities' => true, 'override' => true ) ) );
+				$entities = EntityEditor::submitted( EntityEditor::fields( $schema, $global ), $request );
+				$managed = array_merge( CreditEditor::legacy( $schema ), array_keys( $entities ), array_column( $entities, 'names' ) );
+				$combined_release = isset( $_POST['release_history_original'] ) && MovieEditorial::combined_release_editor( $type, $schema, $global );
+				if ( $combined_release ) { array_push( $managed, 'release_history', 'additional_release_dates' ); }
 				foreach ( $schema['fields'] as $key => $field ) {
-					if ( in_array( $key, $legacy, true ) || in_array( $key, $streaming, true ) ) { continue; }
+					if ( in_array( $key, $managed, true ) ) { continue; }
 					if ( 'local' === $action && empty( $_POST['override'][ $key ] ) ) { if ( false !== ( $field['override'] ?? true ) ) { $reset[] = $key; } continue; }
 					$value = wp_unslash( $_POST['fields'][ $key ] ?? '' );
 					if ( in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = is_array( $value ) ? $value : json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }
 					$values[ $key ] = $value;
 				}
-				if ( $streaming ) {
-					$record = $global ? $r : Plugin::store()->resolved( $id );
-					StreamingEditor::changes( wp_unslash( $_POST ), $record ?? array(), $global, $values, $reset );
+				$resolved = ! $global && ( $entities || $combined_release ) ? Plugin::store()->resolved( $id ) : null;
+				if ( $entities ) {
+					$record = $global ? $r : $resolved;
+					EntityEditor::changes( $entities, $request, $record ?? array(), $global, $values, $reset );
+				}
+				if ( $combined_release ) {
+					$release_keys = array( 'release_history', 'additional_release_dates' );
+					if ( ! $global && empty( $_POST['override']['release_history'] ) ) {
+						$reset = array_merge( $reset, $release_keys );
+					} else {
+						$dates = json_decode( wp_unslash( $_POST['fields']['release_history'] ?? '[]' ), true, 32, JSON_THROW_ON_ERROR );
+						$original_dates = json_decode( wp_unslash( $_POST['release_history_original'] ), true, 32, JSON_THROW_ON_ERROR );
+						if ( $dates !== $original_dates ) {
+							$sources = json_decode( wp_unslash( $_POST['release_history_sources'] ?? '[]' ), true, 32, JSON_THROW_ON_ERROR );
+							$values += MovieEditorial::split_release_history( $dates, $sources );
+						} elseif ( $resolved && ! array_intersect( $release_keys, array_keys( $resolved['overrides'] ) ) ) {
+							foreach ( $release_keys as $key ) { $values[ $key ] = $resolved['data'][ $key ] ?? array(); }
+						}
+					}
 				}
 				if ( 'global' === $action ) {
 					$r = $r ? Plugin::store()->update( $id, $values, absint( $_POST['version'] ) ) : Plugin::store()->create( $type, $values );

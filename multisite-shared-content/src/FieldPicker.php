@@ -17,7 +17,7 @@ final class FieldPicker {
 		return $selected;
 	}
 
-	public static function control( string $name, string $id, array $field, $value, ?array $selected = null ): void {
+	public static function control( string $name, string $id, array $field, $value, ?array $selected = null, array $picker = array() ): void {
 		$multiple = in_array( $field['type'], array( 'multiselect', 'relationship_list' ), true );
 		$target = $field['target'] ?? '';
 		$choices = array();
@@ -25,7 +25,7 @@ final class FieldPicker {
 		if ( ! $target ) {
 			$choices = array_map( static fn( $choice ) => array( 'id' => (string) $choice, 'label' => (string) $choice ), Taxonomies::choices( $field, $value ) );
 		}
-		$config = array( 'multiple' => $multiple, 'target' => $target, 'choices' => $choices, 'selected' => $selected );
+		$config = $picker + array( 'multiple' => $multiple, 'target' => $target, 'choices' => $choices, 'selected' => $selected );
 		$stored = $multiple ? wp_json_encode( array_column( $selected, 'id' ) ) : ( $selected[0]['id'] ?? '' );
 		echo '<div class="msc-field-picker" data-picker="' . esc_attr( wp_json_encode( $config ) ) . '">';
 		echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $stored ) . '">';
