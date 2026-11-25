@@ -106,8 +106,8 @@ function msc_screen_overview_breaks( string $html ): string {
     return $output;
 }
 function msc_screen_overview( array $record ): string {
-    $data = $record['data']; $content = trim( (string) ( $data['content'] ?? '' ) );
-    $field = '' !== $content ? 'content' : 'excerpt'; $value = (string) ( $data[ $field ] ?? '' );
+    $data = $record['data'];
+    $field = \MSC\Overview::source( $record['type'] ?? '', $data ); $value = (string) ( $data[ $field ] ?? '' );
     $source = $data['additional_metadata']['open_import']['fields'][ $field ] ?? array();
     if ( 'wikipedia' === ( $source['source']['provider'] ?? '' ) && ( $source['hash'] ?? '' ) === \MSC\OpenImport::hash( $value ) ) {
         // Older imports wrapped Wikipedia's paragraph newlines in one <p> with <br>s.

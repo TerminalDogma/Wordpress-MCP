@@ -1,3 +1,7 @@
+# Shared Content 2.11.4 verification
+
+Chromium checked the single Overview or Biography control in both editors, including a global movie edit and an excerpt-only TV show with a local override and reset. WordPress checks confirmed that previously saved alternative prose and retired fields survive saves, short text comes from the overview, and paragraphs remain intact. The paragraph, open-source import, and OMDb suites passed. The OMDb run used unique fixture IDs and enabled film and TV types for Site C within the test process.
+
 # Shared Content 2.11.3 verification
 
 Chromium checked catalog field labels and selectors in the Shared Content and ACF forms for Movies, TV Shows, Episodes, and Games. Both forms saved imported names and searchable profile links, including a distributor override that reset to the global values. Movie release history showed both sets of rows in one control and kept their original storage and source metadata. WordPress checks confirmed native taxonomy terms and the Sony-only game projection.

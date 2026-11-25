@@ -84,7 +84,7 @@ final class OpenSources {
     }
     private static function tv_fields( array $d, string $type, array $show = array() ): array {
         $fields = array( 'title' => sanitize_text_field( $d['name'] ?? '' ) );
-        $summary = wp_kses_post( $d['summary'] ?? '' ); if ( '' !== trim( wp_strip_all_tags( $summary ) ) ) { $fields['content'] = wpautop( $summary ); $fields['excerpt'] = wp_trim_words( wp_strip_all_tags( $summary ), 55 ); }
+        $summary = wp_kses_post( $d['summary'] ?? '' ); if ( '' !== trim( wp_strip_all_tags( $summary ) ) ) { $fields['content'] = wpautop( $summary ); }
         if ( 'msc_person' === $type ) {
             $date = self::exact_date( $d['birthday'] ?? '' ); if ( $date ) { $fields['birth_date'] = $date; }
             if ( ! empty( $d['country']['name'] ) ) { $fields['country'] = sanitize_text_field( $d['country']['name'] ); }
@@ -197,8 +197,8 @@ final class OpenSources {
             $response = OpenClient::get( 'wikipedia', '', array( 'action' => 'query', 'titles' => $article, 'prop' => 'extracts|info', 'exintro' => 1, 'explaintext' => 1, 'inprop' => 'url' ), DAY_IN_SECONDS );
             $pages = array_values( $response['query']['pages'] ?? array() ); $page = $pages[0] ?? array(); $text = trim( wp_strip_all_tags( $page['extract'] ?? '' ) );
             if ( ! empty( $page['pageid'] ) && '' !== $text && ! isset( $page['missing'] ) ) {
-                $text = mb_substr( $text, 0, 20000 ); $fields['content'] = self::wikipedia_paragraphs( $text ); $fields['excerpt'] = wp_trim_words( $text, 55 );
-                $field_sources['content'] = $field_sources['excerpt'] = self::source( 'wikipedia', 'https://en.wikipedia.org/?curid=' . (int) $page['pageid'] );
+                $text = mb_substr( $text, 0, 20000 ); $fields['content'] = self::wikipedia_paragraphs( $text );
+                $field_sources['content'] = self::source( 'wikipedia', 'https://en.wikipedia.org/?curid=' . (int) $page['pageid'] );
             }
         } catch ( SourceError $error ) { $warnings[] = 'Wikipedia biography/description is unavailable. Facts can still be imported; retry later for text.'; } }
         if ( empty( $fields['content'] ) ) { $warnings[] = 'No verified English Wikipedia introduction is available for this item.'; }

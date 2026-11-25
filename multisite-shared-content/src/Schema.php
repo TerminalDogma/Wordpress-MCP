@@ -2,7 +2,7 @@
 namespace MSC;
 
 final class Schema {
-	public const BUILTIN_VERSION = 16;
+	public const BUILTIN_VERSION = 17;
 	private static array $types = array();
 	public static function all(): array {
 		return get_network_option( get_current_network_id(), 'msc_schemas', self::defaults() );
@@ -40,7 +40,7 @@ final class Schema {
 			'release_date' => array( 'type' => 'date', 'indexed' => true ), 'air_time' => array( 'type' => 'time' ),
 			'time_zone' => array( 'type' => 'timezone' ), 'runtime' => array( 'type' => 'number', 'min' => 0 ),
 			'episode_image' => array( 'type' => 'media' ), 'production_code' => array( 'type' => 'text' ),
-			'additional_release_dates' => array( 'type' => 'json' ), 'external_ids' => array( 'type' => 'json' ),
+			'additional_release_dates' => array( 'type' => 'json', 'hidden' => true ), 'external_ids' => array( 'type' => 'json' ),
 		);
 		$movie = $common;
 		foreach ( array( 'original_title', 'country', 'language', 'director', 'writers', 'distributor', 'production_companies', 'content_rating', 'release_status', 'streaming_service' ) as $field ) { $movie[ $field ] = array( 'type' => 'text' ); }
@@ -124,6 +124,14 @@ final class Schema {
 				}
 			}
 			if ( $previous_version < 9 ) { foreach ( $schemas as &$schema ) { foreach ( array( 'score_rawg_id', 'score_opencritic_id' ) as $obsolete ) { if ( isset( $schema['fields'][ $obsolete ] ) ) { $schema['fields'][ $obsolete ]['hidden'] = true; } } if ( 'OpenCritic critic score / 100' === ( $schema['fields']['opencritic_score']['label'] ?? '' ) ) { $schema['fields']['opencritic_score']['label'] = 'OpenCritic score or critics recommended (0–100)'; } } unset( $schema ); }
+			if ( $previous_version < 17 ) {
+				foreach ( MovieEditorial::RETIRED as $key ) {
+					if ( isset( $schemas['msc_movie']['fields'][ $key ] ) ) { $schemas['msc_movie']['fields'][ $key ]['hidden'] = true; }
+				}
+				if ( isset( $schemas['msc_episode']['fields']['additional_release_dates'] ) ) {
+					$schemas['msc_episode']['fields']['additional_release_dates']['hidden'] = true;
+				}
+			}
 			if ( $schemas !== $saved && ! update_network_option( $network, 'msc_schemas', $schemas ) ) { throw new \RuntimeException( 'Could not save the upgraded schemas; the upgrade will retry.' ); }
 			if ( ! update_network_option( $network, 'msc_builtin_schema_version', self::BUILTIN_VERSION ) && (int) get_network_option( $network, 'msc_builtin_schema_version', 0 ) !== self::BUILTIN_VERSION ) { throw new \RuntimeException( 'Could not record the schema upgrade version; the upgrade will retry.' ); }
 		} );

@@ -138,7 +138,8 @@ final class Plugin {
 		register_block_type( dirname( MSC_FILE ) . '/blocks/record', array( 'editor_script' => 'msc-record-block', 'render_callback' => static function ( $a ) {
 			$r = self::store()->resolved( $a['uuid'] ?? '' );
 			if ( ! $r || ! Schema::enabled( $r['type'] ) || 'active' !== $r['state'] || empty( $r['mapping']['post_id'] ) || ! empty( $r['mapping']['suppressed'] ) || 'publish' !== get_post_status( (int) $r['mapping']['post_id'] ) || 'publish' !== $r['mapping']['status'] ) { return ''; }
-			return '<aside ' . get_block_wrapper_attributes( array( 'class' => 'msc-record' ) ) . '><h3><a href="' . esc_url( get_permalink( (int) $r['mapping']['post_id'] ) ) . '">' . esc_html( $r['data']['title'] ?? '' ) . '</a></h3><p>' . esc_html( wp_strip_all_tags( $r['data']['excerpt'] ?? '' ) ) . '</p></aside>';
+			Attribution::collect( $r, array( 'title', Overview::source( $r['type'], $r['data'] ) ) );
+			return '<aside ' . get_block_wrapper_attributes( array( 'class' => 'msc-record' ) ) . '><h3><a href="' . esc_url( get_permalink( (int) $r['mapping']['post_id'] ) ) . '">' . esc_html( $r['data']['title'] ?? '' ) . '</a></h3><p>' . esc_html( Overview::summary( $r, 55 ) ) . '</p></aside>';
 		} ) );
 	}
 }

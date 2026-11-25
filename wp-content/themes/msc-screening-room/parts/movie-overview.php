@@ -2,7 +2,7 @@
 use MSC\MovieEditorial;
 $record = $args['record'];
 $data = $record['data'];
-$overview = ! empty( $data['editorial_synopsis'] ) ? wp_kses_post( wpautop( $data['editorial_synopsis'] ) ) : msc_screen_overview( $record );
+$overview = msc_screen_overview( $record );
 $faq = array();
 if ( array_key_exists( 'post_credits_count', $data ) && is_numeric( $data['post_credits_count'] ) ) {
     $count = (int) $data['post_credits_count'];

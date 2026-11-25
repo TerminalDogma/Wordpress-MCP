@@ -4,6 +4,7 @@ namespace MSC;
 /** Editorial movie fields and data shared by the movie presentation and metadata. */
 final class MovieEditorial {
     public const CREW = array( 'cinematographers' => 'Cinematography', 'film_editors' => 'Edited by', 'composers' => 'Music by' );
+    public const RETIRED = array( 'film_tagline', 'spoiler_synopsis' );
 
     public static function fields(): array {
         $fields = array();
@@ -13,6 +14,7 @@ final class MovieEditorial {
         foreach ( array( 'editorial_synopsis' => 'Original spoiler-free synopsis', 'spoiler_synopsis' => 'Synopsis with spoilers' ) as $key => $label ) {
             $fields[ $key ] = array( 'type' => 'richtext', 'label' => $label );
         }
+        foreach ( self::RETIRED as $key ) { $fields[ $key ]['hidden'] = true; }
         foreach ( self::CREW as $key => $label ) {
             $fields[ $key ] = array( 'type' => 'relationship_list', 'target' => 'msc_person', 'label' => $label );
         }
@@ -161,7 +163,7 @@ final class MovieEditorial {
         $d = $record['data'];
         $url = Presentation::url( $record );
         $movie = array( '@context' => 'https://schema.org', '@type' => 'Movie', '@id' => $url . '#movie', 'url' => $url, 'name' => $d['title'] );
-        $description = wp_strip_all_tags( $d['film_logline'] ?? ( $d['editorial_synopsis'] ?? ( $d['excerpt'] ?? '' ) ) );
+        $description = trim( wp_strip_all_tags( $d['film_logline'] ?? '' ) ) ?: Overview::summary( $record, 55 );
         if ( $description ) { $movie['description'] = $description; }
         if ( $date = ReleaseCalendar::date( $d['release_date'] ?? '' ) ) { $movie['datePublished'] = $date; }
         if ( ! empty( $d['runtime'] ) ) { $movie['duration'] = 'PT' . (int) $d['runtime'] . 'M'; }

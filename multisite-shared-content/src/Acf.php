@@ -58,6 +58,10 @@ final class Acf {
 		$schema = Schema::get( $field['msc_type'] );
 		$definition = $schema['fields'][ $field['msc_name'] ];
 		if ( self::$editing && in_array( $field['msc_name'], array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) ), true ) ) { return false; }
+		if ( self::$editing && in_array( $field['msc_name'], Overview::keys( $field['msc_type'] ), true ) ) {
+			$overview = EditorLayout::overview( $field['msc_type'], $schema, self::$global ? self::$editing['global'] : self::$editing['data'] );
+			$field['label'] = EditorLayout::label( $field['msc_type'], $field['msc_name'], $definition, $overview );
+		}
 		if ( self::$editing && in_array( $definition['type'], array( 'relationship', 'relationship_list' ), true ) && ! Schema::enabled( $definition['target'] ) ) { return false; }
 		if ( ! empty( $definition['taxonomy'] ) ) {
 			$current = self::$editing ? ( self::$global ? self::$editing['global'] : self::$editing['data'] )[ $field['msc_name'] ] ?? array() : $field['value'] ?? array();
@@ -189,6 +193,8 @@ final class Acf {
 		$schema = Schema::get( $r['type'] );
 		$entities = EntityEditor::fields( $schema, self::$global );
 		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ), array_column( $entities, 'names' ) );
+		$overview = EditorLayout::overview( $r['type'], $schema, self::$global ? $r['global'] : $r['data'] );
+		if ( $overview ) { $managed = array_merge( $managed, array_diff( Overview::keys( $r['type'] ), array( $overview ) ) ); }
 		$visible = array_filter( $schema['fields'], static fn( $field, $name ) => isset( self::$fields[ self::key( $r['type'], $name ) ] ) && ! in_array( $name, $managed, true ), ARRAY_FILTER_USE_BOTH );
 		foreach ( EditorLayout::sections( $visible ) as $heading => list( $collapsed, $fields ) ) {
 			$container = EditorLayout::open( $heading, $collapsed );

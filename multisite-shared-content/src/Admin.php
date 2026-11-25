@@ -124,6 +124,8 @@ final class Admin {
 		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
 		$entities = EntityEditor::fields( $schema, $global );
 		$managed = array_merge( $managed, array_column( $entities, 'names' ) );
+		$overview = EditorLayout::overview( $type, $schema, ( $global ? $r['global'] : $r['data'] ) ?? array() );
+		if ( $overview ) { $managed = array_merge( $managed, array_diff( Overview::keys( $type ), array( $overview ) ) ); }
 		$combined_release = MovieEditorial::combined_release_editor( $type, $schema, $global );
 		if ( $combined_release ) { $managed[] = 'additional_release_dates'; }
 		$fields = array_filter( $schema['fields'], static fn( $field, $key ) => empty( $field['hidden'] ) && ! in_array( $key, $managed, true ), ARRAY_FILTER_USE_BOTH );
@@ -141,7 +143,7 @@ final class Admin {
 				$merged_dates = $combined_release && 'release_history' === $key;
 				if ( $merged_dates ) { $value = MovieEditorial::release_history( ( $global ? $r['global'] : $r['data'] ) ?? array() ); }
 				if ( '' === $value && in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = array(); }
-				$label = esc_html( EditorLayout::label( $type, $key, $field ) );
+				$label = esc_html( EditorLayout::label( $type, $key, $field, $overview ) );
 				echo '<tr><th>' . ( StructuredField::uses( $key, $field ) ? '<span id="msc-' . esc_attr( $key ) . '-label">' . $label . '</span>' : '<label for="msc-' . esc_attr( $key ) . '">' . $label . '</label>' ) . '</th><td>';
 				if ( ! $global ) {
 					$overridden = array_key_exists( $key, $r['overrides'] ) || ( $merged_dates && array_key_exists( 'additional_release_dates', $r['overrides'] ) );
@@ -203,7 +205,7 @@ final class Admin {
 		EpisodeAdmin::context( Plugin::store()->resolved( (int) $r['id'] ) );
 		$m = Plugin::store()->mapping( (int) $r['id'] );
 		self::hidden( 'msc_expected_version', $m['local_version'] );
-		echo '<p>Editing title, content, excerpt, or slug here creates a <strong>local override</strong>. Use Manage fields to view global values, reset inheritance, edit media, or make a global change.</p><p><code>' . esc_html( $r['uuid'] ) . '</code> · ' . esc_html( count( Plugin::store()->overrides( (int) $r['id'] ) ) ) . ' overrides · local revision ' . esc_html( $m['local_version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">Manage fields and inheritance</a></p>';
+		echo '<p>Edits here create <strong>local overrides</strong>. Use Manage fields to edit the published overview, view global values, reset inheritance, edit media, or make a global change.</p><p><code>' . esc_html( $r['uuid'] ) . '</code> · ' . esc_html( count( Plugin::store()->overrides( (int) $r['id'] ) ) ) . ' overrides · local revision ' . esc_html( $m['local_version'] ) . '</p><p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=msc&record=' . $r['uuid'] ) ) . '">Manage fields and inheritance</a></p>';
 	}
 	public static function global_scope( $scope ): bool { return 'global' === $scope || '' === $scope && current_user_can( 'msc_edit_global' ); }
 	public static function network_page(): void {
@@ -234,8 +236,10 @@ final class Admin {
 				$managed = array_merge( CreditEditor::legacy( $schema ), array_keys( $entities ), array_column( $entities, 'names' ) );
 				$combined_release = isset( $_POST['release_history_original'] ) && MovieEditorial::combined_release_editor( $type, $schema, $global );
 				if ( $combined_release ) { array_push( $managed, 'release_history', 'additional_release_dates' ); }
+				$prose = Overview::keys( $type );
 				foreach ( $schema['fields'] as $key => $field ) {
-					if ( in_array( $key, $managed, true ) ) { continue; }
+					if ( ! empty( $field['hidden'] ) || in_array( $key, $managed, true ) ) { continue; }
+					if ( in_array( $key, $prose, true ) && ! isset( $_POST['fields'][ $key ] ) ) { continue; }
 					if ( 'local' === $action && empty( $_POST['override'][ $key ] ) ) { if ( false !== ( $field['override'] ?? true ) ) { $reset[] = $key; } continue; }
 					$value = wp_unslash( $_POST['fields'][ $key ] ?? '' );
 					if ( in_array( $field['type'], array( 'json', 'media', 'media_list', 'multiselect', 'relationship_list' ), true ) ) { $value = is_array( $value ) ? $value : json_decode( $value ?: '[]', true, 32, JSON_THROW_ON_ERROR ); }

@@ -72,7 +72,7 @@ final class ComicSource {
             foreach ( array( 'year_began' => 'start_year', 'year_ended' => 'end_year', 'publishing_format' => 'publication_format', 'country' => 'country', 'language' => 'language' ) as $from => $to ) { if ( isset( $d[ $from ] ) && '' !== $d[ $from ] ) { $fields[ $to ] = $d[ $from ]; } }
             $fields['issue_count'] = count( $d['active_issues'] ?? array() );
         }
-        if ( $notes ) { $fields['content'] = wpautop( esc_html( mb_substr( $notes, 0, 20000 ) ) ); $fields['excerpt'] = wp_trim_words( $notes, 55 ); }
+        if ( $notes ) { $fields['content'] = wpautop( esc_html( mb_substr( $notes, 0, 20000 ) ) ); }
         $image = $issue ? self::cover( $d ) : null;
         $warnings = array();
         if ( ! $issue ) {

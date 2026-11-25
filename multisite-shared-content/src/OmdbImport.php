@@ -44,7 +44,7 @@ final class OmdbImport {
     }
     public static function map( array $data, string $type ): array {
         $values = array( 'title' => self::text( $data, 'Title' ) ); $plot = self::text( $data, 'Plot' );
-        if ( $plot ) { $values['content'] = '<p>' . esc_html( $plot ) . '</p>'; $values['excerpt'] = wp_trim_words( $plot, 55 ); }
+        if ( $plot ) { $values['content'] = '<p>' . esc_html( $plot ) . '</p>'; }
         foreach ( array( 'Genre' => 'genres', 'Country' => 'country', 'Language' => 'language' ) as $source => $field ) {
             $text = self::text( $data, $source ); if ( $text ) { $list = array_map( 'trim', explode( ',', $text ) ); $values[ $field ] = 'genres' === $field ? $list : $list[0]; }
         }

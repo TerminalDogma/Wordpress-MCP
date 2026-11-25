@@ -3,13 +3,16 @@ namespace MSC;
 
 /** Shared editing workflow for the full record form and the ACF form. */
 final class EditorLayout {
-	public static function label( string $type, string $key, array $field ): string {
-		$label = EntityCatalog::editor_label( $key, $field );
-		if ( 'msc_movie' === $type ) {
-			if ( 'excerpt' === $key && 'Synopsis' === $label ) { return 'Short summary'; }
-			if ( 'editorial_synopsis' === $key && 'Original spoiler-free synopsis' === $label ) { return 'Spoiler-free overview'; }
-		}
-		return $label;
+	public static function overview( string $type, array $schema, array $data ): ?string {
+		if ( 'post_content' !== ( $schema['fields']['content']['property'] ?? '' ) ) { return null; }
+		$key = Overview::source( $type, $data );
+		$field = $schema['fields'][ $key ] ?? array();
+		return 'richtext' === ( $field['type'] ?? '' ) && empty( $field['hidden'] ) ? $key : null;
+	}
+
+	public static function label( string $type, string $key, array $field, ?string $overview = null ): string {
+		if ( $overview === $key ) { return 'msc_person' === $type ? 'Biography' : 'Overview'; }
+		return EntityCatalog::editor_label( $key, $field );
 	}
 
 	public static function sections( array $fields ): array {
@@ -25,11 +28,11 @@ final class EditorLayout {
 		foreach ( $fields as $key => $field ) {
 			$heading = match ( true ) {
 				(bool) preg_match( '/^(?:rotten_tomatoes|metacritic|opencritic|score)_/', $key ) => 'Aggregate review scores',
-				in_array( $key, array( 'title', 'original_title', 'content', 'excerpt', 'editorial_synopsis', 'film_logline', 'film_tagline' ), true ) => 'Overview',
+				in_array( $key, array( 'title', 'original_title', 'content', 'excerpt', 'editorial_synopsis' ), true ) => 'Overview',
 				in_array( $field['type'], array( 'media', 'media_list' ), true ) || in_array( $key, array( 'trailers', 'trailer_source_url' ), true ) => 'Artwork and trailers',
 				in_array( $key, array( 'release_history', 'additional_release_dates', 'watch_options', 'release_dates' ), true ) => 'Release history and availability',
-				in_array( $key, array( 'spoiler_synopsis', 'movie_faq', 'rating_reason', 'franchise_context', 'post_credits_count', 'film_budget', 'film_budget_url', 'domestic_opening', 'worldwide_gross', 'box_office_currency', 'box_office_url' ), true ) => 'Optional editorial details',
-				in_array( $key, array( 'slug', 'external_ids', 'additional_metadata', 'platform_ids', 'seo_title', 'seo_description' ), true ) => 'Additional settings',
+				in_array( $key, array( 'movie_faq', 'rating_reason', 'franchise_context', 'post_credits_count', 'film_budget', 'film_budget_url', 'domestic_opening', 'worldwide_gross', 'box_office_currency', 'box_office_url' ), true ) => 'Optional editorial details',
+				in_array( $key, array( 'slug', 'external_ids', 'additional_metadata', 'platform_ids', 'film_logline', 'seo_title', 'seo_description' ), true ) => 'Additional settings',
 				default => 'Catalog details',
 			};
 			$sections[ $heading ][1][ $key ] = $field;
