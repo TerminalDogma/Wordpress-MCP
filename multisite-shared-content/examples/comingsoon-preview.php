@@ -6,7 +6,7 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 }
 
 $variant_key = $args[0] ?? '';
-if ( ! in_array( $variant_key, array( '', 'b', 'c' ), true ) ) { WP_CLI::error( 'Choose preview b or c.' ); }
+if ( ! in_array( $variant_key, array( '', 'b', 'c', 'research' ), true ) ) { WP_CLI::error( 'Choose preview b, c or research.' ); }
 \MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $variant_key ): void {
 	$slug = 'homepage-preview';
 	$marker = '_msc_comingsoon_preview';
@@ -150,7 +150,7 @@ if ( ! in_array( $variant_key, array( '', 'b', 'c' ), true ) ) { WP_CLI::error( 
 		WP_CLI::success( 'ComingSoon homepage preview: ' . get_permalink( $parent ) );
 		return;
 	}
-	$variant_label = strtoupper( $variant_key );
+	$variant_label = 'research' === $variant_key ? 'Research' : strtoupper( $variant_key );
 	$variant_id = $variant ? $variant->ID : $insert( array(
 		'post_title' => 'ComingSoon Homepage Preview ' . $variant_label,
 		'post_name' => $variant_slug,

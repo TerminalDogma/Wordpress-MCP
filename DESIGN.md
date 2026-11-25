@@ -20,6 +20,18 @@ ComingSoon’s adaptation uses its own wordmark, Archivo typography and original
 
 Run `sh bin/shared-content.sh comingsoon-detail-previews` to add six standalone comparison URLs on Site A. The `movie-page-preview-a` through `movie-page-preview-c` pages use the published Iron Man catalog entry. The `article-preview-a` through `article-preview-c` posts use the same fictional news story and original *The Last Meridian* artwork. A uses a warm paper background, dark teal and serif headings. B pairs the same editorial typography with a split lead and red, yellow and sky-blue accents. C uses compact Archivo headings and an overlapping caption. Each preview links to the other designs and carries a noindex directive. The installer preserves existing preview edits and leaves the homepage settings in place.
 
+### Competitor research previews
+
+Run `sh bin/shared-content.sh comingsoon-research-previews` to install the `homepage-preview-research`, `article-preview-research`, and `movie-page-preview-research` routes on Site A. The utility links connect the three designs.
+
+| Research pattern | Design choice |
+| --- | --- |
+| Strong curated leads and quick access to new stories | A single main story with three supporting stories, a short Latest News rail, a compact sticky desktop masthead, and the complete filterable feed farther down |
+| Lists are easier to scan than grids of posters, and dates become stale quickly | A chronological shortlist comes from the published local movie and TV catalog. It starts today, flags same-day releases, names the parent show on episode rows, and links to the full schedule. The adjacent streaming section is a small set of editorial recommendations. |
+| Distinctive formats give readers a reason to return | Box office, reviews, recaps, and interviews each get a distinct layout. The three box-office figures are labeled sample data. Topic links reflect editorial curation. |
+| Clear headlines, useful related links, and an uninterrupted article body | The sample news article opens with its release details, keeps the reading column clear, and links to related reporting and upcoming dates. |
+| Catalog basics should be visible and related coverage should sit higher | Iron Man puts the U.S. date, trailer, and watch options near the title. Coverage follows the overview. The film page uses the regular cast, trailer, review, and franchise components. Outside scores appear in the review section. |
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |

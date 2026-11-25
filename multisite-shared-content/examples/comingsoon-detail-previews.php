@@ -21,11 +21,21 @@ $article = <<<'HTML'
 <p>For viewers planning a group screening, theaters are handling ticket sales and seat reservations individually. Any additional showtimes will appear on the same local listings if demand warrants them.</p>
 HTML;
 
-$ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(), static function () use ( $article ): array {
+$research = 'research' === ( $args[0] ?? '' );
+$variants = $research ? array( 'research' ) : array( 'a', 'b', 'c' );
+if ( $research ) {
+	$first_look = get_page_by_path( 'homepage-preview/last-meridian' );
+	$article = str_replace( '<h2>Where to see', '<aside class="cs-screening-details" aria-label="Screening details"><dl><div><dt>Dates</dt><dd>December 11–17</dd></div><div><dt>Format</dt><dd>Select IMAX theaters</dd></div><div><dt>Before the film</dt><dd>Production featurette</dd></div></dl></aside>' . "\n\n" . '<h2>Where to see', $article );
+	if ( $first_look && 'publish' === $first_look->post_status && 'story' === get_post_meta( $first_look->ID, '_msc_comingsoon_preview', true ) ) {
+		$article = str_replace( 'a full-scale observatory set', '<a href="' . esc_url( get_permalink( $first_look ) ) . '">a full-scale observatory set</a>', $article );
+	}
+}
+
+$ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(), static function () use ( $article, $variants ): array {
 	$marker = '_msc_comingsoon_detail_preview';
 	$pages = array();
 	$ids = array();
-	foreach ( array( 'a', 'b', 'c' ) as $variant ) {
+	foreach ( $variants as $variant ) {
 		foreach ( array( 'movie-page-preview-' => 'page', 'article-preview-' => 'post' ) as $prefix => $type ) {
 			$slug = $prefix . $variant;
 			$existing = get_page_by_path( $slug, OBJECT, $type );
@@ -41,7 +51,7 @@ $ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(
 			$is_article = 'post' === $type;
 			$pages[ $slug ] = array(
 				'post_type' => $type,
-				'post_title' => $is_article ? 'The Last Meridian Sets a One-Week Return to IMAX' : 'Iron Man · Movie Page Preview ' . strtoupper( $variant ),
+				'post_title' => $is_article ? 'The Last Meridian Sets a One-Week Return to IMAX' : 'Iron Man · Movie Page Preview ' . ( 'research' === $variant ? 'Research' : strtoupper( $variant ) ),
 				'post_name' => $slug,
 				'post_status' => 'draft',
 				'post_content' => $is_article ? $article : '',
@@ -52,6 +62,7 @@ $ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(
 				'meta_input' => array( $marker => $slug, '_msc_comingsoon_detail_variant' => $variant ) + ( $is_article ? array(
 					'_msc_comingsoon_art' => 'meridian',
 					'_msc_comingsoon_byline' => 'Maya Bennett',
+				'_msc_comingsoon_label' => 'Movie News',
 				) : array() ),
 			);
 		}
@@ -62,8 +73,9 @@ $ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(
 		$ids[ $slug ] = $id;
 	}
 	ksort( $ids );
-	update_option( 'msc_comingsoon_detail_previews', $ids );
-	if ( $ids !== get_option( 'msc_comingsoon_detail_previews' ) ) { throw new RuntimeException( 'Could not save the preview list.' ); }
+	$all_previews = $ids + get_option( 'msc_comingsoon_detail_previews', array() );
+	update_option( 'msc_comingsoon_detail_previews', $all_previews );
+	if ( $all_previews !== get_option( 'msc_comingsoon_detail_previews' ) ) { throw new RuntimeException( 'Could not save the preview list.' ); }
 	foreach ( $ids as $slug => $id ) {
 		if ( 'publish' !== get_post_status( $id ) ) {
 			$result = wp_update_post( array( 'ID' => $id, 'post_status' => 'publish' ), true );

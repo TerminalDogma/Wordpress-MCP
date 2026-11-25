@@ -3,7 +3,9 @@
 require_once __DIR__ . '/inc/comingsoon-preview.php';
 
 $preview_page = get_queried_object_id();
-$preview_c = 'c' === get_post_meta( $preview_page, '_msc_comingsoon_palette', true );
+$palette = get_post_meta( $preview_page, '_msc_comingsoon_palette', true );
+$preview_c = 'c' === $palette;
+$research = 'research' === $palette;
 $story_source = (int) get_post_meta( $preview_page, '_msc_comingsoon_story_source', true );
 if ( ! $story_source || 'home' !== get_post_meta( $story_source, '_msc_comingsoon_preview', true ) || 'publish' !== get_post_status( $story_source ) || post_password_required( $story_source ) ) {
 	$story_source = $preview_page;
@@ -21,6 +23,14 @@ $stories = get_posts( array(
 $sections = array();
 foreach ( $stories as $story ) { $sections[ msc_cs_preview_meta( $story, 'section' ) ][] = $story; }
 $lead = $sections['lead'][0] ?? null;
+if ( $research ) {
+	$article_id = get_option( 'msc_comingsoon_detail_previews', array() )['article-preview-research'] ?? 0;
+	$article = $article_id ? get_post( $article_id ) : null;
+	if ( $article && 'publish' === $article->post_status && ! $article->post_password ) {
+		$lead = $article;
+		$stories[] = $article;
+	}
+}
 $spotlight = array_slice( $sections['spotlight'] ?? array(), 0, 2 );
 $latest = $sections['latest'] ?? array();
 $picks = $sections['watch'] ?? array();
@@ -39,12 +49,14 @@ if ( $stories ) {
 	wp_enqueue_script( 'cs-editorial-feed', get_template_directory_uri() . '/assets/comingsoon/feed.js', array(), '1.1.0', true );
 }
 get_header( 'comingsoon-preview', array(
-	'movies' => (bool) $movie_reviews,
-	'tv' => (bool) ( $tv_review || $recaps ),
+	'movies' => $research || (bool) $movie_reviews,
+	'tv' => $research || (bool) ( $tv_review || $recaps ),
 ) );
 ?>
 <main id="main">
-	<?php if ( $preview_c ) {
+	<?php if ( $research ) {
+		get_template_part( 'parts/comingsoon-preview-research', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
+	} elseif ( $preview_c ) {
 		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
 	} else { ?>
 	<div class="cs-frame">
@@ -99,7 +111,7 @@ get_header( 'comingsoon-preview', array(
 	<?php } ?>
 	<?php } ?>
 	<?php if ( $stories ) {
-		get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ), 'title' => $preview_c ? 'Latest' : 'The Feed' ) );
+		get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ), 'title' => $preview_c || $research ? 'Latest' : 'The Feed' ) );
 	} ?>
 </main>
-<?php get_footer( 'comingsoon-preview' ); ?>
+<?php get_footer( 'comingsoon-preview', array( 'sources' => $research, 'preview_note' => $research ? 'Editorial stories are fictional. Release dates come from this site’s catalog.' : 'Fictional stories and original artwork for this homepage preview.' ) ); ?>

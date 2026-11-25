@@ -2,6 +2,7 @@
 use MSC\{Attribution, CatalogArticles, EntityCatalog, Franchises, MovieEditorial, Presentation, ReleaseCalendar, ReviewScores, Reviews, Timelines};
 
 $record = $args['record'];
+$research = 'research' === ( $args['design_preview'] ?? null );
 $data = $record['data'];
 $title = $data['title'];
 $release = MovieEditorial::theatrical_release( $data );
@@ -34,6 +35,10 @@ $sections = array(
     'movie-details' => array( 'Details', $section( 'movie-details', $args ) ),
 );
 $sections = array_filter( $sections, static fn( array $row ) => '' !== $row[1] );
+if ( $research ) {
+    $priority = array_fill_keys( array( 'overview', 'recent-articles', 'trailers', 'review-scores', 'credits' ), null );
+    $sections = array_filter( array_replace( $priority, $sections ) );
+}
 $sidebar_keys = array( 'actors', 'directors', 'screenwriters', 'producers', 'creators', ...array_keys( MovieEditorial::CREW ) );
 $side_credits = array_diff_key( $credits, array_flip( $sidebar_keys ) );
 foreach ( $side_credits as &$row ) {
@@ -47,6 +52,7 @@ $side_facts = ob_get_clean() . EntityCatalog::sidebar( $record, $side_credits );
 $directors = array_column( $credits['directors']['items'] ?? array(), 'title' );
 if ( ! $directors && ! empty( $data['director'] ) ) { $directors = array( $data['director'] ); }
 $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'title' ), 0, 3 );
+$hero_scores = $research ? array_filter( $scores, static fn( $row ) => 'editorial' === $row['provider'] ) : $scores;
 ?>
 <article class="screen-title movie-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -74,9 +80,9 @@ $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'tit
             </div>
             <?php if ( $directors ) { ?><p class="movie-hero-credits"><strong>Directed by</strong> <?php echo esc_html( implode( ', ', $directors ) ); ?></p><?php } ?>
             <?php if ( $stars ) { ?><p class="movie-hero-credits"><strong>Starring</strong> <?php echo esc_html( implode( ', ', $stars ) ); ?></p><?php } ?>
-            <?php if ( $scores ) { ?>
+            <?php if ( $hero_scores ) { ?>
                 <div class="movie-hero-scores" aria-label="Review scores">
-                    <?php foreach ( $scores as $row ) { ?>
+                    <?php foreach ( $hero_scores as $row ) { ?>
                         <a class="movie-hero-score<?php echo 'editorial' === $row['provider'] ? ' movie-editorial-chip' : ''; ?>" href="<?php echo esc_url( 'editorial' !== $row['provider'] && $row['url'] ? $row['url'] : '#movie-score-' . $row['provider'] ); ?>">
                             <strong><?php echo esc_html( Reviews::number( $row['score'] ) . ( 'rotten_tomatoes' === $row['provider'] ? '%' : '/' . $row['max'] ) ); ?></strong>
                             <span><?php echo esc_html( $sample_review && 'editorial' === $row['provider'] ? 'Sample review score' : $row['name'] ); ?></span>
@@ -87,7 +93,10 @@ $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'tit
             <?php if ( $watch || isset( $sections['trailers'] ) || $trailer_url ) { ?>
                 <div class="movie-hero-actions">
                     <?php if ( isset( $sections['trailers'] ) || $trailer_url ) { ?><a class="movie-action primary" href="<?php echo esc_url( isset( $sections['trailers'] ) ? '#trailers' : $trailer_url ); ?>"><span aria-hidden="true">▶</span> Watch trailer</a><?php } ?>
-                    <?php if ( $watch ) { ?><a class="movie-action" href="<?php echo esc_url( $watch[0]['url'] ); ?>"><?php echo esc_html( $watch[0]['service'] ); ?></a><a class="movie-action" href="#where-to-watch">All watch options</a><?php } ?>
+                    <?php if ( $watch ) { ?>
+                        <?php if ( ! $research ) { ?><a class="movie-action" href="<?php echo esc_url( $watch[0]['url'] ); ?>"><?php echo esc_html( $watch[0]['service'] ); ?></a><?php } ?>
+                        <a class="movie-action" href="#where-to-watch"><?php echo $research ? 'Where to watch' : 'All watch options'; ?></a>
+                    <?php } ?>
                 </div>
             <?php } ?>
         </div>
