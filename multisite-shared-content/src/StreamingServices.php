@@ -34,8 +34,8 @@ final class StreamingServices {
         if ( 'msc_episode' === $r['type'] && ! $own && $parent ) { $r = $parent; }
         $out = array();
         foreach ( (array) ( $r['data']['streaming_service_records'] ?? array() ) as $uuid ) { if ( isset( $directory[ $uuid ] ) ) { $out[ $uuid ] = $directory[ $uuid ]; } }
-        // An explicit empty relationship override also suppresses legacy name matching.
-        if ( array_key_exists( 'streaming_service_records', $r['overrides'] ?? array() ) && empty( $r['overrides']['streaming_service_records'] ) ) { return array_values( $out ); }
+        // An empty relationship override suppresses inherited names, but a locally selected name still counts.
+        if ( array_key_exists( 'streaming_service_records', $r['overrides'] ?? array() ) && empty( $r['overrides']['streaming_service_records'] ) && empty( $r['overrides']['streaming_service'] ) ) { return array_values( $out ); }
         $names = (array) ( $r['data']['streaming_service'] ?? array() );
         if ( ! $names && in_array( $r['type'], array( 'msc_show', 'msc_episode' ), true ) ) { $names = (array) ( $r['data']['network'] ?? array() ); }
         foreach ( $names as $name ) {

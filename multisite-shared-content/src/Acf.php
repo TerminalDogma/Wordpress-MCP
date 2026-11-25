@@ -119,10 +119,13 @@ final class Acf {
 		if ( $publication ) { Publication::require( $publication, $r ); }
 		$values = array(); $reset = array();
 		$schema = Schema::get( $r['type'] );
+		$global = 'global' === $scope;
+		$streaming = isset( $request['streaming_services'] ) ? StreamingEditor::keys( $schema, $global ) : array();
 		foreach ( (array) ( $request['acf'] ?? array() ) as $key => $raw ) {
 			$field = self::$fields[ $key ] ?? null;
 			if ( ! $field || $field['msc_type'] !== $r['type'] ) { throw new \InvalidArgumentException( 'Unsupported or mismatched shared ACF field.' ); }
 			$name = $field['msc_name']; $definition = Schema::get( $r['type'] )['fields'][ $name ];
+			if ( in_array( $name, $streaming, true ) ) { continue; }
 			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; }
 			else {
@@ -138,6 +141,10 @@ final class Acf {
 			if ( 'local' === $scope && false === ( $definition['override'] ?? true ) ) { continue; }
 			if ( 'local' === $scope && empty( $request['override'][ $name ] ) ) { $reset[] = $name; continue; }
 			$values[ $name ] = Schema::sanitize( $definition, 'relationship_list' === $definition['type'] ? json_decode( $raw, true, 32, JSON_THROW_ON_ERROR ) : $raw );
+		}
+		if ( $streaming ) {
+			$record = $global ? $r : Plugin::store()->resolved( $r['id'] );
+			StreamingEditor::changes( $request, $record, $global, $values, $reset );
 		}
 		$save = static function () use ( $r, $values, $reset, $request, $scope ) { return 'global' === $scope ? Plugin::store()->update( $r['id'], $values, (int) ( $request['version'] ?? 0 ) ) : Plugin::store()->local( $r['id'], $values, $reset, (int) ( $request['local_version'] ?? 0 ) ); };
 		if ( ! $publication ) { return $save(); }
@@ -178,12 +185,21 @@ final class Acf {
 		echo '<form action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" method="post">';
 		foreach ( array( 'action' => 'msc_acf_save', 'post_id' => $r['mapping']['post_id'], 'nonce' => wp_create_nonce( 'msc_acf_' . $r['mapping']['post_id'] ), 'scope' => self::$global ? 'global' : 'local', 'version' => $r['version'], 'local_version' => $r['mapping']['local_version'] ) as $name => $value ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">'; }
 		$schema = Schema::get( $r['type'] );
+		$streaming = StreamingEditor::keys( $schema, self::$global );
 		$managed = array_merge( CreditEditor::keys( $schema ), CreditEditor::legacy( $schema ) );
+		if ( $streaming ) { $managed[] = StreamingEditor::NAME; }
 		$visible = array_filter( $schema['fields'], static fn( $field, $name ) => isset( self::$fields[ self::key( $r['type'], $name ) ] ) && ! in_array( $name, $managed, true ), ARRAY_FILTER_USE_BOTH );
 		foreach ( EditorLayout::sections( $visible ) as $heading => list( $collapsed, $fields ) ) {
 			$container = EditorLayout::open( $heading, $collapsed );
+			$streaming_field = $streaming ? $fields[ StreamingEditor::LINKS ] ?? null : null;
+			if ( $streaming_field ) { unset( $fields[ StreamingEditor::LINKS ] ); }
 			$keys = array_map( static fn( $name ) => self::key( $r['type'], $name ), array_keys( $fields ) );
-			acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'fields' => $keys, 'form' => false, 'honeypot' => false, 'updated_message' => false ) );
+			if ( $keys ) { acf_form( array( 'post_id' => (int) $r['mapping']['post_id'], 'fields' => $keys, 'form' => false, 'honeypot' => false, 'updated_message' => false ) ); }
+			if ( $streaming_field ) {
+				echo '<div class="acf-field"><div class="acf-label"><label for="msc-streaming-services">Streaming Services</label></div><div class="acf-input">';
+				StreamingEditor::control( $streaming_field, $r, self::$global );
+				echo '</div></div>';
+			}
 			echo '</' . $container . '>';
 		}
 		CreditEditor::control( $schema, self::$global ? $r['global'] : $r['data'], $r['overrides'], self::$global, 'credits' );

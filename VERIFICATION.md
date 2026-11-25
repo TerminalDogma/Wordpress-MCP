@@ -1,3 +1,7 @@
+# Shared Content 2.11.2 verification
+
+Chromium verified one Streaming Services picker in both editors, preservation of imported names, duplicate-name display, directory search, global saves, and clearing and resetting a local override. WordPress checks confirmed the stored values, TV archive tags, and calendar behavior for local overrides.
+
 # Shared Content 2.11.1 verification
 
 Chromium checked the release, viewing, FAQ and identifier controls. Global and local saves retained nested metadata, source-specific row fields and integers beyond JavaScript’s safe number range. Aggregate scores and optional sections started closed, and Cast and crew appeared last in both editors. The grouped ACF form saved a collapsed score field and an open rating field together.

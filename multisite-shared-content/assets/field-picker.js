@@ -16,6 +16,12 @@
         const selected = new Map(config.selected.map(item => [item.id, item]));
         const list = picker.querySelector('ul');
         const status = picker.querySelector('[role="status"]');
+        const override = picker.closest('.msc-streaming-editor')?.querySelector('input[type="checkbox"]');
+
+        function changed() {
+            if (override) override.checked = true;
+            render();
+        }
 
         function render() {
             list.replaceChildren();
@@ -30,7 +36,7 @@
                 remove.setAttribute('aria-label', `Remove ${label}`);
                 remove.addEventListener('click', () => {
                     selected.delete(id);
-                    render();
+                    changed();
                     input.trigger('focus');
                 });
                 row.append(text, remove);
@@ -67,7 +73,7 @@
                 selected.set(item.id, item);
                 input.val('');
                 status.textContent = '';
-                render();
+                changed();
                 return false;
             },
         });

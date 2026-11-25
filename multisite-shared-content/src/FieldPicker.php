@@ -3,10 +3,7 @@ namespace MSC;
 
 /** Searchable choices for the full Shared Content editor, including network records without a local post. */
 final class FieldPicker {
-	public static function control( string $name, string $id, array $field, $value ): void {
-		$multiple = in_array( $field['type'], array( 'multiselect', 'relationship_list' ), true );
-		$target = $field['target'] ?? '';
-		$choices = array();
+	public static function selection( $value, string $target ): array {
 		$selected = array();
 		foreach ( (array) $value as $item ) {
 			if ( '' === (string) $item ) { continue; }
@@ -17,6 +14,14 @@ final class FieldPicker {
 			}
 			$selected[] = array( 'id' => (string) $item, 'label' => $label );
 		}
+		return $selected;
+	}
+
+	public static function control( string $name, string $id, array $field, $value, ?array $selected = null ): void {
+		$multiple = in_array( $field['type'], array( 'multiselect', 'relationship_list' ), true );
+		$target = $field['target'] ?? '';
+		$choices = array();
+		$selected ??= self::selection( $value, $target );
 		if ( ! $target ) {
 			$choices = array_map( static fn( $choice ) => array( 'id' => (string) $choice, 'label' => (string) $choice ), Taxonomies::choices( $field, $value ) );
 		}

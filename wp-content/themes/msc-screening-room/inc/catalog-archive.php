@@ -9,7 +9,17 @@ function msc_archive_meta( array $r ): array {
     if ( $date ) { $facts[] = msc_archive_date( $date ); }
     if ( in_array( $r['type'], array( 'msc_movie', 'msc_episode' ), true ) && ! empty( $d['runtime'] ) ) { $facts[] = $d['runtime'] . ' min'; }
     if ( 'msc_movie' === $r['type'] && ! empty( $d['content_rating'] ) ) { $tags[] = $d['content_rating']; }
-    if ( 'msc_show' === $r['type'] ) { if ( ! empty( $d['number_of_seasons'] ) ) { $facts[] = $d['number_of_seasons'] . ( 1 === (int) $d['number_of_seasons'] ? ' season' : ' seasons' ); } $tags = array_filter( array( ( $d['network'] ?? '' ) ?: ( $d['streaming_service'] ?? '' ), $d['status'] ?? '' ) ); }
+    if ( 'msc_show' === $r['type'] ) {
+        if ( ! empty( $d['number_of_seasons'] ) ) { $facts[] = $d['number_of_seasons'] . ( 1 === (int) $d['number_of_seasons'] ? ' season' : ' seasons' ); }
+        $outlet = ( $d['network'] ?? '' ) ?: ( $d['streaming_service'] ?? '' );
+        if ( ! $outlet ) {
+            foreach ( $d['streaming_service_records'] ?? array() as $uuid ) {
+                $service = \MSC\Presentation::credit( $uuid, 'msc_streaming' );
+                if ( $service ) { $outlet = $service['title']; break; }
+            }
+        }
+        $tags = array_filter( array( $outlet, $d['status'] ?? '' ) );
+    }
     if ( 'msc_game' === $r['type'] ) { $tags = (array) ( $d['platforms'] ?? array() ); }
     if ( 'msc_comic' === $r['type'] ) { $kicker = $d['publisher'] ?? 'Comic Book'; if ( ! empty( $d['start_year'] ) ) { $facts[] = $d['start_year'] . ( ! empty( $d['end_year'] ) ? '–' . $d['end_year'] : '' ); } }
     if ( 'msc_comic_issue' === $r['type'] ) { $parent = ! empty( $d['parent_comic'] ) ? \MSC\CatalogArchive::related( $d['parent_comic'] ) : null; $kicker = $parent['data']['title'] ?? 'Comic Issue'; if ( isset( $d['issue_number'] ) ) { $tags[] = 'Issue #' . ltrim( $d['issue_number'], '#' ); } }
