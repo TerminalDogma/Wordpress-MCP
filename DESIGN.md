@@ -18,6 +18,8 @@ Preview C uses Polygon’s cover-led story grouping, compact headline modules, a
 
 ComingSoon’s adaptation uses its own wordmark, Archivo typography and original story art. Preview C uses a compact light masthead, a caption that overlaps the large lead image, two cover cards, and a split feature with a sky-blue text panel. A five-story news strip sits directly below the lead, followed by a two-column review collection and a full-width What to Watch panel. The red, yellow, and sky-blue palette carries over from Preview B. The feature grid stacks on phones. Movies and TV have separate desks, and the Latest feed carries all 28 stories. Run `sh bin/shared-content.sh comingsoon-preview-c` to install `/site-a/homepage-preview-c/`.
 
+Run `sh bin/shared-content.sh comingsoon-detail-previews` to add six standalone comparison URLs on Site A. The `movie-page-preview-a` through `movie-page-preview-c` pages use the published Iron Man catalog entry. The `article-preview-a` through `article-preview-c` posts use the same fictional news story and original *The Last Meridian* artwork. A uses a warm paper background, dark teal and serif headings. B pairs the same editorial typography with a split lead and red, yellow and sky-blue accents. C uses compact Archivo headings and an overlapping caption. Each preview links to the other designs and carries a noindex directive. The installer preserves existing preview edits and leaves the homepage settings in place.
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |

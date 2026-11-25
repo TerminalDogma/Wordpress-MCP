@@ -37,6 +37,10 @@ case "${1:-setup}" in
     esac
     wp --url="$site_a_url" --user=1 eval-file /msc-examples/comingsoon-preview.php "$@"
     ;;
+  comingsoon-detail-previews)
+    site_a_url="$(wp site list --field=url | grep '/site-a/$')"
+    wp --url="$site_a_url" --user=1 eval-file /msc-examples/comingsoon-detail-previews.php
+    ;;
   restore-demo-genres)
     site_a_url="$(wp site list --field=url | grep '/site-a/$')"
     wp --url="$site_a_url" --user=1 eval-file /msc-examples/restore-demo-genres.php
@@ -84,5 +88,5 @@ case "${1:-setup}" in
     docker compose run --rm -T -e MSC_DISPOSABLE_TESTS=1 cli --url="$site_a_url" eval-file /msc-tests/upcoming-releases.php
     ;;
   stop) docker compose down ;;
-  *) echo 'Usage: sh bin/shared-content.sh setup|takeover-demo|star-wars-demo|comingsoon-preview|comingsoon-preview-b|comingsoon-preview-c|restore-demo-genres|training|timeline|movie-preview|movie-portraits|franchise-demo|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
+  *) echo 'Usage: sh bin/shared-content.sh setup|takeover-demo|star-wars-demo|comingsoon-preview|comingsoon-preview-b|comingsoon-preview-c|comingsoon-detail-previews|restore-demo-genres|training|timeline|movie-preview|movie-portraits|franchise-demo|demo|style|queue|test|stop|wp [WP-CLI arguments]' >&2; exit 2 ;;
 esac

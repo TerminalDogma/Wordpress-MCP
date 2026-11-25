@@ -1,0 +1,190 @@
+.cs-detail-preview {
+    --bg: var(--cs-paper);
+    --text: var(--cs-ink);
+    --muted: var(--cs-muted);
+    --line: var(--cs-line);
+    --accent: var(--cs-blue);
+    --surface: #f3f1e8;
+    --surface2: #e8e6db;
+    --cs-detail-display: var(--cs-serif);
+    --cs-detail-mark: var(--cs-blue);
+    padding-block: 15px clamp(34px, 5vw, 68px);
+}
+.cs-editorial--preview-b .cs-detail-preview {
+    --surface: #e6f2fc;
+    --surface2: #d6e9f7;
+    --cs-detail-mark: var(--cs-red);
+}
+.cs-editorial--preview-c .cs-detail-preview {
+    --surface: #f5eeea;
+    --surface2: #ece3e0;
+    --cs-detail-display: var(--cs-sans);
+    --cs-detail-mark: var(--cs-coral);
+}
+.cs-preview-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+    font-size: .77rem;
+    font-weight: 700;
+}
+.cs-preview-links > span { margin-inline-end: 6px; color: var(--muted); }
+.cs-preview-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 31px; min-height: 31px; }
+.cs-preview-links a:hover { text-decoration: underline; text-underline-offset: .2em; }
+.cs-preview-links [aria-current] { background: var(--cs-ink); color: #fff; }
+.cs-preview-companion { margin-inline-start: auto; gap: 6px; }
+
+/* The same movie view takes its colors and typography from the preview masthead. */
+.cs-detail-preview .movie-page { --movie-radius: 0px; --movie-highlight: var(--cs-yellow); margin-bottom: 0; }
+.cs-detail-preview .breadcrumbs { padding-block: 12px; font-size: .78rem; }
+.cs-detail-preview .movie-hero {
+    grid-template-columns: minmax(0, clamp(9rem, 24vw, 21rem)) minmax(0, 1fr);
+    gap: clamp(15px, 5vw, 68px);
+    padding: clamp(16px, 3.4vw, 44px);
+    background: var(--surface);
+    color: var(--text);
+    border-top: 4px solid var(--cs-detail-mark);
+}
+.cs-detail-preview .movie-hero .hero-art { width: fit-content; max-width: 100%; justify-self: center; }
+.cs-detail-preview .movie-poster { height: auto; width: auto; max-height: 365px; box-shadow: none; border-radius: 0; background: var(--cs-dark); }
+.cs-detail-preview img.movie-poster { aspect-ratio: auto; }
+.cs-editorial .cs-detail-preview .movie-hero h1 {
+    font: 800 clamp(2rem, 6.9vw, 6.4rem)/.97 var(--cs-detail-display);
+    letter-spacing: -.058em;
+    margin: .25rem 0 .7rem;
+}
+.cs-detail-preview .movie-year { font: 700 .41em/1 var(--cs-sans); letter-spacing: -.045em; }
+.cs-detail-preview .movie-hero :is(.movie-year, .movie-original, .movie-hero-meta, .movie-hero-credits, .movie-hero-credits strong, .movie-hero-release span) { color: var(--muted); }
+.cs-detail-preview .movie-hero :is(.movie-hero-release, .movie-franchise-kicker) { color: var(--text); }
+.cs-detail-preview .movie-franchise-kicker { font-size: .77rem; letter-spacing: .07em; text-transform: uppercase; }
+.cs-detail-preview .movie-franchise-kicker a:hover { text-decoration: underline; }
+.cs-detail-preview .movie-hero-score,
+.cs-detail-preview .movie-action { color: var(--text); background: var(--cs-paper); border: 1px solid var(--line); border-radius: 0; }
+.cs-detail-preview .movie-hero-score.movie-editorial-chip,
+.cs-detail-preview .movie-action.primary { background: var(--cs-yellow); color: var(--cs-ink); border-color: var(--cs-yellow); }
+.cs-detail-preview .movie-action { padding: .42rem .72rem; }
+.cs-detail-preview .movie-watch { border-left: 4px solid var(--cs-detail-mark); }
+.cs-detail-preview .movie-tabs a[aria-current],
+.cs-detail-preview :is(.movie-order-switch button[aria-pressed="true"], .movie-coverage-controls a[aria-current]) { background: var(--cs-dark); color: white; }
+.cs-editorial .cs-detail-preview .movie-main :is(section > h2, .section-heading > h2) {
+    font: 800 clamp(1.65rem, 3.15vw, 2.45rem)/1.02 var(--cs-detail-display);
+    letter-spacing: -.044em;
+}
+.cs-detail-preview .movie-main > :is(section, div) + :is(section, div) { border-top: 1px solid var(--line); }
+.cs-detail-preview .movie-prose { max-width: 76ch; }
+.cs-detail-preview .movie-rail .details-panel { border-top: 3px solid var(--cs-detail-mark); }
+.cs-detail-preview .movie-page :is(.movie-disclosure, .movie-watch-link, .movie-coverage-card, .person-card, .movie-hero .item-score-badge) { border-radius: 0; }
+.cs-detail-preview .movie-page .editorial-score { color: #f5f8fb; }
+#msc-source-footer { display: block; padding-top: 0; }
+#msc-source-footer summary { cursor: pointer; }
+
+.cs-editorial--preview-b .cs-detail-preview .movie-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, clamp(9rem, 24vw, 21rem));
+    grid-template-areas: "copy poster";
+    background: #f9efdc;
+    border: 0;
+    border-left: 6px solid var(--cs-red);
+}
+.cs-editorial--preview-b .cs-detail-preview .movie-hero .hero-art { grid-area: poster; box-shadow: 9px 9px 0 var(--cs-yellow); }
+.cs-editorial--preview-b .cs-detail-preview .movie-hero-copy { grid-area: copy; }
+.cs-editorial--preview-b .cs-detail-preview .movie-hero h1 { color: #972f31; }
+.cs-editorial--preview-b .cs-detail-preview .movie-watch { border-left-color: var(--cs-sky); }
+.cs-editorial--preview-b .cs-detail-preview .movie-rail .details-panel { border-top-color: var(--cs-sky); }
+
+.cs-editorial--preview-c .cs-detail-preview .movie-hero {
+    grid-template-columns: minmax(0, clamp(9rem, 23vw, 20rem)) minmax(0, 1fr);
+    gap: 0;
+    align-items: center;
+    background: var(--cs-dark);
+    border-top: 0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+}
+.cs-editorial--preview-c .cs-detail-preview .movie-hero .hero-art { z-index: 2; }
+.cs-editorial--preview-c .cs-detail-preview .movie-hero-copy {
+    margin-inline-start: -7px;
+    padding: clamp(14px, 3vw, 42px);
+    padding-inline-start: clamp(23px, 4.2vw, 58px);
+    border-left: 5px solid var(--cs-coral);
+    background: var(--cs-paper);
+}
+
+.cs-detail-story { max-width: 1080px; margin: clamp(23px, 4vw, 55px) auto 0; }
+.cs-detail-story-lead { display: grid; }
+.cs-detail-story-header { min-width: 0; width: min(100%, 850px); padding-bottom: clamp(15px, 2.5vw, 31px); }
+.cs-detail-story-header .cs-label { display: inline-flex; margin-bottom: .75rem; }
+.cs-detail-story-header .cs-label:hover { text-decoration: underline; }
+.cs-editorial .cs-detail-story h1 {
+    max-width: 20ch;
+    margin: 0;
+    font: 800 clamp(2.45rem, 5.6vw, 5.25rem)/.99 var(--cs-detail-display);
+    letter-spacing: -.06em;
+    overflow-wrap: anywhere;
+}
+.cs-detail-story-header .cs-deck { max-width: 61ch; font-size: clamp(1rem, 1.6vw, 1.2rem); }
+.cs-detail-story-header .cs-byline { margin: .95rem 0 0; }
+.cs-detail-story-lead .cs-art { width: 100%; height: auto; aspect-ratio: 2.15; object-fit: cover; object-position: center 43%; }
+.cs-detail-story-copy {
+    max-width: 64ch;
+    margin: clamp(20px, 4vw, 46px) auto 0;
+    overflow-wrap: anywhere;
+    font: clamp(1.07rem, 1.6vw, 1.22rem)/1.7 var(--cs-serif);
+}
+.cs-detail-story-copy p { margin: 0 0 1em; }
+.cs-detail-story-copy :is(h2, h3) {
+    margin: 1.25em 0 .5em;
+    font: 800 clamp(1.65rem, 3.2vw, 2.2rem)/1.08 var(--cs-detail-display);
+    letter-spacing: -.04em;
+}
+.cs-detail-story-copy a { color: var(--cs-blue); text-decoration: underline; text-underline-offset: .15em; }
+.cs-editorial--preview-b .cs-detail-story { max-width: 1160px; }
+.cs-editorial--preview-b .cs-detail-story-lead {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: stretch;
+    background: #f9efdc;
+}
+.cs-editorial--preview-b .cs-detail-story-header {
+    align-self: center;
+    padding: clamp(15px, 3.5vw, 43px);
+    border-left: 6px solid var(--cs-red);
+}
+.cs-editorial--preview-b .cs-detail-story h1 { font-size: clamp(2.45rem, 4.6vw, 4.4rem); color: #972f31; }
+.cs-editorial--preview-b .cs-detail-story-header .cs-label { background: var(--cs-yellow); color: var(--cs-ink); padding: .24rem .5rem; }
+.cs-editorial--preview-b .cs-detail-story-lead .cs-art { height: 100%; min-height: 330px; aspect-ratio: 1.23; object-position: 60% center; }
+.cs-editorial--preview-b .cs-detail-story-copy :is(h2, h3) { border-bottom: 3px solid var(--cs-sky); padding-bottom: .2em; }
+
+.cs-editorial--preview-c .cs-detail-story { max-width: 1200px; }
+.cs-editorial--preview-c .cs-detail-story-header {
+    grid-row: 2;
+    z-index: 1;
+    width: min(calc(100% - 28px), 930px);
+    margin-inline-start: clamp(8px, 4vw, 58px);
+    padding: clamp(14px, 2.4vw, 33px);
+    border-left: 5px solid var(--cs-coral);
+    background: var(--cs-paper);
+}
+.cs-editorial--preview-c .cs-detail-story-lead:has(.cs-art) .cs-detail-story-header { margin-top: clamp(-67px, -4.8vw, -27px); }
+.cs-editorial--preview-c .cs-detail-story-lead .cs-art {
+    grid-row: 1;
+    aspect-ratio: 2.8;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+}
+.cs-editorial--preview-c .cs-detail-story-header .cs-label { background: var(--cs-coral); color: var(--cs-dark); padding: .24rem .55rem; }
+.cs-editorial--preview-c .cs-detail-story-copy { font: clamp(1.03rem, 1.65vw, 1.17rem)/1.65 var(--cs-sans); }
+.cs-editorial--preview-c .cs-detail-story-copy :is(h2, h3) { border-left: 4px solid var(--cs-coral); padding-inline-start: .4em; }
+
+@media (max-width: 760px) {
+    .cs-editorial--preview-b .cs-detail-story-lead { grid-template-columns: minmax(0, 1fr); }
+    .cs-editorial--preview-b .cs-detail-story-lead .cs-art { height: auto; min-height: 0; aspect-ratio: 1.8; }
+    .cs-editorial--preview-c .cs-detail-story-lead .cs-art { aspect-ratio: 1.65; }
+    .cs-detail-preview .movie-hero :is(.movie-hero-meta, .movie-hero-actions, .movie-hero-scores) { gap: .35rem; }
+}
+@media (max-width: 500px) {
+    .cs-editorial .cs-detail-preview .movie-hero { grid-template-columns: minmax(0, 1fr); grid-template-areas: "poster" "copy"; }
+    .cs-detail-preview .movie-hero .hero-art { justify-self: start; max-width: min(100%, 230px); }
+    .cs-detail-preview .movie-poster { max-height: 216px; }
+    .cs-editorial--preview-c .cs-detail-preview .movie-hero .hero-art { margin-inline: 12px; }
+    .cs-editorial--preview-c .cs-detail-preview .movie-hero-copy { margin: -6px 0 0; }
+}

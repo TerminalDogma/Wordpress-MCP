@@ -114,4 +114,4 @@ $stars = array_slice( array_column( $credits['actors']['items'] ?? array(), 'tit
         <?php } ?>
     </div>
 </article>
-<?php echo MovieEditorial::structured_data( $record, $credits, $review ); ?>
+<?php if ( empty( $args['design_preview'] ) ) { echo MovieEditorial::structured_data( $record, $credits, $review ); } ?>

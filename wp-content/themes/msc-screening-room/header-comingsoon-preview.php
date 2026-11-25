@@ -1,13 +1,14 @@
 <?php
-$preview_parent = (int) wp_get_post_parent_id( get_queried_object_id() ) ?: get_queried_object_id();
-$preview_url = get_permalink( $preview_parent );
-$preview_variant = match ( get_post_meta( $preview_parent, '_msc_comingsoon_palette', true ) ) {
+$preview_parent = $args['preview_home'] ?? ( (int) wp_get_post_parent_id( get_queried_object_id() ) ?: get_queried_object_id() );
+$preview_url = $preview_parent ? get_permalink( $preview_parent ) : home_url( '/' );
+$preview_variant = match ( $args['preview_variant'] ?? get_post_meta( $preview_parent, '_msc_comingsoon_palette', true ) ) {
 	'b', 'violet' => 'b',
 	'c' => 'c',
 	default => '',
 };
-$movies_url = ( $args['movies'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#movies' : msc_news_category_url( 'Movies' );
-$tv_url = ( $args['tv'] ?? (bool) wp_get_post_parent_id( get_queried_object_id() ) ) ? $preview_url . '#tv' : msc_news_category_url( 'TV' );
+$show_home_sections = isset( $args['preview_home'] ) ? (bool) $preview_parent : (bool) wp_get_post_parent_id( get_queried_object_id() );
+$movies_url = ( $args['movies'] ?? $show_home_sections ) ? $preview_url . '#movies' : msc_news_category_url( 'Movies' );
+$tv_url = ( $args['tv'] ?? $show_home_sections ) ? $preview_url . '#tv' : msc_news_category_url( 'TV' );
 add_filter( 'wp_robots', static function ( array $robots ): array {
 	unset( $robots['index'] );
 	$robots['noindex'] = true;
@@ -35,11 +36,11 @@ if ( 'c' === $preview_variant ) {
 	<div class="cs-utility">
 		<div class="cs-frame">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>">← ComingSoon home</a>
-			<span><?php echo esc_html( trim( 'Homepage preview ' . strtoupper( $preview_variant ) ) ); ?></span>
+			<span><?php echo esc_html( $args['preview_label'] ?? trim( 'Homepage preview ' . strtoupper( $preview_variant ) ) ); ?></span>
 		</div>
 	</div>
 	<div class="cs-frame cs-brand-row">
-		<a class="cs-brand" href="<?php echo esc_url( $preview_url ); ?>" aria-label="ComingSoon homepage preview">
+		<a class="cs-brand" href="<?php echo esc_url( $preview_url ); ?>" aria-label="<?php echo $preview_parent ? 'ComingSoon homepage preview' : 'ComingSoon homepage'; ?>">
 			<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/network/logo-a.svg' ); ?>" width="260" height="73" alt="ComingSoon">
 		</a>
 		<?php if ( 'c' !== $preview_variant ) { ?><a class="cs-calendar-link" href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">Release Calendar <span aria-hidden="true">→</span></a><?php } ?>
@@ -47,11 +48,11 @@ if ( 'c' === $preview_variant ) {
 	<div class="cs-nav-wrap">
 		<div class="cs-frame cs-nav-row">
 			<nav aria-label="Preview navigation" class="cs-nav">
-				<a href="<?php echo esc_url( $preview_url . ( 'c' === $preview_variant ? '#the-feed' : '#latest' ) ); ?>">Latest</a>
+				<a href="<?php echo esc_url( $preview_url . ( ! $preview_parent ? '' : ( 'c' === $preview_variant ? '#the-feed' : '#latest' ) ) ); ?>">Latest</a>
 				<a href="<?php echo esc_url( $movies_url ); ?>">Movies</a>
 				<a href="<?php echo esc_url( $tv_url ); ?>">TV</a>
-				<?php if ( 'c' !== $preview_variant ) { ?><a href="<?php echo esc_url( $preview_url . '#the-feed' ); ?>">The Feed</a><?php } ?>
-				<a href="<?php echo esc_url( $preview_url . '#what-to-watch' ); ?>">What to Watch</a>
+				<?php if ( $preview_parent && 'c' !== $preview_variant ) { ?><a href="<?php echo esc_url( $preview_url . '#the-feed' ); ?>">The Feed</a><?php } ?>
+				<a href="<?php echo esc_url( $preview_parent ? $preview_url . '#what-to-watch' : msc_news_category_url( 'Streaming' ) ); ?>">What to Watch</a>
 				<?php if ( \MSC\Reviews::enabled() ) { ?><a href="<?php echo esc_url( get_post_type_archive_link( 'msc_review' ) ); ?>">Reviews</a><?php } ?>
 				<?php if ( 'c' === $preview_variant ) { ?><a href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">Release Calendar</a><?php } ?>
 			</nav>

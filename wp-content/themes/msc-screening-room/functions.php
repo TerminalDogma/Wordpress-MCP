@@ -1,8 +1,16 @@
 <?php
 require_once __DIR__ . '/inc/catalog-archive.php';
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_franchise', 'msc_movie', 'msc_show' ) ) ) { wp_enqueue_style( 'msc-franchises', get_template_directory_uri() . '/assets/franchises.css', array( 'network-presentation' ), MSC_VERSION ); } }, 30 );
+function msc_screen_movie_view(): bool {
+    return is_singular( 'msc_movie' ) || ( is_page() && is_page_template( 'template-comingsoon-detail-preview.php' ) );
+}
+add_action( 'pre_get_posts', static function ( WP_Query $query ): void {
+    if ( is_admin() || $query->is_singular() || $query->get( 'post__in' ) ) { return; }
+    $previews = get_option( 'msc_comingsoon_detail_previews', array() );
+    if ( $previews ) { $query->set( 'post__not_in', array_merge( (array) $query->get( 'post__not_in' ), array_values( $previews ) ) ); }
+} );
+add_action( 'wp_enqueue_scripts', static function () { if ( msc_screen_movie_view() || is_singular( array( 'msc_franchise', 'msc_show' ) ) ) { wp_enqueue_style( 'msc-franchises', get_template_directory_uri() . '/assets/franchises.css', array( 'network-presentation' ), MSC_VERSION ); } }, 30 );
 add_action( 'wp_enqueue_scripts', static function () {
-    if ( is_singular( array_merge( array_keys( \MSC\Schema::all() ), array( 'msc_review' ) ) ) ) {
+    if ( msc_screen_movie_view() || is_singular( array_merge( array_keys( \MSC\Schema::all() ), array( 'msc_review' ) ) ) ) {
         wp_enqueue_style( 'msc-collections', get_template_directory_uri() . '/assets/collections.css', array( 'network-presentation' ), MSC_VERSION );
         wp_enqueue_script( 'msc-collections', get_template_directory_uri() . '/assets/collections.js', array(), MSC_VERSION, true );
     }
@@ -18,13 +26,13 @@ add_action( 'wp_enqueue_scripts', static function () {
     wp_enqueue_script( 'msc-timelines', get_template_directory_uri() . '/assets/timelines.js', array(), MSC_VERSION, true );
 }, 30 );
 add_action( 'wp_enqueue_scripts', static function () {
-    if ( is_singular( array( 'msc_movie', 'msc_show' ) ) ) {
+    if ( msc_screen_movie_view() || is_singular( 'msc_show' ) ) {
         wp_enqueue_style( 'msc-title-details', get_template_directory_uri() . '/assets/title-details.css', array( 'msc-reviews' ), MSC_VERSION );
     }
 }, 30 );
 add_action( 'wp_enqueue_scripts', static function () {
-    if ( ! is_singular( array( 'msc_movie', 'post' ) ) ) { return; }
-    $movie = is_singular( 'msc_movie' );
+    $movie = msc_screen_movie_view();
+    if ( ! $movie && ! is_singular( 'post' ) ) { return; }
     wp_enqueue_style( 'msc-movies', get_template_directory_uri() . '/assets/movies.css', array( $movie ? 'msc-title-details' : 'network-presentation' ), MSC_VERSION );
     if ( $movie ) { wp_enqueue_script( 'msc-movies', get_template_directory_uri() . '/assets/movies.js', array(), MSC_VERSION, true ); }
 }, 35 );
@@ -118,6 +126,6 @@ function msc_screen_overview( array $record ): string {
 add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( 'msc_show' ) ) { wp_enqueue_script( 'msc-episode-seasons', get_template_directory_uri() . '/assets/episodes.js', array(), '2.10.4', true ); } } );
 add_action( 'wp_enqueue_scripts', static function () { if ( \MSC\CatalogArchive::current() ) { wp_enqueue_style( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.css', array( 'network-presentation' ), '2.10.4' ); wp_enqueue_script( 'msc-catalog-archives', get_template_directory_uri() . '/assets/archives.js', array(), '2.10.4', true ); } } );
 
-add_action( 'wp_enqueue_scripts', static function () { if ( is_singular( array( 'msc_movie', 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), MSC_VERSION, true ); } } );
+add_action( 'wp_enqueue_scripts', static function () { if ( msc_screen_movie_view() || is_singular( array( 'msc_show', 'msc_game' ) ) ) { wp_enqueue_script( 'msc-trailers', get_template_directory_uri() . '/assets/trailers.js', array(), MSC_VERSION, true ); } } );
 
 add_action( 'wp_enqueue_scripts', static function () { wp_enqueue_style( 'msc-reviews', get_template_directory_uri() . '/assets/reviews.css', array( 'network-presentation' ), '2.10.4' ); } );
