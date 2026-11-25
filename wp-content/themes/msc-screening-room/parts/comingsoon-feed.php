@@ -23,7 +23,7 @@ usort( $stories, static fn( WP_Post $a, WP_Post $b ) => array( $b->post_date_gmt
 <section id="the-feed" class="cs-feed" aria-labelledby="cs-feed-title" data-cs-feed data-limit="<?php echo esc_attr( $limit ); ?>">
 	<div class="cs-frame">
 		<div class="cs-feed-heading">
-			<h2 id="cs-feed-title">The Feed</h2>
+			<h2 id="cs-feed-title"><?php echo esc_html( $args['title'] ?? 'The Feed' ); ?></h2>
 			<nav class="cs-feed-filters" aria-label="Filter stories">
 				<?php foreach ( $formats as $key => $label ) { ?>
 					<a href="<?php echo esc_url( add_query_arg( 'cs_format', 'all' === $key ? false : $key, $url ) . '#the-feed' ); ?>" data-cs-filter="<?php echo esc_attr( $key ); ?>"<?php if ( $filter === $key ) { ?> aria-current="true"<?php } ?>><?php echo esc_html( $label ); ?></a>

@@ -1,14 +1,15 @@
 <?php
 $sections = $args['sections'];
 $lead = $args['lead'];
-$latest = $args['latest'];
-$watch = $args['picks'];
 $movies = $args['movie_reviews'];
 $tv = $args['tv_review'];
 $recaps = $args['recaps'];
 $featured = array_slice( array_merge( $args['spotlight'], $sections['trailers'] ?? array() ), 0, 3 );
-$editors_picks = array_slice( array_merge( $sections['features'] ?? array(), array_slice( $movies, 1 ) ), 0, 4 );
-$movie_news = array_filter( $latest, static fn( WP_Post $story ) => 'Movie News' === msc_cs_preview_meta( $story, 'label' ) );
+$highlights = array_slice( $args['latest'], 0, 5 );
+$criticism = array_filter( $args['picks'], static fn( WP_Post $story ) => 'criticism' === msc_cs_preview_format( $story ) );
+$criticism = array_slice( array_merge( $sections['criticism'] ?? array(), $criticism ), 0, 4 );
+$watch = array_filter( array_merge( $args['picks'], $sections['feed'] ?? array() ), static fn( WP_Post $story ) => 'streaming' === msc_cs_preview_format( $story ) );
+$movie_news = array_filter( $args['latest'], static fn( WP_Post $story ) => 'Movie News' === msc_cs_preview_meta( $story, 'label' ) );
 ?>
 <div class="cs-frame cs-grid-page">
 	<h1 class="screen-reader-text">ComingSoon homepage preview C</h1>
@@ -18,46 +19,45 @@ $movie_news = array_filter( $latest, static fn( WP_Post $story ) => 'Movie News'
 		<?php if ( $lead ) { msc_cs_preview_card( $lead, 'grid-lead' ); } ?>
 		<?php if ( $featured ) { ?>
 			<div class="cs-cover-secondary">
-				<?php foreach ( $featured as $story ) { msc_cs_preview_card( $story, 'grid-cover' ); } ?>
+				<?php foreach ( $featured as $index => $story ) { msc_cs_preview_card( $story, 2 === $index ? 'grid-split' : 'grid-cover' ); } ?>
 			</div>
 		<?php } ?>
 	</section>
 	<?php } ?>
 
-	<?php if ( $editors_picks ) { ?>
-	<section class="cs-grid-picks" aria-labelledby="cs-grid-picks-title">
-		<h2 class="cs-grid-title" id="cs-grid-picks-title">Editors’ Picks</h2>
-		<div class="cs-picks-grid">
-			<?php foreach ( $editors_picks as $story ) { msc_cs_preview_card( $story, 'grid-brief' ); } ?>
+	<?php if ( $highlights ) { ?>
+	<section class="cs-grid-highlights" aria-labelledby="cs-highlights-title">
+		<div class="cs-grid-heading">
+			<h2 class="cs-grid-title" id="cs-highlights-title">News Highlights</h2>
+			<a href="#the-feed">Latest stories <span aria-hidden="true">→</span></a>
+		</div>
+		<div class="cs-highlight-grid">
+			<?php foreach ( $highlights as $story ) { msc_cs_preview_card( $story, 'grid-highlight' ); } ?>
 		</div>
 	</section>
 	<?php } ?>
 
-	<?php if ( $latest || $watch ) { ?>
-	<div class="cs-grid-discovery">
-		<?php if ( $latest ) { ?>
-			<section id="latest" aria-labelledby="cs-grid-latest-title">
-				<div class="cs-grid-heading">
-					<h2 class="cs-grid-title" id="cs-grid-latest-title">Latest</h2>
-					<a href="#the-feed">See all stories <span aria-hidden="true">→</span></a>
-				</div>
-				<div class="cs-grid-news-list">
-					<?php foreach ( $latest as $story ) { msc_cs_preview_card( $story, 'grid-news' ); } ?>
-				</div>
-			</section>
-		<?php } ?>
+	<?php if ( $criticism ) { ?>
+	<section class="cs-grid-criticism" aria-labelledby="cs-grid-criticism-title">
+		<div class="cs-grid-heading">
+			<h2 class="cs-grid-title" id="cs-grid-criticism-title">Reviews &amp; Criticism</h2>
+		</div>
+		<div class="cs-criticism-grid">
+			<?php foreach ( $criticism as $story ) { msc_cs_preview_card( $story, 'grid-roundup' ); } ?>
+		</div>
+	</section>
+	<?php } ?>
 
-		<?php if ( $watch ) { ?>
-			<aside id="what-to-watch" class="cs-grid-watch" aria-labelledby="cs-grid-watch-title">
-				<h2 class="cs-grid-title" id="cs-grid-watch-title">What to Watch</h2>
-				<?php
-				msc_cs_preview_card( $watch[0], 'grid-guide' );
-				foreach ( array_slice( $watch, 1 ) as $story ) { msc_cs_preview_card( $story, 'grid-brief' ); }
-				?>
-				<a class="cs-guide-calendar" href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">Upcoming releases <span aria-hidden="true">→</span></a>
-			</aside>
-		<?php } ?>
-	</div>
+	<?php if ( $watch ) { ?>
+	<section id="what-to-watch" class="cs-grid-watch" aria-labelledby="cs-grid-watch-title">
+		<div class="cs-grid-heading">
+			<h2 class="cs-grid-title" id="cs-grid-watch-title">What to Watch</h2>
+			<a class="cs-guide-calendar" href="<?php echo esc_url( \MSC\NetworkSites::calendar_url() ); ?>">Upcoming releases <span aria-hidden="true">→</span></a>
+		</div>
+		<div class="cs-watch-guides">
+			<?php foreach ( $watch as $story ) { msc_cs_preview_card( $story, 'grid-guide' ); } ?>
+		</div>
+	</section>
 	<?php } ?>
 
 	<?php if ( $movies || $tv || $recaps ) { ?>

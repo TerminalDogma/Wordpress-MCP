@@ -98,6 +98,8 @@ get_header( 'comingsoon-preview', array(
 	</div>
 	<?php } ?>
 	<?php } ?>
-	<?php if ( $stories ) { get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ) ) ); } ?>
+	<?php if ( $stories ) {
+		get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ), 'title' => $preview_c ? 'Latest' : 'The Feed' ) );
+	} ?>
 </main>
 <?php get_footer( 'comingsoon-preview' ); ?>
