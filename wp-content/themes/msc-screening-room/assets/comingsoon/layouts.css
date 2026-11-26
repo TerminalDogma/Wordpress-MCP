@@ -1,0 +1,36 @@
+body.cs-layout {
+    --layout-width: min(calc(100% - 68px), 1380px);
+    --layout-sans: Archivo, Arial, sans-serif;
+    background: var(--layout-ground);
+    color: var(--layout-ink);
+    font-family: var(--layout-sans);
+}
+.cs-layout [hidden] { display: none !important; }
+.cs-layout :is(a, button, input, select):focus-visible { outline: 3px solid var(--layout-focus); outline-offset: 3px; }
+.cs-layout :is(h1, h2, h3, h4) { max-width: none; overflow-wrap: anywhere; font-family: var(--layout-sans); }
+.cs-layout h1 { font-weight: 900; }
+.cs-layout a:hover { color: inherit; text-decoration: underline; text-underline-offset: .14em; }
+.layout-width { width: var(--layout-width); margin-inline: auto; }
+.layout-top { background: var(--layout-ribbon); color: var(--layout-ribbon-ink); border-bottom: 1px solid var(--layout-edge); }
+.layout-top-inner, .layout-footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 7px 16px; padding-block: 12px; }
+.layout-brand { font: 900 italic clamp(1.4rem, 3vw, 2.02rem)/1 var(--layout-sans); letter-spacing: -.075em; }
+.layout-brand span { color: var(--layout-brand); }
+.layout-top nav, .layout-tabs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 7px; }
+.layout-top nav a, .layout-tabs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 2px 8px;
+    font: 760 .78rem/1.2 var(--layout-sans);
+}
+.layout-top nav [aria-current], .layout-tabs [aria-current] { background: var(--layout-button); color: var(--layout-button-ink); }
+.layout-label { margin: 0 0 .35em; font: 800 .7rem/1.25 var(--layout-sans); letter-spacing: .077em; text-transform: uppercase; }
+.layout-footer { margin-top: clamp(25px, 5.5vw, 72px); border-top: 1px solid var(--layout-edge); font-size: .8rem; }
+.layout-footer-inner { align-items: flex-start; }
+.layout-footer-inner > p { margin: 0; }
+.cs-layout .cs-art { display: block; object-fit: cover; width: 100%; height: auto; }
+
+@media (max-width: 680px) {
+    body.cs-layout { --layout-width: calc(100% - 30px); }
+    .layout-top nav a { padding-inline: 4px; }
+}

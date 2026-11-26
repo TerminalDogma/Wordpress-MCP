@@ -6,8 +6,9 @@ if ( 'a' !== get_option( 'msc_site_identity' ) || 'msc-screening-room' !== get_t
 }
 
 $variant_key = $args[0] ?? '';
-if ( ! in_array( $variant_key, array( '', 'b', 'c', 'research' ), true ) ) { WP_CLI::error( 'Choose preview b, c or research.' ); }
-\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $variant_key ): void {
+$layouts = array( 'runway' => 'Release Runway', 'sheet' => 'Contact Sheet', 'index' => 'Cross-Reference' );
+if ( ! in_array( $variant_key, array( '', 'b', 'c', 'research', ...array_keys( $layouts ) ), true ) ) { WP_CLI::error( 'Unknown homepage preview design.' ); }
+\MSC\Database::lock( 'comingsoon-preview-' . get_current_blog_id(), static function () use ( $variant_key, $layouts ): void {
 	$slug = 'homepage-preview';
 	$marker = '_msc_comingsoon_preview';
 	$existing = get_page_by_path( $slug, OBJECT, array( 'page' ) );
@@ -150,12 +151,12 @@ if ( ! in_array( $variant_key, array( '', 'b', 'c', 'research' ), true ) ) { WP_
 		WP_CLI::success( 'ComingSoon homepage preview: ' . get_permalink( $parent ) );
 		return;
 	}
-	$variant_label = 'research' === $variant_key ? 'Research' : strtoupper( $variant_key );
+	$variant_label = $layouts[ $variant_key ] ?? ( 'research' === $variant_key ? 'Research' : strtoupper( $variant_key ) );
 	$variant_id = $variant ? $variant->ID : $insert( array(
 		'post_title' => 'ComingSoon Homepage Preview ' . $variant_label,
 		'post_name' => $variant_slug,
 		'post_status' => 'publish',
-		'page_template' => 'page-comingsoon-preview.php',
+		'page_template' => isset( $layouts[ $variant_key ] ) ? 'page-comingsoon-layout.php' : 'page-comingsoon-preview.php',
 		'meta_input' => array(
 			$marker => 'home',
 			'_msc_comingsoon_story_source' => $parent,

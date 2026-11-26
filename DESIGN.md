@@ -44,6 +44,18 @@ Run `sh bin/shared-content.sh comingsoon-studio-previews` on Site A. It installs
 
 The three concepts use original generated film art and fictional articles. The movie previews read the published Iron Man record for the date, overview, trailers, cast, providers, reviews, and film facts. The Cut Room homepage uses the shared ComingSoon preview stories and its own *Spin Cycle* lead. Its Latest Stories filters and filmstrip links work with JavaScript disabled.
 
+### Homepage layout explorations
+
+`sh bin/shared-content.sh comingsoon-layout-previews` installs three standalone Site A pages. The header links between them for comparison.
+
+| Preview | First action |
+| --- | --- |
+| Release Runway (`homepage-preview-runway`) | Change the date window or open a release from a chronological schedule populated by the catalog. News and streaming picks follow the schedule. |
+| Contact Sheet (`homepage-preview-sheet`) | Scan a photo wall or narrow it to a coverage format. Every tile opens its article. |
+| Cross-Reference (`homepage-preview-index`) | Look up a published movie or show by title and see its catalog entry beside related coverage. The featured list includes selected fictional examples from the preview library. |
+
+Release windows, story filters, and title search can be used with JavaScript disabled. Contact Sheet also filters in place when JavaScript is available.
+
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 
 | Site | Reference | Masthead | Accent | Heading / body | Observed homepage structure |
