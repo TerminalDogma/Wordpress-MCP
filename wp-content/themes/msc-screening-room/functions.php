@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/inc/catalog-archive.php';
 function msc_screen_movie_view(): bool {
-    return is_singular( 'msc_movie' ) || ( is_page() && is_page_template( 'template-comingsoon-detail-preview.php' ) );
+    return is_singular( 'msc_movie' ) || ( is_page() && ( is_page_template( 'template-comingsoon-detail-preview.php' ) || ( is_page_template( 'template-comingsoon-studio.php' ) && 'movie-page' === get_post_meta( get_queried_object_id(), '_msc_studio_kind', true ) ) ) );
 }
 add_action( 'pre_get_posts', static function ( WP_Query $query ): void {
     if ( is_admin() || $query->is_singular() || $query->get( 'post__in' ) ) { return; }
-    $previews = get_option( 'msc_comingsoon_detail_previews', array() );
+    $previews = get_option( 'msc_comingsoon_detail_previews', array() ) + get_option( 'msc_comingsoon_studio_previews', array() );
     if ( $previews ) { $query->set( 'post__not_in', array_merge( (array) $query->get( 'post__not_in' ), array_values( $previews ) ) ); }
 } );
 add_action( 'wp_enqueue_scripts', static function () { if ( msc_screen_movie_view() || is_singular( array( 'msc_franchise', 'msc_show' ) ) ) { wp_enqueue_style( 'msc-franchises', get_template_directory_uri() . '/assets/franchises.css', array( 'network-presentation' ), MSC_VERSION ); } }, 30 );

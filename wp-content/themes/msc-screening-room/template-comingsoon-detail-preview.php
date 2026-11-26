@@ -10,8 +10,7 @@ $preview = get_queried_object();
 $is_movie = 'page' === $preview->post_type;
 $kind = $is_movie ? 'Movie page' : 'Article';
 $variant = msc_cs_preview_meta( $preview, 'detail_variant' );
-$experimental = isset( msc_cs_experimental_designs()[ $variant ] );
-$variant = $experimental || in_array( $variant, array( 'b', 'c', 'research' ), true ) ? $variant : 'a';
+$variant = in_array( $variant, array( 'b', 'c', 'research' ), true ) ? $variant : 'a';
 $research = 'research' === $variant;
 $homepage = get_page_by_path( 'homepage-preview' . ( 'a' === $variant ? '' : '-' . $variant ) );
 $home_id = $homepage && 'publish' === $homepage->post_status && 'home' === msc_cs_preview_meta( $homepage, 'preview' ) ? $homepage->ID : 0;
@@ -19,17 +18,16 @@ $prefix = $is_movie ? 'movie-page-preview-' : 'article-preview-';
 $previews = get_option( 'msc_comingsoon_detail_previews', array() );
 $companion = $previews[ ( $is_movie ? 'article-preview-' : 'movie-page-preview-' ) . $variant ] ?? 0;
 $dependencies = array( 'a' => 'cs-editorial-preview', 'b' => 'cs-editorial-preview-b', 'c' => 'cs-editorial-preview-c', 'research' => 'cs-research-preview' );
-wp_enqueue_style( 'cs-detail-preview', get_template_directory_uri() . '/assets/comingsoon/detail-preview.css', array( $dependencies[ $variant ] ?? 'cs-editorial-preview' ), '1.0.0' );
+wp_enqueue_style( 'cs-detail-preview', get_template_directory_uri() . '/assets/comingsoon/detail-preview.css', array( $dependencies[ $variant ] ), '1.0.0' );
 
-get_header( $experimental ? 'comingsoon-experimental' : 'comingsoon-preview', array(
+get_header( 'comingsoon-preview', array(
 	'preview_home' => $home_id,
 	'preview_variant' => $variant,
-	'preview_kind' => $is_movie ? 'movie-page' : 'article',
 	'preview_label' => $kind . ' preview ' . strtoupper( $variant ),
 ) );
 ?>
 <main id="main" class="cs-frame cs-detail-preview">
-	<?php if ( ! $research && ! $experimental ) { ?><nav class="cs-preview-links" aria-label="Compare designs">
+	<?php if ( ! $research ) { ?><nav class="cs-preview-links" aria-label="Compare designs">
 		<span><?php echo esc_html( $kind . ' designs' ); ?></span>
 		<?php foreach ( array( 'a', 'b', 'c' ) as $letter ) {
 			$id = $previews[ $prefix . $letter ] ?? 0;
@@ -53,8 +51,6 @@ get_header( $experimental ? 'comingsoon-experimental' : 'comingsoon-preview', ar
 			} else {
 				?><h1>Iron Man</h1><p>This preview needs a published Iron Man entry on ComingSoon.</p><?php
 			}
-		} elseif ( $experimental ) {
-			get_template_part( 'parts/comingsoon-experimental-article', null, array( 'story' => $preview, 'variant' => $variant ) );
 		} else {
 			get_template_part( 'parts/comingsoon-detail-article', null, array( 'story' => $preview, 'research' => $research, 'home_id' => $home_id ) );
 		}

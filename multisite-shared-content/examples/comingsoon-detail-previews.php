@@ -21,10 +21,8 @@ $article = <<<'HTML'
 <p>For viewers planning a group screening, theaters are handling ticket sales and seat reservations individually. Any additional showtimes will appear on the same local listings if demand warrants them.</p>
 HTML;
 
-$mode = $args[0] ?? '';
-$research = 'research' === $mode;
-$experimental = 'experimental' === $mode ? require __DIR__ . '/comingsoon-experimental-stories.php' : array();
-$variants = $experimental ? array_keys( $experimental ) : ( $research ? array( 'research' ) : array( 'a', 'b', 'c' ) );
+$research = 'research' === ( $args[0] ?? '' );
+$variants = $research ? array( 'research' ) : array( 'a', 'b', 'c' );
 if ( $research ) {
 	$first_look = get_page_by_path( 'homepage-preview/last-meridian' );
 	$article = str_replace( '<h2>Where to see', '<aside class="cs-screening-details" aria-label="Screening details"><dl><div><dt>Dates</dt><dd>December 11–17</dd></div><div><dt>Format</dt><dd>Select IMAX theaters</dd></div><div><dt>Before the film</dt><dd>Production featurette</dd></div></dl></aside>' . "\n\n" . '<h2>Where to see', $article );
@@ -33,7 +31,7 @@ if ( $research ) {
 	}
 }
 
-$ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(), static function () use ( $article, $variants, $experimental ): array {
+$ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(), static function () use ( $article, $variants ): array {
 	$marker = '_msc_comingsoon_detail_preview';
 	$pages = array();
 	$ids = array();
@@ -51,22 +49,20 @@ $ids = \MSC\Database::lock( 'comingsoon-detail-previews-' . get_current_blog_id(
 				continue;
 			}
 			$is_article = 'post' === $type;
-			$story = $experimental[ $variant ] ?? array();
-			$design_label = 1 === strlen( $variant ) ? strtoupper( $variant ) : ucfirst( $variant );
 			$pages[ $slug ] = array(
 				'post_type' => $type,
-				'post_title' => $is_article ? ( $story['title'] ?? 'The Last Meridian Sets a One-Week Return to IMAX' ) : 'Iron Man · Movie Page Preview ' . $design_label,
+				'post_title' => $is_article ? 'The Last Meridian Sets a One-Week Return to IMAX' : 'Iron Man · Movie Page Preview ' . ( 'research' === $variant ? 'Research' : strtoupper( $variant ) ),
 				'post_name' => $slug,
 				'post_status' => 'draft',
-				'post_content' => $is_article ? ( $story['body'] ?? $article ) : '',
-				'post_excerpt' => $is_article ? ( $story['deck'] ?? 'The sci-fi film will play select theaters in December with a new featurette about its eclipse sequence.' ) : '',
+				'post_content' => $is_article ? $article : '',
+				'post_excerpt' => $is_article ? 'The sci-fi film will play select theaters in December with a new featurette about its eclipse sequence.' : '',
 				'comment_status' => 'closed',
 				'ping_status' => 'closed',
 				'page_template' => 'template-comingsoon-detail-preview.php',
 				'meta_input' => array( $marker => $slug, '_msc_comingsoon_detail_variant' => $variant ) + ( $is_article ? array(
-					'_msc_comingsoon_art' => $story['art'] ?? 'meridian',
-					'_msc_comingsoon_byline' => $story['byline'] ?? 'Maya Bennett',
-					'_msc_comingsoon_label' => 'Movie News',
+					'_msc_comingsoon_art' => 'meridian',
+					'_msc_comingsoon_byline' => 'Maya Bennett',
+				'_msc_comingsoon_label' => 'Movie News',
 				) : array() ),
 			);
 		}

@@ -4,10 +4,6 @@ function msc_cs_preview_meta( WP_Post $post, string $key ): string {
 	return (string) get_post_meta( $post->ID, '_msc_comingsoon_' . $key, true );
 }
 
-function msc_cs_experimental_designs(): array {
-	return array( 'signal' => 'Signal 2001', 'zine' => 'Fan Zine', 'disc' => 'Disc Menu' );
-}
-
 function msc_cs_preview_format( WP_Post $story ): string {
 	return match ( msc_cs_preview_meta( $story, 'label' ) ) {
 		'TV Recap' => 'recaps',

@@ -32,15 +32,17 @@ Run `sh bin/shared-content.sh comingsoon-research-previews` to install the `home
 | Clear headlines, useful related links, and an uninterrupted article body | The sample news article opens with its release details, keeps the reading column clear, and links to related reporting and upcoming dates. |
 | Catalog basics should be visible and related coverage should sit higher | Iron Man puts the U.S. date, trailer, and watch options near the title. Coverage follows the overview. The film page uses the regular cast, trailer, review, and franchise components. Outside scores appear in the review section. |
 
-### Experimental previews
+### Studio previews
 
-Run `sh bin/shared-content.sh comingsoon-experimental-previews` for nine Site A URLs. Each design has `homepage-preview-`, `movie-page-preview-`, and `article-preview-` routes. The pages share the published Iron Man catalog record, and each design has its own fictional news article and homepage lead. The header switches to the same page type in another design.
+Run `sh bin/shared-content.sh comingsoon-studio-previews` on Site A. It installs standalone homepage, Iron Man, and article routes for `orbit`, `cut`, and `tower`. The previous Signal, Fan Zine, and Disc Menu previews move to Draft. The installer checks each old entry’s preview metadata before retiring it.
 
-| Design | Slug suffix | Layout |
-| --- | --- | --- |
-| Signal 2001 | `signal` | Cyan CRT lines, a news wire and a framed film still. The article uses a side-by-side bulletin, and the movie places its art and details in a split monitor. |
-| Fan Zine | `zine` | Patterned lavender, taped photographs, ink borders and bright section labels. The article uses ruled paper, and the movie header takes the shape of a ticket stub. |
-| Disc Menu | `disc` | Glossy cobalt panels, silver navigation and a rail of first looks. Article headlines sit below widescreen art, and the movie uses a centered case and metadata panel. |
+| Preview | Interaction |
+| --- | --- |
+| Orbit | Choose an orbital waypoint to change the artwork and open its story or film section. The links also support arrow keys. |
+| Cut Room | Select a film frame or scrub the range control to browse stories, movie sections, or article chapters. |
+| The Tower | Select a floor to open its content. An elevator indicator follows the active floor. |
+
+The three concepts use original generated film art and fictional articles. The movie previews read the published Iron Man record for the date, overview, trailers, cast, providers, reviews, and film facts. Every control targets a real section or link. The layouts allow all sections to be read with JavaScript disabled.
 
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 

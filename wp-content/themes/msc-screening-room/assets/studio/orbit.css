@@ -1,0 +1,94 @@
+body.cs-studio--orbit {
+    --studio-bg: #19072e;
+    --studio-ink: #f8effb;
+    --studio-card: #edcff4;
+    --studio-copy: #240b3b;
+    --studio-subtle: #583269;
+    --studio-border: #b485bd;
+    --studio-surface: #f7e6f7;
+    --studio-link: #642463;
+    --studio-button: #d6ff4a;
+    --studio-button-ink: #160822;
+    --studio-focus: #ff83ce;
+    background-image: radial-gradient(ellipse at 28% 43%, #46105c 0, transparent 60%), radial-gradient(#e6aaf449 1px, transparent 1px);
+    background-size: auto, 21px 21px;
+}
+.cs-studio--orbit .studio-top { color: #f8effb; background: #150621; border-bottom: 1px solid #703885; }
+.cs-studio--orbit .studio-brand span { color: #d6ff4a; }
+.cs-studio--orbit .studio-designs [aria-current], .cs-studio--orbit .studio-types [aria-current] { color: #d6ff4a; }
+.cs-studio--orbit .studio-title { padding-top: clamp(20px, 4vw, 48px); }
+.cs-studio--orbit .studio-title h1 { max-width: 1150px; font-size: clamp(3rem, 10vw, 8.8rem); font-weight: 900; letter-spacing: -.082em; color: #d6ff4a; }
+.cs-studio--orbit [data-studio-kind="article"] h1 { font-size: clamp(2.5rem, 7vw, 7rem); }
+.cs-studio--orbit .studio-title > .studio-deck { color: #f7deff; }
+.cs-studio--orbit .studio-layout { display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(0, 1fr); align-items: center; gap: clamp(12px, 3vw, 42px); }
+.cs-studio--orbit .studio-index { position: relative; display: grid; place-items: center; min-height: 490px; isolation: isolate; }
+.cs-studio--orbit .studio-index h2 { position: absolute; top: 0; left: 0; color: #ffadf1; text-transform: uppercase; letter-spacing: .09em; font-size: .76rem; }
+.studio-orbit-field { display: grid; place-items: center; width: min(94%, 505px); aspect-ratio: 1.12; position: relative; }
+.studio-orbit-field::before, .studio-orbit-field::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; }
+.studio-orbit-field::before { inset: 14% -6%; border: 2px solid #e4a5ee90; transform: rotate(calc(-28deg + var(--active-stop, 0) * 9deg)); box-shadow: 0 0 0 15px #bd75da35, 0 0 0 29px #af5ad833, 0 0 0 44px #ae4be323, 0 0 28px #d156f450; }
+.studio-orbit-field::after { inset: 9% 10%; border: 1px dashed #e6ff58b3; transform: rotate(32deg); }
+.studio-orbit-core {
+    position: relative;
+    width: 70%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #dcff69;
+    background: #351044;
+    box-shadow: 0 0 40px #d1ff448c, inset 0 0 30px #d2ff4485;
+}
+.studio-orbit-core img { width: 100%; height: 100%; object-fit: cover; }
+.studio-orbit-core::after { position: absolute; inset: 0; content: ""; border-radius: inherit; box-shadow: inset 0 0 25px #3e0c55b0; }
+.cs-studio--orbit .studio-stops { position: absolute; inset: 0; pointer-events: none; }
+.cs-studio--orbit .studio-stops li { position: absolute; pointer-events: auto; }
+.cs-studio--orbit .studio-stops a {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    max-width: min(180px, 30vw);
+    padding: 7px 12px 7px 8px;
+    border: 1px solid #e0b7f2;
+    border-radius: 24px;
+    background: #250937;
+    color: #fceffe;
+    font-weight: 770;
+    font-size: .83rem;
+    line-height: 1.18;
+    box-shadow: 0 4px 15px #12041b9c;
+}
+.cs-studio--orbit .studio-stops a:is(:hover, [aria-current]) { background: #d6ff4a; border-color: #d6ff4a; color: #24112c; }
+.cs-studio--orbit .studio-stop-number { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border: 1px solid currentColor; border-radius: 50%; }
+.cs-studio--orbit .studio-stops li:nth-child(1) { top: 10%; left: 23%; }
+.cs-studio--orbit .studio-stops li:nth-child(2) { top: 23%; right: 1%; }
+.cs-studio--orbit .studio-stops li:nth-child(3) { top: 57%; right: 0; }
+.cs-studio--orbit .studio-stops li:nth-child(4) { bottom: 7%; left: 45%; }
+.cs-studio--orbit .studio-stops li:nth-child(5) { bottom: 16%; left: 2%; }
+.cs-studio--orbit .studio-stops li:nth-child(6) { top: 35%; left: 0; }
+.cs-studio--orbit .studio-panel { position: relative; border-radius: 2px 46px 2px 2px; border: 1px solid #f1c9fa; box-shadow: 9px 10px 0 #9154a8; }
+.cs-studio--orbit .studio-panel::before { position: absolute; inset: 0 0 auto; height: 8px; border-radius: inherit; background: #d6ff4a; content: ""; }
+.cs-studio--orbit .studio-panel-copy { padding-top: clamp(22px, 4vw, 52px); }
+.cs-studio--orbit .studio-panel-copy h2 { font-size: clamp(1.9rem, 4.5vw, 4.75rem); }
+.cs-studio--orbit .studio-panel-copy .studio-kicker { color: #6a266c; }
+.cs-studio--orbit .studio-step { margin-top: 22px; }
+.cs-studio--orbit .studio-step button { border-radius: 2em; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .studio-orbit-field::before { transition: transform .48s cubic-bezier(.23, .73, .35, 1); }
+}
+
+@media (max-width: 910px) {
+    .cs-studio--orbit .studio-index { min-height: 410px; }
+    .studio-orbit-field { width: 81%; }
+}
+@media (max-width: 760px) {
+    .cs-studio--orbit .studio-layout { grid-template-columns: minmax(0, 1fr); }
+    .cs-studio--orbit .studio-index { min-height: 0; padding: 12px 0 6px; }
+    .studio-orbit-field { width: min(82%, 330px); aspect-ratio: 1.38; }
+    .studio-orbit-field::before { inset: 17% 0; box-shadow: 0 0 0 8px #bd75da35, 0 0 0 18px #af5ad833; }
+    .studio-orbit-core { width: 64%; }
+    .cs-studio--orbit .studio-stops { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 3px; }
+    .cs-studio--orbit .studio-stops li { position: static; }
+    .cs-studio--orbit .studio-stops a { max-width: 100%; font-size: .75rem; }
+    .cs-studio--orbit .studio-title h1 { font-size: clamp(3.35rem, 12vw, 5.9rem); }
+    .cs-studio--orbit [data-studio-kind="article"] h1 { font-size: clamp(2.3rem, 9vw, 4.3rem); }
+}

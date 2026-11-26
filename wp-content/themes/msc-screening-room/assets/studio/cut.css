@@ -1,0 +1,76 @@
+body.cs-studio--cut {
+    --studio-bg: #efff00;
+    --studio-ink: #1d1823;
+    --studio-card: #fff9e6;
+    --studio-copy: #201825;
+    --studio-subtle: #4e3c50;
+    --studio-border: #ad8594;
+    --studio-surface: #ffe7de;
+    --studio-link: #951d47;
+    --studio-button: #fe4765;
+    --studio-button-ink: #201625;
+    --studio-focus: #9430d3;
+    background-image: repeating-linear-gradient(90deg, #20192620 0 1px, transparent 1px 6.25%);
+}
+.cs-studio--cut .studio-top { background: #1d1823; color: #f6ff65; }
+.cs-studio--cut .studio-top nav a { border: 1px solid #9585a3; }
+.cs-studio--cut .studio-top nav [aria-current] { text-decoration: none; background: #ff5975; color: #201625; }
+.cs-studio--cut .studio-brand { font-style: italic; }
+.cs-studio--cut .studio-brand span { color: #ff5975; }
+.cs-studio--cut .studio-title { position: relative; padding-block: clamp(18px, 3vw, 44px); }
+.cs-studio--cut .studio-title h1 { font: 900 clamp(3.1rem, 12.3vw, 12rem)/.79 var(--studio-heading); color: #201625; text-transform: uppercase; letter-spacing: -.086em; }
+.cs-studio--cut .studio-title > .studio-kicker { color: #471d32; }
+.cs-studio--cut [data-studio-kind="article"] .studio-title h1 { max-width: 1120px; font-size: clamp(2.65rem, 7vw, 7.5rem); line-height: .88; }
+.cs-studio--cut .studio-index {
+    padding: 14px;
+    border: 3px solid #201625;
+    background: #221a27;
+    box-shadow: 6px 6px #f75d77;
+    color: #ffffdc;
+}
+.cs-studio--cut .studio-index h2 { margin-bottom: 11px; color: #f3ff5c; text-transform: uppercase; letter-spacing: .08em; font-size: .77rem; }
+.cs-studio--cut .studio-stops {
+    display: grid;
+    grid-template-columns: repeat(var(--stop-count), minmax(110px, 1fr));
+    gap: 8px;
+    padding-block: 16px;
+    overflow-x: auto;
+    background: repeating-linear-gradient(90deg, transparent 0 8px, #f6edcb 8px 20px, transparent 20px 29px) top / 100% 7px no-repeat,
+                repeating-linear-gradient(90deg, transparent 0 8px, #f6edcb 8px 20px, transparent 20px 29px) bottom / 100% 7px no-repeat;
+}
+.cs-studio--cut .studio-stops li { min-width: 0; }
+.cs-studio--cut .studio-stops a { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 7px; height: 100%; padding: 5px; border: 2px solid #d9bf9f; background: #352636; color: #fff8d4; font-size: .8rem; font-weight: 750; line-height: 1.19; }
+.cs-studio--cut .studio-stops a img { grid-column: 1 / -1; width: 100%; height: clamp(42px, 6.5vw, 84px); object-fit: cover; object-position: center 40%; }
+.studio-frame-mark {
+    grid-column: 1 / -1;
+    display: grid;
+    place-items: center;
+    height: clamp(42px, 6.5vw, 84px);
+    color: var(--mark-ink, #261632);
+    background: radial-gradient(circle, #ffffff72 0 17%, transparent 18% 24%, #ffffff3d 25% 27%, transparent 28%), var(--mark-ground, #fe566e);
+    font: 780 clamp(1.3rem, 3vw, 2.5rem)/1 var(--studio-ui);
+}
+.studio-frame-mark--watch { --mark-ground: #f4fe6a; }
+.studio-frame-mark--scores { --mark-ground: #9e43cc; --mark-ink: #fff4d2; }
+.studio-frame-mark--details { --mark-ground: #66c7f6; }
+.cs-studio--cut .studio-stops a:is(:hover, [aria-current]) { border-color: #ff5677; color: #201625; background: #faff8e; }
+.cs-studio--cut .studio-stop-number { padding: 1px 3px; background: #f95a77; color: #211628; }
+.cs-studio--cut [data-studio-scrub] { display: flex; align-items: center; gap: 9px 12px; margin-top: 10px; font-size: .75rem; font-weight: 700; }
+.cs-studio--cut input[type="range"] { flex: 1; min-width: 0; width: 100%; accent-color: #ff5975; }
+.cs-studio--cut .studio-panels { margin-top: 19px; }
+.cs-studio--cut .studio-panel { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr); gap: 0; align-items: stretch; border: 3px solid #28212c; }
+.cs-studio--cut .studio-scene-image { background: #201728; min-height: 250px; max-height: 430px; }
+.cs-studio--cut .studio-panel-copy { border-left: 9px solid #fe4765; }
+.cs-studio--cut .studio-panel-copy h2 { text-transform: uppercase; }
+.cs-studio--cut [data-studio-kind="movie-page"] .studio-panel { grid-template-columns: minmax(0, .76fr) minmax(0, 1.24fr); }
+.cs-studio--cut [data-studio-kind="movie-page"] .studio-scene-image { align-self: start; height: auto; min-height: 0; }
+.cs-studio--cut .studio-step button { box-shadow: 2px 2px #271b2c; }
+
+@media (max-width: 760px) {
+    .cs-studio--cut .studio-title h1 { font-size: clamp(2.9rem, 11vw, 6.2rem); }
+    .cs-studio--cut [data-studio-kind="article"] .studio-title h1 { font-size: clamp(2.15rem, 9.6vw, 4.6rem); }
+    .cs-studio--cut .studio-index { padding: 10px; }
+    .cs-studio--cut .studio-panel, .cs-studio--cut [data-studio-kind="movie-page"] .studio-panel { grid-template-columns: minmax(0, 1fr); }
+    .cs-studio--cut .studio-scene-image { min-height: 0; height: auto; aspect-ratio: 1.75; }
+    .cs-studio--cut [data-studio-kind="movie-page"] .studio-scene-image { max-height: 230px; }
+}
