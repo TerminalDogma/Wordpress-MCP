@@ -1,7 +1,22 @@
 <?php
 /** Shared rendering for the ComingSoon preview and its sample story pages. */
 function msc_cs_preview_meta( WP_Post $post, string $key ): string {
-	return (string) get_post_meta( $post->ID, '_msc_comingsoon_' . $key, true );
+	$value = (string) get_post_meta( $post->ID, '_msc_comingsoon_' . $key, true );
+	if ( '' === $value && 'label' === $key && 'article' === get_post_meta( $post->ID, '_msc_studio_kind', true ) ) { return 'Movie News'; }
+	return $value;
+}
+
+function msc_cs_preview_stories( int $source ): array {
+	return get_posts( array(
+		'post_type' => 'page',
+		'post_parent' => $source,
+		'post_status' => 'publish',
+		'has_password' => false,
+		'posts_per_page' => -1,
+		'meta_key' => '_msc_comingsoon_preview',
+		'meta_value' => 'story',
+		'orderby' => array( 'menu_order' => 'ASC', 'ID' => 'ASC' ),
+	) );
 }
 
 function msc_cs_preview_format( WP_Post $story ): string {

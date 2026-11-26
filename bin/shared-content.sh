@@ -48,6 +48,7 @@ case "${1:-setup}" in
     ;;
   comingsoon-studio-previews)
     site_a_url="$(wp site list --field=url | grep '/site-a/$')"
+    wp --url="$site_a_url" --user=1 eval-file /msc-examples/comingsoon-preview.php
     wp --url="$site_a_url" --user=1 eval-file /msc-examples/comingsoon-studio-previews.php
     ;;
   restore-demo-genres)

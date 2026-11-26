@@ -10,16 +10,7 @@ $story_source = (int) get_post_meta( $preview_page, '_msc_comingsoon_story_sourc
 if ( ! $story_source || 'home' !== get_post_meta( $story_source, '_msc_comingsoon_preview', true ) || 'publish' !== get_post_status( $story_source ) || post_password_required( $story_source ) ) {
 	$story_source = $preview_page;
 }
-$stories = get_posts( array(
-	'post_type' => 'page',
-	'post_parent' => $story_source,
-	'post_status' => 'publish',
-	'has_password' => false,
-	'posts_per_page' => -1,
-	'meta_key' => '_msc_comingsoon_preview',
-	'meta_value' => 'story',
-	'orderby' => array( 'menu_order' => 'ASC', 'ID' => 'ASC' ),
-) );
+$stories = msc_cs_preview_stories( $story_source );
 $sections = array();
 foreach ( $stories as $story ) { $sections[ msc_cs_preview_meta( $story, 'section' ) ][] = $story; }
 $lead = $sections['lead'][0] ?? null;

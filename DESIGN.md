@@ -39,10 +39,10 @@ Run `sh bin/shared-content.sh comingsoon-studio-previews` on Site A. It installs
 | Preview | Interaction |
 | --- | --- |
 | Orbit | Choose an orbital waypoint to change the artwork and open its story or film section. The links also support arrow keys. |
-| Cut Room | Select a film frame or scrub the range control to browse stories, movie sections, or article chapters. |
+| Cut Room | The editorial homepage puts a lead and news rail above separate Movies, TV & Recaps, What to Watch, and Interviews & Features desks. The article uses a continuous reading column. Both filmstrips link to visible sections. The Iron Man guide uses the film-frame selector. |
 | The Tower | Select a floor to open its content. An elevator indicator follows the active floor. |
 
-The three concepts use original generated film art and fictional articles. The movie previews read the published Iron Man record for the date, overview, trailers, cast, providers, reviews, and film facts. Every control targets a real section or link. The layouts allow all sections to be read with JavaScript disabled.
+The three concepts use original generated film art and fictional articles. The movie previews read the published Iron Man record for the date, overview, trailers, cast, providers, reviews, and film facts. The Cut Room homepage uses the shared ComingSoon preview stories and its own *Spin Cycle* lead. Its Latest Stories filters and filmstrip links work with JavaScript disabled.
 
 References were captured in a desktop browser at 1440 × 1000 on 6 November 2026, using full-page screenshots, HTML, font and branding inspection. News, reviews and catalog examples in the presentation are fictional.
 

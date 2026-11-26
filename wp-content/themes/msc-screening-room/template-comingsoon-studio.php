@@ -14,6 +14,7 @@ $design = get_post_meta( $post->ID, '_msc_studio_design', true );
 $kind = get_post_meta( $post->ID, '_msc_studio_kind', true );
 $kinds = array( 'homepage' => 'Homepage', 'movie-page' => 'Iron Man', 'article' => 'Article' );
 if ( ! isset( $designs[ $design ], $kinds[ $kind ] ) ) { require __DIR__ . '/page.php'; return; }
+$cut_editorial = 'cut' === $design && 'movie-page' !== $kind;
 $ids = get_option( 'msc_comingsoon_studio_previews', array() );
 $password = post_password_required( $post );
 $title = $designs[ $design ];
@@ -22,7 +23,7 @@ $release = $facts = array();
 $scenes = array();
 if ( ! $password ) {
 	if ( 'homepage' === $kind ) {
-		$scenes = msc_studio_home( $ids, $design );
+		if ( ! $cut_editorial ) { $scenes = msc_studio_home( $ids, $design ); }
 	} elseif ( 'movie-page' === $kind ) {
 		$movie = msc_studio_iron_man();
 		$title = $movie['data']['title'] ?? 'Iron Man';
@@ -36,7 +37,7 @@ if ( ! $password ) {
 	} else {
 		$title = get_the_title( $post );
 		$deck = $post->post_excerpt;
-		$scenes = msc_studio_article( $post, $design );
+		if ( ! $cut_editorial ) { $scenes = msc_studio_article( $post, $design ); }
 	}
 }
 
@@ -45,7 +46,15 @@ $dependencies = array( 'network-presentation' );
 if ( 'movie-page' === $kind ) { $dependencies[] = 'msc-movies'; }
 wp_enqueue_style( 'cs-studio', $assets . 'studio.css', $dependencies, '1.0.0' );
 wp_enqueue_style( 'cs-studio-' . $design, $assets . $design . '.css', array( 'cs-studio' ), '1.0.0' );
-wp_enqueue_script( 'cs-studio', $assets . 'studio.js', array(), '1.0.0', true );
+if ( $cut_editorial ) {
+	require_once __DIR__ . '/inc/comingsoon-preview.php';
+	wp_enqueue_style( 'cs-cut-editorial', $assets . 'cut-editorial.css', array( 'cs-studio-cut' ), '1.0.0' );
+	if ( 'homepage' === $kind ) {
+		wp_enqueue_script( 'cs-editorial-feed', get_template_directory_uri() . '/assets/comingsoon/feed.js', array(), '1.1.0', true );
+	}
+} else {
+	wp_enqueue_script( 'cs-studio', $assets . 'studio.js', array(), '1.0.0', true );
+}
 add_filter( 'wp_robots', static function ( array $robots ): array {
 	unset( $robots['index'] );
 	$robots['noindex'] = true;
@@ -86,11 +95,12 @@ $frame_marks = array( 'trailers' => '▶', 'watch' => '◉', 'scores' => '★', 
 		</nav>
 	</div>
 </header>
-<main id="main" class="studio-main" data-studio data-studio-kind="<?php echo esc_attr( $kind ); ?>">
+<main id="main" class="studio-main<?php if ( $cut_editorial ) { ?> cut-editorial<?php } ?>" data-studio data-studio-kind="<?php echo esc_attr( $kind ); ?>">
 	<header class="studio-title">
 		<?php if ( 'homepage' !== $kind && ! $password ) { ?><p class="studio-kicker"><?php echo 'article' === $kind ? 'Movie News · Fictional Sample' : 'Movie Guide'; ?></p><?php } ?>
 		<h1><?php echo esc_html( $password ? 'Protected Preview' : $title ); ?></h1>
 		<?php if ( $deck ) { ?><p class="studio-deck"><?php echo esc_html( $deck ); ?></p><?php } ?>
+		<?php if ( $cut_editorial && 'article' === $kind && ! $password ) { ?><p class="cut-byline"><strong>ComingSoon</strong> <time datetime="<?php echo esc_attr( get_the_date( DATE_W3C, $post ) ); ?>"><?php echo esc_html( get_the_date( 'F j, Y', $post ) ); ?></time></p><?php } ?>
 		<?php if ( ! empty( $release['date'] ) || $facts ) { ?>
 			<div class="studio-facts">
 				<?php if ( ! empty( $release['date'] ) ) { ?><time datetime="<?php echo esc_attr( $release['date'] ); ?>"><?php echo esc_html( wp_date( 'F j, Y', strtotime( $release['date'] . ' 12:00 UTC' ), new DateTimeZone( 'UTC' ) ) ); ?></time><?php } ?>
@@ -98,7 +108,11 @@ $frame_marks = array( 'trailers' => '▶', 'watch' => '◉', 'scores' => '★', 
 			</div>
 		<?php } ?>
 	</header>
-	<?php if ( $password ) { echo get_the_password_form( $post ); } elseif ( ! $scenes ) { ?><p>Publish the Iron Man catalog entry to fill this preview.</p><?php } else { ?>
+	<?php if ( $password ) {
+		echo get_the_password_form( $post );
+	} elseif ( $cut_editorial ) {
+		get_template_part( 'parts/comingsoon-cut-' . ( 'homepage' === $kind ? 'home' : 'article' ), null, array( 'ids' => $ids, 'post' => $post ) );
+	} elseif ( ! $scenes ) { ?><p>Publish the Iron Man catalog entry to fill this preview.</p><?php } else { ?>
 	<div class="studio-layout">
 		<nav class="studio-index" aria-label="<?php echo esc_attr( $area ); ?>">
 			<h2><?php echo esc_html( $area ); ?></h2>
