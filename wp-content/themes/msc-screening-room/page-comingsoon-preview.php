@@ -39,6 +39,11 @@ foreach ( $sections['criticism'] ?? array() as $story ) {
 if ( $stories ) {
 	wp_enqueue_script( 'cs-editorial-feed', get_template_directory_uri() . '/assets/comingsoon/feed.js', array(), '1.1.0', true );
 }
+$releases = $research ? array() : msc_cs_releases();
+if ( $releases ) {
+	wp_enqueue_style( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.css', array( 'cs-editorial-preview', 'msc-reviews' ), '1.0.0' );
+	wp_enqueue_script( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.js', array(), '1.0.0', true );
+}
 get_header( 'comingsoon-preview', array(
 	'movies' => $research || (bool) $movie_reviews,
 	'tv' => $research || (bool) ( $tv_review || $recaps ),
@@ -48,7 +53,7 @@ get_header( 'comingsoon-preview', array(
 	<?php if ( $research ) {
 		get_template_part( 'parts/comingsoon-preview-research', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
 	} elseif ( $preview_c ) {
-		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
+		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps', 'releases' ) );
 	} else { ?>
 	<div class="cs-frame">
 		<h1 class="screen-reader-text">ComingSoon homepage preview</h1>
@@ -74,6 +79,7 @@ get_header( 'comingsoon-preview', array(
 		<?php } ?>
 	</div>
 	<?php
+	get_template_part( 'parts/comingsoon-releases', null, array( 'releases' => $releases, 'frame' => true ) );
 	get_template_part( 'parts/comingsoon-channels', null, compact( 'movie_reviews', 'tv_review', 'latest', 'recaps' ) );
 	?>
 	<?php if ( $picks ) { ?>
@@ -105,4 +111,4 @@ get_header( 'comingsoon-preview', array(
 		get_template_part( 'parts/comingsoon-feed', null, array( 'stories' => $stories, 'url' => get_permalink( $preview_page ), 'title' => $preview_c || $research ? 'Latest' : 'The Feed' ) );
 	} ?>
 </main>
-<?php get_footer( 'comingsoon-preview', array( 'sources' => $research, 'preview_note' => $research ? 'Editorial stories are fictional. Release dates come from this site’s catalog.' : 'Fictional stories and original artwork for this homepage preview.' ) ); ?>
+<?php get_footer( 'comingsoon-preview', array( 'sources' => $research || (bool) $releases, 'preview_note' => $research || $releases ? 'Sample editorial stories are fictional. Release dates come from this site’s catalog.' : 'Fictional stories and original artwork for this homepage preview.' ) ); ?>

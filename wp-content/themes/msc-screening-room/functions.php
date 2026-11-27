@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/inc/catalog-archive.php';
+require_once __DIR__ . '/inc/comingsoon-releases.php';
 function msc_screen_movie_view(): bool {
     return is_singular( 'msc_movie' ) || ( is_page() && ( is_page_template( 'template-comingsoon-detail-preview.php' ) || ( is_page_template( 'template-comingsoon-studio.php' ) && 'movie-page' === get_post_meta( get_queried_object_id(), '_msc_studio_kind', true ) ) ) );
 }

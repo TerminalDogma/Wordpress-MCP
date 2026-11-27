@@ -37,6 +37,8 @@ $movie_news = array_filter( $args['latest'], static fn( WP_Post $story ) => 'Mov
 	</section>
 	<?php } ?>
 
+	<?php get_template_part( 'parts/comingsoon-releases', null, array( 'releases' => $args['releases'] ?? array() ) ); ?>
+
 	<?php if ( $criticism ) { ?>
 	<section class="cs-grid-criticism" aria-labelledby="cs-grid-criticism-title">
 		<div class="cs-grid-heading">
