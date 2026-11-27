@@ -22,6 +22,8 @@ Previews A, B, and C include **Latest & Upcoming Movies**, which takes its cue f
 
 On Site A, open a movie with **Edit locally (WordPress)** in the Movies list to find the **ComingSoon Release Carousel** box. Turn on **Feature this release on ComingSoon** to give an eligible film an Editor’s Pick label and priority. Published ComingSoon scores appear on the artwork using the existing gold, silver, and copper treatments. Critic aggregates appear on the movie pages. The rail is scrollable with JavaScript disabled.
 
+Run `sh bin/shared-content.sh comingsoon-release-previews` to install the smaller carousel in two positions for each of A, B, and C. The `/site-a/homepage-preview-{a,b,c}-releases-top/` previews put it directly below the masthead, before the editorial lead. The `/site-a/homepage-preview-{a,b,c}-releases-inline/` previews place it in the original release slot. Both use one row of thumbnail cards with a wider first card and inline score badges.
+
 Run `sh bin/shared-content.sh comingsoon-detail-previews` to add six standalone comparison URLs on Site A. The `movie-page-preview-a` through `movie-page-preview-c` pages use the published Iron Man catalog entry. The `article-preview-a` through `article-preview-c` posts use the same fictional news story and original *The Last Meridian* artwork. A uses a warm paper background, dark teal and serif headings. B pairs the same editorial typography with a split lead and red, yellow and sky-blue accents. C uses compact Archivo headings and an overlapping caption. Each preview links to the other designs and carries a noindex directive. The installer preserves existing preview edits and leaves the homepage settings in place.
 
 ### Competitor research previews

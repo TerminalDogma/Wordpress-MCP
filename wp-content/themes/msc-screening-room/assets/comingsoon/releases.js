@@ -16,9 +16,15 @@
     }
 
     function move(direction) {
-        const step = track.children[1].offsetLeft - track.children[0].offsetLeft;
+        const position = Math.abs(track.scrollLeft);
+        const first = track.firstElementChild.offsetLeft;
+        const offsets = Array.from(track.children, item => Math.abs(item.offsetLeft - first));
+        if (direction < 0) offsets.reverse();
+        const target = offsets.find(offset => direction * (offset - position) > 2);
+        const end = track.scrollWidth - track.clientWidth;
+        const inlineDirection = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
         const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        track.scrollBy({left: direction * step, behavior: reduced ? 'auto' : 'smooth'});
+        track.scrollTo({left: inlineDirection * (target ?? (direction < 0 ? 0 : end)), behavior: reduced ? 'auto' : 'smooth'});
     }
 
     previous.addEventListener('click', () => move(-1));

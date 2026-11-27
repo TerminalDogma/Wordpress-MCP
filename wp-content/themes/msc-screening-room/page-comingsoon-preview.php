@@ -6,6 +6,8 @@ $preview_page = get_queried_object_id();
 $palette = get_post_meta( $preview_page, '_msc_comingsoon_palette', true );
 $preview_c = 'c' === $palette;
 $research = 'research' === $palette;
+$release_placement = get_post_meta( $preview_page, '_msc_comingsoon_release_placement', true );
+$compact_releases = in_array( $release_placement, array( 'top', 'inline' ), true );
 $story_source = (int) get_post_meta( $preview_page, '_msc_comingsoon_story_source', true );
 if ( ! $story_source || 'home' !== get_post_meta( $story_source, '_msc_comingsoon_preview', true ) || 'publish' !== get_post_status( $story_source ) || post_password_required( $story_source ) ) {
 	$story_source = $preview_page;
@@ -41,22 +43,28 @@ if ( $stories ) {
 }
 $releases = $research ? array() : msc_cs_releases();
 if ( $releases ) {
-	wp_enqueue_style( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.css', array( 'cs-editorial-preview', 'msc-reviews' ), '1.0.0' );
-	wp_enqueue_script( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.js', array(), '1.0.0', true );
+	wp_enqueue_style( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.css', array( 'cs-editorial-preview', 'msc-reviews' ), '1.1.0' );
+	wp_enqueue_script( 'cs-releases', get_template_directory_uri() . '/assets/comingsoon/releases.js', array(), '1.1.0', true );
 }
+$release_at_top = 'top' === $release_placement;
+$carousel = array( 'releases' => $releases, 'compact' => $compact_releases, 'top' => $release_at_top );
+$top_carousel = $release_at_top ? $carousel : array();
+$inline_carousel = $release_at_top ? array() : $carousel;
 get_header( 'comingsoon-preview', array(
 	'movies' => $research || (bool) $movie_reviews,
 	'tv' => $research || (bool) ( $tv_review || $recaps ),
+	'preview_label' => $compact_releases ? 'Preview ' . strtoupper( $palette ) . ' · ' . ( $release_at_top ? 'Compact releases near top' : 'Compact releases in current position' ) : null,
 ) );
 ?>
 <main id="main">
 	<?php if ( $research ) {
 		get_template_part( 'parts/comingsoon-preview-research', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps' ) );
 	} elseif ( $preview_c ) {
-		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps', 'releases' ) );
+		get_template_part( 'parts/comingsoon-preview-c', null, compact( 'sections', 'lead', 'spotlight', 'latest', 'picks', 'movie_reviews', 'tv_review', 'recaps', 'top_carousel', 'inline_carousel' ) );
 	} else { ?>
 	<div class="cs-frame">
 		<h1 class="screen-reader-text">ComingSoon homepage preview</h1>
+		<?php get_template_part( 'parts/comingsoon-releases', null, $top_carousel ); ?>
 		<div class="cs-edition">
 			<p><span aria-hidden="true"></span> Today on ComingSoon</p>
 			<time datetime="<?php echo esc_attr( wp_date( 'Y-m-d' ) ); ?>"><?php echo esc_html( wp_date( 'l, F j, Y' ) ); ?></time>
@@ -79,7 +87,7 @@ get_header( 'comingsoon-preview', array(
 		<?php } ?>
 	</div>
 	<?php
-	get_template_part( 'parts/comingsoon-releases', null, array( 'releases' => $releases, 'frame' => true ) );
+	get_template_part( 'parts/comingsoon-releases', null, $inline_carousel + array( 'frame' => true ) );
 	get_template_part( 'parts/comingsoon-channels', null, compact( 'movie_reviews', 'tv_review', 'latest', 'recaps' ) );
 	?>
 	<?php if ( $picks ) { ?>

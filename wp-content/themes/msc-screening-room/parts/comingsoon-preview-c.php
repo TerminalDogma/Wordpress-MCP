@@ -13,6 +13,7 @@ $movie_news = array_filter( $args['latest'], static fn( WP_Post $story ) => 'Mov
 ?>
 <div class="cs-frame cs-grid-page">
 	<h1 class="screen-reader-text">ComingSoon homepage preview C</h1>
+	<?php get_template_part( 'parts/comingsoon-releases', null, $args['top_carousel'] ?? array() ); ?>
 
 	<?php if ( $lead || $featured ) { ?>
 	<section class="cs-cover-grid" aria-label="Featured stories">
@@ -37,7 +38,7 @@ $movie_news = array_filter( $args['latest'], static fn( WP_Post $story ) => 'Mov
 	</section>
 	<?php } ?>
 
-	<?php get_template_part( 'parts/comingsoon-releases', null, array( 'releases' => $args['releases'] ?? array() ) ); ?>
+	<?php get_template_part( 'parts/comingsoon-releases', null, $args['inline_carousel'] ?? array() ); ?>
 
 	<?php if ( $criticism ) { ?>
 	<section class="cs-grid-criticism" aria-labelledby="cs-grid-criticism-title">

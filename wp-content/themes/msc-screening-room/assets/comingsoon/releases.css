@@ -59,3 +59,38 @@
     .cs-release-card--spotlight .cs-release-poster { max-height: 240px; }
     .cs-release-track { grid-auto-columns: clamp(103px, 30vw, 145px); }
 }
+
+.cs-releases.cs-releases--compact { margin-block: clamp(13px, 2vw, 26px); padding: clamp(6px, 1.1vw, 12px); border-top-width: 3px; }
+.cs-releases.cs-releases--top { margin-block: clamp(8px, 1.55vw, 16px) 5px; }
+.cs-releases--compact .cs-releases-heading { gap: 5px 12px; margin-bottom: 4px; padding-bottom: 5px; align-items: center; }
+.cs-editorial .cs-releases--compact .cs-releases-heading h2 { font-size: clamp(1.22rem, 2.05vw, 1.7rem); }
+.cs-releases--compact .cs-releases-links { flex-grow: 0; gap: 4px 8px; font-size: .76rem; }
+.cs-releases--compact .cs-releases-database { padding: 3px 5px; }
+.cs-releases--compact .cs-releases-display { grid-template-columns: minmax(0, 1fr); }
+.cs-releases--compact .cs-release-track {
+    grid-template-columns: clamp(182px, 19vw, 236px);
+    grid-auto-columns: clamp(144px, 14vw, 177px);
+    gap: 6px;
+    padding-block: 3px 6px;
+}
+.cs-releases--compact .cs-release-card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+    height: 100%;
+    padding: 4px;
+    background: var(--cs-paper);
+}
+.cs-releases--compact .cs-release-card--spotlight { grid-template-columns: 51px minmax(0, 1fr); background: var(--release-spotlight); }
+.cs-releases--compact .cs-release-poster { height: auto; }
+.cs-releases--compact .cs-release-copy { padding: 0; }
+.cs-editorial .cs-releases--compact .cs-release-card h3 { font-size: clamp(.76rem, 1vw, .93rem); }
+.cs-editorial .cs-releases--compact .cs-release-card--spotlight h3 { font-size: clamp(.89rem, 1.13vw, 1.12rem); line-height: 1.01; }
+.cs-releases--compact .cs-release-feature-label { margin-bottom: 3px; padding: 2px 3px; font-size: .54rem; }
+.cs-releases--compact .cs-release-date { gap: 1px 3px; margin-top: 3px; font-size: .63rem; }
+.cs-releases--compact .item-score-badge { position: static; display: inline-flex; width: fit-content; max-width: 100%; margin-top: 3px; padding: 1px 4px; border-width: 1px; box-shadow: none; }
+.cs-releases--compact .item-score-badge strong { font: 800 .77rem/1.15 var(--cs-sans); }
+.cs-releases--compact .item-score-badge small { font-size: .56rem; }
+.cs-releases--compact .item-score-badge :is(.score-source, .score-award) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.cs-releases--compact .cs-releases-controls button { width: 28px; height: 26px; font-size: 1rem; }
